@@ -1,0 +1,58 @@
+# AHC-0006 — One span per call, with context that survives the hops
+# Normative. Edit here; anything rendered is generated from this file.
+id: AHC-0006
+status: active
+since: "0.1.0"
+
+level: MUST
+layers: [L11]
+positions: [P3, P2]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  One span per call, with context that survives the hops
+
+requirement: |-
+  The choke point emits a span for every model call, and trace context propagates across every out-of-process boundary the request crosses, including the gateway. Retrieval, tool calls and nested work attach to the same trace, so one identifier reaches the whole of a unit of work. Payload capture, where enabled, happens at a named point with redaction applied before the payload leaves the process.
+
+failure_mode: |-
+  Without propagation across the proxy hop, traces stop at the application and resume at the provider with a gap in the middle — precisely where routing, caching and fallback decisions were made. Without a single unit-of-work identifier, an agent's fourteen calls appear as fourteen unrelated events, and nobody can reconstruct the trajectory that produced the answer.
+
+discharges: [AAC-0011, AAC-0100, AAC-0095]
+
+design_decisions:
+  - question: Emit through a general tracing standard, or a vendor's own client?
+    tension: >-
+      A standard keeps the backend swappable and makes this catalog's identifiers
+      portable; a vendor client is faster to adopt and usually richer on day one.
+    resolution: >-
+      Whichever is chosen, require a raw export path out. Instrumentation is the
+      expensive half and the half that should outlive the backend.
+  - question: Where does redaction happen — at capture, or at query?
+    tension: >-
+      Redacting at capture means an unredacted copy never exists at rest, and
+      also means a genuinely useful debugging detail is gone forever. Redacting
+      at query keeps the detail and keeps the liability.
+    resolution: >-
+      At capture. The debugging case is real but it is not worth a searchable
+      archive of customer data with an unbounded retention window.
+  - question: Full capture, or sampled?
+    tension: >-
+      Full capture is what you want during the incident and what you regret on
+      the invoice. Sampling is cheap and is never sampling the run you need.
+    resolution: >-
+      Capture failures fully, sample successes. Decide the rates before the
+      first bill, not after.
+  - question: Does a tracing failure affect the request?
+    tension: >-
+      Blocking on the exporter makes telemetry an availability dependency of the
+      product. Dropping silently means an outage in observability is invisible
+      to the people relying on it.
+    resolution: >-
+      Never block the request path. Alarm on exporter health separately.
+
+realization_policy: own
+
+see_also: [AHC-0004, AHC-0007]

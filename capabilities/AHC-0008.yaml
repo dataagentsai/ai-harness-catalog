@@ -1,0 +1,56 @@
+# AHC-0008 — One enforcement position, defaulting closed
+# Normative. Edit here; anything rendered is generated from this file.
+id: AHC-0008
+status: active
+since: "0.1.0"
+
+level: MUST
+layers: [L7]
+positions: [P2, P3]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  One enforcement position, defaulting closed
+
+requirement: |-
+  Policies applied to traffic — redaction, screening of untrusted content, output filtering — are applied at one named position that every call traverses, not once per application. That position declares, per policy, what happens when the policy machinery itself is unavailable, and the declared default is to refuse rather than to pass traffic through unchecked.
+
+failure_mode: |-
+  Enforcement duplicated per application drifts within a quarter: each copy is updated on a different schedule, and the one that matters during an incident is the copy nobody remembered existed. Where the open-or-closed behaviour was never declared, a dependency outage silently disables the control, and traffic that should have been refused flows normally with nothing recording that it did.
+
+discharges: [AAC-0091, AAC-0006, AAC-0004, AAC-0092]
+
+design_decisions:
+  - question: Which policies can live at the gateway, and which cannot?
+    tension: >-
+      Anything needing application context — the retrieved passages, the user's
+      entitlements, the schema that was requested — is unavailable at the proxy.
+      Anything that must cover code you did not write is unenforceable inside it.
+    resolution: >-
+      Context-free policies go to the shared position; context-dependent ones
+      stay in the application and are listed as such, so the gap is deliberate
+      rather than discovered.
+  - question: Fail closed on what, exactly?
+    tension: >-
+      Closed by default is correct for a safety screen and unusable for an
+      enrichment step, where refusing every request because an optional
+      classifier is down is a self-inflicted outage.
+    resolution: >-
+      Declare it per policy, never globally, and record the choice next to the
+      policy rather than in a runbook.
+  - question: Is a refusal distinguishable from a failure by the caller?
+    tension: >-
+      Collapsing them simplifies the interface and makes an outage look like a
+      policy decision, which sends the incident to the wrong team for the first
+      hour.
+  - question: Streamed responses — screen before or during?
+    tension: >-
+      Screening the completed response means buffering, which discards the
+      latency benefit that motivated streaming. Screening incrementally means
+      tokens already delivered cannot be recalled.
+
+realization_policy: own
+
+see_also: [AHC-0004, AHC-0009]

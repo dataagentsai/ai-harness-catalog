@@ -1,0 +1,117 @@
+# The construction axes: WHERE a capability physically lives, and WHO supplies it.
+#
+# Deliberately NOT the assurance catalog's axes. AAC organises by mechanism
+# (how a verdict is computed) and stage (when it runs) — those are verification
+# axes. Reusing them here would blur two catalogs that are only useful while
+# they stay distinct. See docs/THE-AAC-BOUNDARY.md.
+#
+# Position is this catalog's spine. It is the axis architects actually argue
+# about, and the same capability at a different position is a different system:
+# a budget enforced in the loop and a budget enforced at the gateway catch
+# different failures and miss different ones.
+
+version: "0.1.0"
+
+positions:
+  - id: P1
+    name: Caller / edge
+    summary: >-
+      Before the harness is entered — the API surface, the UI, the trigger.
+      Anything enforced here is invisible to any other entry point, which is
+      why so little belongs here.
+  - id: P2
+    name: Gateway / proxy
+    summary: >-
+      Out of process, on the request path. The only position that covers calls
+      made by code you do not own, and the only one that can enforce across
+      languages. Also a hop, a dependency and a failure domain.
+  - id: P3
+    name: Harness library
+    summary: >-
+      In-process, wrapping the model call. Sees types, business context and the
+      caller's intent; governs only code that imports it.
+  - id: P4
+    name: Control loop
+    summary: >-
+      The iteration itself. The only position that can see a trajectory — that
+      these fourteen calls are one runaway task rather than fourteen tasks.
+  - id: P5
+    name: Tool boundary
+    summary: >-
+      Between the decision to call a tool and the tool running. The last place
+      an action can be stopped while it is still cheap to stop.
+  - id: P6
+    name: State store
+    summary: >-
+      The durable substrate. Enforcement here survives process death, which is
+      what makes it the right home for anything that must outlive a crash.
+  - id: P7
+    name: Offline / CI
+    summary: >-
+      Out of band, not on the request path. Unlimited time budget, no user
+      waiting, and no ability to prevent anything in production.
+  - id: P8
+    name: Human surface
+    summary: >-
+      A queue, an approval, a console. Slow, expensive, and the only position
+      that can exercise judgement the system does not have.
+
+# WHO supplies the machinery. Five of these are the assurance catalog's
+# approach vocabulary, kept identical so an adopter filters both catalogs the
+# same way. `framework` is the one deliberate addition: "adopt an agent
+# framework or build the loop" is the defining harness question and has no
+# assurance-side equivalent.
+approaches:
+  - id: in-house
+    name: Build it yourself
+    summary: >-
+      Your own code, your own types. Most control and most portable; the
+      strongest option for anything that encodes a decision specific to your
+      domain, and the weakest use of time for anything commoditised.
+  - id: framework
+    name: Adopt an agent or workflow framework
+    summary: >-
+      The loop, state and tool plumbing arrive built. You inherit its control
+      flow model and its opinions, including the ones you have not read yet.
+      The question is never "is it good" but "which of my decisions does it
+      make for me".
+  - id: open-source
+    name: Open-source library
+    summary: >-
+      A component you run yourself, doing one job. No vendor dependency; you
+      own the upgrade treadmill.
+  - id: platform
+    name: Hosted platform
+    summary: >-
+      Tracing, datasets, prompt registries and experiment history as a service.
+      Fastest to useful, and where a growing share of your operational history
+      ends up living — so the export path matters on day one.
+  - id: gateway
+    name: AI gateway or proxy
+    summary: >-
+      Enforcement on the request path, out of process. The only approach that
+      covers applications you did not write, and the only one that can prevent
+      rather than detect.
+  - id: cloud-native
+    name: Cloud provider managed service
+    summary: >-
+      Capability from the cloud you already run in. Low integration cost,
+      procurement usually already done, opaque internals, hard to reproduce
+      locally.
+
+# Obligation strength. Same semantics and same words as the assurance catalog,
+# because an adopter should not have to learn two vocabularies for one idea.
+levels:
+  - id: MUST
+    summary: >-
+      Inherent to the shape. A harness without it has a hole that no amount of
+      testing closes, because there is nothing to test. Omitting requires a
+      recorded, owned decision.
+  - id: SHOULD
+    summary: >-
+      Expected in a production harness. Valid reasons to omit exist and belong
+      in the design record.
+  - id: MAY
+    summary: >-
+      Applies when the stated condition holds — regulated domain, untrusted
+      input, real side effects, external users, more than one team.

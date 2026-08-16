@@ -1,0 +1,130 @@
+# The harness layers: WHICH PART of the scaffolding a capability belongs to.
+#
+# The harness is everything that is neither the model nor your business logic —
+# the deterministic machinery that turns a model into a system. These sixteen
+# layers are the whole of it.
+#
+# Observability is L11 and the eval harness is L12. That they are two of
+# sixteen is the point of this catalog: teams routinely build those two and
+# call the harness done.
+#
+# Layers are TAGS, not a tree, for the same reason archetypes are — a
+# capability frequently spans two (context assembly and cost, tool dispatch and
+# identity). Where a capability genuinely spans, list both; where it merely
+# touches, list the one that owns it.
+
+version: "0.1.0"
+
+layers:
+  - id: L1
+    name: Context assembly
+    summary: >-
+      Turning typed inputs into the bytes sent to the model: templating, prompt
+      versioning, retrieval placement, ordering, compaction, token budget.
+    owns: What the model is told.
+
+  - id: L2
+    name: Model invocation
+    summary: >-
+      The call itself: client construction, parameters, streaming, timeouts, the
+      choke point every call passes through, and which model is reachable at all.
+    owns: How the call is made.
+
+  - id: L3
+    name: Tool layer
+    summary: >-
+      Tool definition and schema, dispatch, argument validation, sandboxing,
+      result shaping and truncation, and what a tool is allowed to reach.
+    owns: What the model can do.
+
+  - id: L4
+    name: Control loop
+    summary: >-
+      Iteration, step and budget accounting, termination conditions, planning
+      and replanning, interruption and resumption.
+    owns: When the system stops.
+
+  - id: L5
+    name: State and memory
+    summary: >-
+      Conversation state, working memory, checkpoints, long-term stores, and the
+      durability boundary between what survives a crash and what does not.
+    owns: What is remembered.
+
+  - id: L6
+    name: I/O contracts
+    summary: >-
+      The typed boundary between the harness and its callers in both
+      directions: input validation, response parsing, and the declared shape of
+      failure.
+    owns: What the caller can rely on.
+
+  - id: L7
+    name: Policy enforcement
+    summary: >-
+      The positions at which a rule can actually be applied to traffic, what
+      happens on detection, and the open-or-closed default.
+    owns: Where a rule becomes real.
+
+  - id: L8
+    name: Concurrency and flow control
+    summary: >-
+      Parallel calls, fan-out limits, queueing, backpressure, and behaviour when
+      a provider throttles rather than fails.
+    owns: What happens under load.
+
+  - id: L9
+    name: Determinism and replay
+    summary: >-
+      Pinned parameters, recorded fixtures, mocked providers, and the ability to
+      re-run a past call without the network.
+    owns: Whether yesterday can be reproduced.
+
+  - id: L10
+    name: Failure handling
+    summary: >-
+      Retries, fallback, idempotency, compensation, partial results, and the
+      declared degradation path when the model or a tool is unavailable.
+    owns: What happens when something breaks.
+
+  - id: L11
+    name: Observability
+    summary: >-
+      Span emission, attribute population, trace-context propagation across
+      out-of-process hops, and payload capture with its redaction point.
+    owns: Whether a past run can be explained.
+
+  - id: L12
+    name: Eval harness
+    summary: >-
+      The seams that let an evaluation drive the system: a callable task
+      entrypoint, dataset plumbing, injectable graders, and CI wiring.
+    owns: Whether the system can be measured at all.
+
+  - id: L13
+    name: Cost accounting
+    summary: >-
+      Token and spend accounting attributed to a unit of work, attribution tags
+      applied at the boundary, and ceilings that can actually stop a call.
+    owns: What it costs and who pays.
+
+  - id: L14
+    name: Human-in-the-loop
+    summary: >-
+      Approval gates, escalation paths, the surface a reviewer sees, and what
+      the system does while it waits.
+    owns: Where a person can intervene.
+
+  - id: L15
+    name: Release and configuration
+    summary: >-
+      Model pins, prompt versions, feature flags, canary and rollback, and the
+      resolution of all of it into a recorded, reproducible configuration.
+    owns: Which version is running.
+
+  - id: L16
+    name: Identity and authorization
+    summary: >-
+      Whose identity a call carries, propagation of that identity to tools and
+      downstream systems, authorization of actions, secret handling and egress.
+    owns: Who the system is acting as.

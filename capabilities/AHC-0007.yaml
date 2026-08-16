@@ -1,0 +1,57 @@
+# AHC-0007 — Spend is accounted to a unit of work, not a call
+# Normative. Edit here; anything rendered is generated from this file.
+id: AHC-0007
+status: active
+since: "0.1.0"
+
+level: MUST
+layers: [L13]
+positions: [P3, P2]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Spend is accounted to a unit of work, not a call
+
+requirement: |-
+  The harness defines a unit of work — a task, a request, a conversation turn — and accumulates tokens and spend against it across every call the unit makes, including retries, judge calls and calls made by nested components. Attribution tags identifying tenant, feature and caller are applied where the unit begins, not at each call site.
+
+failure_mode: |-
+  Per-call accounting makes an agent that succeeded in one call and one that took forty look identical on a dashboard of averages. Cost per successful task — the only figure that is a business number — becomes uncomputable, and the retries that quietly tripled the bill are counted as separate healthy traffic. Tags applied per call site are missing from whichever call site was added last.
+
+discharges: [AAC-0008, AAC-0104, AAC-0102, AAC-0093]
+
+design_decisions:
+  - question: What is a unit of work in this system?
+    tension: >-
+      Too fine and it is a call by another name. Too coarse — a whole session —
+      and it spans work with different owners and different value, so the number
+      cannot be acted on.
+    resolution: >-
+      The smallest thing a user or a caller would call a completed task. If two
+      people would disagree about whether it succeeded, it is still too coarse.
+  - question: Where is the ceiling enforced — the harness, or the gateway?
+    tension: >-
+      The harness knows this is one runaway task; the gateway sees only a rising
+      call rate that could equally be healthy traffic. But the gateway sees calls
+      that never entered the harness.
+    resolution: >-
+      Harness enforces per-unit, gateway enforces per-key as a backstop. Neither
+      alone catches both a single runaway task and an unrouted caller.
+  - question: Do failed and abandoned units count?
+    tension: >-
+      Counting only successes flatters the figure and hides the cost of failure,
+      which for agentic work is frequently the larger half.
+    resolution: >-
+      Account for all units, report success and failure separately. Cost per
+      successful task requires the denominator to include the failures.
+  - question: Is spend computed from provider-reported usage or from local counting?
+    tension: >-
+      Provider-reported is authoritative and arrives after the fact, sometimes
+      only in aggregate. Local counting is immediate — which is what a ceiling
+      needs — and drifts from the invoice.
+
+realization_policy: own
+
+see_also: [AHC-0004, AHC-0006]

@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/basantchoudhary/ai-harness-catalog/schema/capability.schema.json",
+  "title": "AHC Capability",
+  "description": "One harness capability. The normative unit of the AI Harness Catalog. A capability states WHAT MUST EXIST in a system, tags WHICH archetypes need it, names WHERE it can physically live, and records the design decisions its builder must make. A capability never states a verification obligation (that is the assurance catalog's job), never names a product, and never sets a threshold.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id", "status", "since", "level", "layers", "positions",
+    "archetypes", "core", "title", "requirement", "failure_mode",
+    "realization_policy"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^AHC-[0-9]{4}$",
+      "description": "Flat, permanent, never reused. Layer and archetype are metadata, not identity — see docs/ID-POLICY.md."
+    },
+    "status": {
+      "enum": ["active", "deprecated", "superseded"],
+      "description": "Deprecated and superseded capabilities stay in the catalog forever so citations keep resolving."
+    },
+    "since": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Catalog version in which this capability first appeared."
+    },
+    "deprecated_in": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "superseded_by": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^AHC-[0-9]{4}$" },
+      "description": "Required when status is 'superseded'."
+    },
+    "level": {
+      "enum": ["MUST", "SHOULD", "MAY"],
+      "description": "Strength, RFC 2119 usage, binding only within an adopting organisation."
+    },
+    "layers": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^L([1-9]|1[0-6])$" },
+      "description": "Which part of the harness owns this. Tags, not a tree. More than two usually means the capability is really two capabilities."
+    },
+    "positions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^P[1-8]$" },
+      "description": "Where this can physically live. Order is meaningful: the first is the primary position, the rest are backstops or alternatives."
+    },
+    "archetypes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^A([1-9]|10)$" },
+      "description": "Tags, not a tree. Core capabilities enumerate every archetype explicitly so a consumer never has to resolve inheritance. Vocabulary is pinned from the assurance catalog."
+    },
+    "core": {
+      "type": "boolean",
+      "description": "True if every AI application needs this regardless of shape. Presentational: core capabilities already list all archetypes."
+    },
+    "title": { "type": "string", "minLength": 8, "maxLength": 120 },
+    "requirement": {
+      "type": "string",
+      "minLength": 40,
+      "description": "What must exist, in plain English. States the component and the constraint on it. Contains no verification language, no product names, no thresholds."
+    },
+    "failure_mode": {
+      "type": "string",
+      "minLength": 30,
+      "description": "What actually goes wrong in a system that lacks this. Concrete and specific — this is the field that justifies the capability's existence, and a vague one is a sign the capability is a principle rather than a component."
+    },
+    "discharges": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^AAC-[0-9]{4}$" },
+      "description": "Assurance catalog obligations this capability makes verifiable. The join between the two catalogs. An obligation cannot be discharged by a component that does not exist."
+    },
+    "design_decisions": {
+      "type": "array",
+      "description": "The choices a builder must make. This is the substance of the catalog — a capability with no decisions is either trivial or under-specified.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["question", "tension"],
+        "properties": {
+          "question": { "type": "string", "minLength": 10 },
+          "tension": {
+            "type": "string",
+            "minLength": 30,
+            "description": "What is genuinely traded away by each answer. If nothing is traded away, it is not a decision."
+          },
+          "resolution": {
+            "type": "string",
+            "description": "A defensible default, where one exists. Omit rather than invent one — a decision with no general answer is the most useful kind to surface."
+          }
+        }
+      }
+    },
+    "realization_policy": {
+      "enum": ["own", "see_aac"],
+      "description": "'own' — the construction question is genuinely different from the verification question, so realizations/ may carry build options for this capability. 'see_aac' — the assurance catalog already enumerates the same machinery, so realizations/ must carry none and the reader is pointed there instead. This is the anti-duplication rule; the linter enforces it."
+    },
+    "realization_note": {
+      "type": "string",
+      "minLength": 30,
+      "description": "Required when realization_policy is 'see_aac'. States what this catalog adds beyond the assurance catalog's realization options — usually a positional or structural constraint — and nothing more."
+    },
+    "see_also": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^AHC-[0-9]{4}$" },
+      "description": "Related capabilities. Not inheritance and not a dependency graph."
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "realization_policy": { "const": "see_aac" } }, "required": ["realization_policy"] },
+      "then": { "required": ["realization_note", "discharges"] }
+    },
+    {
+      "if": { "properties": { "status": { "const": "superseded" } }, "required": ["status"] },
+      "then": { "required": ["superseded_by"] }
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+# AHC-0003 — The running configuration is resolved once and recorded
+# Normative. Edit here; anything rendered is generated from this file.
+id: AHC-0003
+status: active
+since: "0.1.0"
+
+level: MUST
+layers: [L15]
+positions: [P3, P7]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  The running configuration is resolved once and recorded
+
+requirement: |-
+  Model identifier, prompt version, sampling parameters, tool set and enabled policies are resolved from pinned configuration when the harness is constructed, not read ad hoc at each call site. The resolved set is emitted as a single record that identifies exactly what is running, and the same record is reproducible from a commit plus a configuration reference.
+
+failure_mode: |-
+  Without a single resolution point, "which model answered this?" becomes an archaeology exercise across environment variables, defaults buried in a client library, and a provider alias that silently moved to a new version last Tuesday. Rollback becomes guesswork because nobody can state what the previous configuration was.
+
+discharges: [AAC-0012, AAC-0107, AAC-0101]
+
+design_decisions:
+  - question: Alias or pinned version for the model identifier?
+    tension: >-
+      An alias picks up provider improvements without work, and picks up
+      behaviour changes without warning. A pinned version is stable until it is
+      retired on the provider's schedule rather than yours.
+    resolution: >-
+      Pin, and treat the pin as a dependency with an owner and an upgrade path.
+      An alias is acceptable only where a recorded resolution captures what the
+      alias resolved to at call time.
+  - question: What is allowed to change without a deploy?
+    tension: >-
+      Runtime-changeable configuration is how you respond to an incident in
+      minutes. It is also how the running system stops being described by any
+      commit, and how a change reaches production without review.
+    resolution: >-
+      Name the changeable set explicitly and keep it small. Anything in it must
+      appear in the resolved record, so an unreviewed change is at least visible.
+  - question: Does the record travel with the output, or only into telemetry?
+    tension: >-
+      Travelling with the output lets a consumer reason about provenance and
+      makes a stale cached answer detectable; it also leaks internal
+      configuration to whoever receives the response.
+
+realization_policy: own
+
+see_also: [AHC-0002, AHC-0009]

@@ -1,0 +1,58 @@
+# AHC-0010 — A task entrypoint an evaluation can drive
+# Normative. Edit here; anything rendered is generated from this file.
+id: AHC-0010
+status: active
+since: "0.1.0"
+
+level: MUST
+layers: [L12]
+positions: [P7, P3]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  A task entrypoint an evaluation can drive
+
+requirement: |-
+  The system exposes a callable entrypoint that performs one unit of work end to end, without a web server, a queue or a user interface, and returns the typed result together with the trace of how it was produced. The path it exercises is the production path — the same context assembly, the same choke point, the same parsing — parameterised by configuration rather than reimplemented.
+
+failure_mode: |-
+  Where no such seam exists, an evaluation harness reimplements the pipeline, and thereafter scores a system that resembles production without being it. The reimplementation drifts, and the drift is discovered when a release passes evaluation and fails in production for a reason the evaluation could not have seen. This capability is the one that makes almost every assurance obligation reachable; without it they are aspirations.
+
+discharges: [AAC-0001, AAC-0013, AAC-0098, AAC-0010]
+
+design_decisions:
+  - question: Does the entrypoint return the trace, or is the trace collected out of band?
+    tension: >-
+      Returning it makes trajectory checks trivial and couples the production
+      return type to a testing need. Collecting out of band keeps the interface
+      clean and makes the evaluation depend on a telemetry backend being up.
+    resolution: >-
+      Return a handle to the trace rather than the trace. The evaluation
+      resolves it; production ignores it.
+  - question: How is the provider substituted for a cheap run?
+    tension: >-
+      Recorded fixtures make runs fast, free and deterministic, and they go
+      stale silently — passing against a recording of behaviour the model no
+      longer has. Live calls are honest and cost real money on every change.
+    resolution: >-
+      Both, at different stages: recorded for the plumbing, live for the
+      release candidate. Date the recordings and re-cut them on a schedule.
+  - question: Is the entrypoint parameterised by model and prompt version?
+    tension: >-
+      Parameterising is what allows every reachable route to be scored rather
+      than only the default one; it also widens the interface and invites
+      configuration that only ever appears in tests.
+    resolution: >-
+      Parameterise by the resolved configuration record from AHC-0003, not by
+      loose arguments. One thing to pass, and it is the same thing production
+      records.
+  - question: Where do graders live — beside the system, or in a separate suite?
+    tension: >-
+      Beside it, they drift toward asserting what the implementation does rather
+      than what the task requires. Separate, they lag behind changes and rot.
+
+realization_policy: own
+
+see_also: [AHC-0001, AHC-0003, AHC-0006]

@@ -1,0 +1,94 @@
+# PINNED COPY — DO NOT EDIT HERE.
+#
+# This vocabulary is owned by the AI Assurance Catalog and copied in so the two
+# catalogs join on the same ten shapes. tools/lint.js diffs it against upstream
+# and fails on drift. To change an archetype, change it there and re-copy.
+#
+#   source: ai-assurance-catalog @ 0.11.2
+#
+# Archetypes are TAGS, not a tree.
+#
+# A system carries as many as apply, and a case may apply to several. This is
+# deliberate: ATT&CK hit the same multi-membership problem with techniques and
+# tactics, and flat tags with metadata proved to be the shape that survives
+# re-categorisation. Boundaries here are drawn by two questions only —
+# who owns control flow, and what the output touches. Not by domain, sector
+# or model size, because those do not change the test surface.
+
+version: "0.1.0"
+
+archetypes:
+  - id: A1
+    name: Single-Turn Transform
+    summary: >-
+      One call in, one answer out. No tools, no retrieval, no memory. The model
+      transforms text it was given.
+    examples: [classify, summarise, translate, rewrite]
+
+  - id: A2
+    name: Structured Extractor
+    summary: >-
+      Output is a typed object consumed by downstream code rather than read by a
+      human. Separate from A1 because a schema turns quality failures into type
+      failures.
+    examples: [entity extraction, form filling, function arguments]
+
+  - id: A3
+    name: Grounded Answerer
+    summary: >-
+      Retrieval over a corpus, then synthesis. Two systems in a trench coat — the
+      retriever and the generator fail independently and must be tested
+      independently.
+    examples: [RAG, document Q&A, knowledge assistant]
+
+  - id: A4
+    name: Conversational Assistant
+    summary: >-
+      Multi-turn and stateful. Holds context, memory and user history across
+      turns, but does not take autonomous action.
+    examples: [support chat, tutoring, guided intake]
+
+  - id: A5
+    name: Deterministic Workflow
+    summary: >-
+      A fixed graph with LLM calls at the nodes. Control flow belongs to your
+      code, so the seams between steps are the new failure surface.
+    examples: [chains, pipelines, batch enrichment]
+
+  - id: A6
+    name: Tool-Using Agent
+    summary: >-
+      The model chooses which tools to call, in what order, and when to stop.
+      Control flow moves from your code into the model — the single largest jump
+      in test surface in this taxonomy.
+    examples: [ReAct loops, function-calling agents]
+
+  - id: A7
+    name: Multi-Agent System
+    summary: >-
+      Several agents delegating to each other under a supervisor or by handoff.
+      Adds boundary, budget and containment failures on top of A6.
+    examples: [supervisor/worker, specialist handoff]
+
+  - id: A8
+    name: Artifact Producer
+    summary: >-
+      Output is code, SQL, config or a document that will be executed or shipped.
+      The artifact can be verified by running it — the strongest signal available
+      anywhere in this catalog.
+    examples: [code generation, text-to-SQL, IaC]
+
+  - id: A9
+    name: Autonomous Operator
+    summary: >-
+      Runs unattended on a trigger or schedule, with real side effects and nobody
+      watching in real time.
+    examples: [scheduled agents, auto-remediation, background workers]
+
+  - id: A10
+    name: Classifier · Router · Judge
+    summary: >-
+      The model's output steers other machinery: a routing decision, a guardrail
+      verdict, a quality score. Its errors are invisible unless you
+      meta-evaluate them.
+    examples: [LLM-as-judge, safety classifiers, model routers]

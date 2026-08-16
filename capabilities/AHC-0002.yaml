@@ -1,0 +1,52 @@
+# AHC-0002 — Context assembly is one inspectable function
+# Normative. Edit here; anything rendered is generated from this file.
+id: AHC-0002
+status: active
+since: "0.1.0"
+
+level: MUST
+layers: [L1]
+positions: [P3]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Context assembly is one inspectable function
+
+requirement: |-
+  The bytes sent to the model are produced by a named function from typed inputs, not by string concatenation spread across the call sites. That function is callable on its own, without a provider, and returns the assembled context so it can be inspected. Every segment it emits carries a provenance label distinguishing authored instruction from untrusted material.
+
+failure_mode: |-
+  Where assembly is scattered, nobody can answer what the model was actually told without running the system and capturing traffic. Prompt changes then arrive as diffs across unrelated files, context growth is invisible until it shows up on an invoice, and the boundary between trusted instruction and retrieved text exists only in the author's head.
+
+discharges: [AAC-0003, AAC-0103, AAC-0106]
+
+design_decisions:
+  - question: Where do prompt versions live — in the repository, or in a registry?
+    tension: >-
+      In the repository they version with the code that depends on them and roll
+      back together, but changing one needs a deploy. In a registry they change
+      without a deploy, which is also the problem: the running system's behaviour
+      is no longer described by its commit.
+    resolution: >-
+      Repository by default. Reach for a registry only when non-engineers must
+      change prompts, and then pin the resolved version into the recorded config.
+  - question: How is the token budget enforced when context exceeds it?
+    tension: >-
+      Truncating loses information silently and usually loses the end of the
+      retrieved set, which is where relevance was ranked lowest but recency often
+      lives. Summarising costs a model call and introduces a second thing to be wrong.
+      Refusing is honest and pushes an unhandled case onto the caller.
+    resolution: >-
+      Whichever is chosen, the assembled context must record that it happened.
+      A budget applied without a record is a silent quality change.
+  - question: Does provenance labelling survive into the prompt itself?
+    tension: >-
+      Delimiting untrusted segments in-band helps the model but is itself
+      spoofable by the untrusted content. Keeping labels out-of-band is
+      unspoofable but gives the model nothing to act on.
+
+realization_policy: own
+
+see_also: [AHC-0003, AHC-0007]

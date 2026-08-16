@@ -1,0 +1,16 @@
+{
+  "name": "ai-harness-catalog",
+  "version": "0.1.0",
+  "description": "Harness capabilities for AI applications, by architecture archetype. A specification, not a framework.",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "lint": "node tools/lint.js",
+    "test": "npm run lint"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "js-yaml": "^4.1.0"
+  }
+}

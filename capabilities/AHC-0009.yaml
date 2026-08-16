@@ -1,0 +1,47 @@
+# AHC-0009 — The reachable model set is data, not code
+# Normative. Edit here; anything rendered is generated from this file.
+#
+# This capability points at the assurance catalog for its build options — see
+# realization_policy below and docs/THE-AAC-BOUNDARY.md.
+id: AHC-0009
+status: active
+since: "0.1.0"
+
+level: SHOULD
+layers: [L15, L2]
+positions: [P2, P3]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  The reachable model set is data, not code
+
+requirement: |-
+  Which models a given caller may reach is configuration resolved at runtime, not a branch in application code. Adding a model, withdrawing one, or restricting a caller to a subset is a change to that configuration and reaches every application at once.
+
+failure_mode: |-
+  Encoded as code, withdrawing a model becomes a coordinated release across every application that might reference it, which means in practice it does not happen — the withdrawn model stays reachable from the one service nobody remembered. The set of models actually in use then differs from the set anyone believes is in use.
+
+discharges: [AAC-0094]
+
+design_decisions:
+  - question: Is the allow-list per caller, or global?
+    tension: >-
+      Global is one thing to maintain and forces the most restrictive
+      requirement onto every caller. Per caller is accurate and becomes a
+      permissions system somebody has to own.
+  - question: What happens to a caller requesting a withdrawn model?
+    tension: >-
+      A hard refusal is honest and takes a feature down at the moment of
+      withdrawal. A silent substitution keeps the feature alive on a model whose
+      behaviour the caller never accounted for.
+    resolution: >-
+      Refuse, and record the request. A substitution nobody asked for is a
+      quality change disguised as availability.
+
+realization_policy: see_aac
+realization_note: |-
+  AAC-0094 already enumerates where a model allow-list is enforced and by what machinery — gateway policy, cloud IAM restriction, registry approval. This catalog adds one constraint and no options: the list is resolved as data at the position established by AHC-0008, so it holds for callers that never entered the harness.
+
+see_also: [AHC-0003, AHC-0004, AHC-0008]

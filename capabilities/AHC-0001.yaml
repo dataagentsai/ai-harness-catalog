@@ -1,0 +1,51 @@
+# AHC-0001 — Every model response crosses a typed boundary
+# Normative. Edit here; anything rendered is generated from this file.
+id: AHC-0001
+status: active
+since: "0.1.0"
+
+level: MUST
+layers: [L6]
+positions: [P3, P2]
+
+# Core capabilities enumerate every archetype explicitly so a consumer never
+# has to resolve inheritance.
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Every model response crosses a typed boundary
+
+requirement: |-
+  No model output reaches business logic as an unparsed string. A single parse-and-validate step sits between the provider response and the caller, producing either a typed value or a typed failure. The failure is a declared return shape that callers must handle, not an exception raised from wherever the parse happened to fail.
+
+failure_mode: |-
+  Without it, malformed output propagates as far as the first component that assumes structure, and surfaces as a KeyError three layers away from the model call that caused it. Teams then add defensive parsing at each consumer, which is the same validation written five times with five different opinions about what to do on failure.
+
+discharges: [AAC-0002, AAC-0099, AAC-0015]
+
+design_decisions:
+  - question: What happens on a parse failure — retry, repair, or fail?
+    tension: >-
+      Retrying hides a quality regression inside a cost and latency increase, and
+      the retry count is invisible unless someone counts it. Failing fast surfaces
+      the problem but pushes the decision onto every caller. Repairing silently
+      produces a value the model never actually generated.
+    resolution: >-
+      Fail into a declared shape and count the failures. Retry only where the
+      caller opted in, and record that a retry happened on the same span as the call.
+  - question: Does the boundary live in the harness or at the gateway?
+    tension: >-
+      In the harness it knows the expected type; at the gateway it covers calls
+      that bypassed the harness entirely but only knows generic well-formedness.
+    resolution: >-
+      Harness owns the typed contract. A gateway check is a coarse backstop for
+      unrouted callers, never the primary.
+  - question: Is the raw response retained after parsing?
+    tension: >-
+      Discarding it makes the failure unexplainable later; retaining it puts raw
+      model output — possibly containing sensitive input echoed back — into storage.
+
+realization_policy: own
+
+see_also: [AHC-0005]
