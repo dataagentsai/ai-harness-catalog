@@ -1,0 +1,46 @@
+# AHC-0062 — Entitlement filtering happens before ranking, not after
+id: AHC-0062
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L16, L1]
+positions: [P6, P3]
+
+archetypes: [A3]
+core: false
+
+title: |-
+  Entitlement filtering happens before ranking, not after
+
+requirement: |-
+  The requester's identity from AHC-0034 constrains the candidate set at the point of search, so passages the requester may not read are never retrieved, never ranked and never reach assembly. Filtering applied to results after retrieval is not sufficient.
+
+failure_mode: |-
+  Post-filtering leaks in two ways. Result counts and relevance scores reveal that matching documents exist, which is disclosure even when the text is withheld. More seriously, any path that skips the filter — a summarisation step, a caching layer, a rewritten query, a debug view — sees the unfiltered set, and each of those is added later by someone who did not know the filter was the control.
+
+discharges: [AAC-0032, AAC-0040, AAC-0006]
+
+design_decisions:
+  - question: Filter in the index, or in the query?
+    tension: >-
+      Index-level partitioning by tenant is unambiguous and multiplies indexes,
+      making cross-tenant search impossible even where it is wanted. Query-level
+      predicates are flexible and are one forgotten clause away from being absent.
+    resolution: >-
+      Partition on the boundary that must never be crossed; predicates for
+      finer-grained rules inside it.
+  - question: How current are the entitlements at query time?
+    tension: >-
+      Resolving permissions per query is correct and adds a lookup to the
+      request path. Caching them is fast and means a revoked permission keeps
+      working for the cache lifetime — which is the window that matters.
+  - question: Does the answer reveal that filtered material exists?
+    tension: >-
+      Saying "there are documents you cannot see" is honest and is itself
+      disclosure. Saying nothing is safe and produces an answer that is
+      confidently incomplete.
+
+realization_policy: own
+
+see_also: [AHC-0034, AHC-0060, AHC-0063]

@@ -1,0 +1,44 @@
+# AHC-0063 — Abstention is a harness outcome, not a phrasing choice
+id: AHC-0063
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L6, L1]
+positions: [P3]
+
+archetypes: [A3]
+core: false
+
+title: |-
+  Abstention is a harness outcome, not a phrasing choice
+
+requirement: |-
+  When retrieval returns nothing above the relevance the system requires, the harness returns the abstained outcome from AHC-0017 without calling the generator at all. Where the generator does run and declines to answer, that decision maps onto the same outcome rather than being returned as ordinary prose.
+
+failure_mode: |-
+  Where abstention is left to the model, it is a request that competes with the pull to be helpful, and the model answers from parametric knowledge instead — producing a confident, unsourced answer that looks exactly like a grounded one. Downstream, an abstention returned as prose is stored, indexed and rendered as though it were content.
+
+discharges: [AAC-0031, AAC-0029, AAC-0002]
+
+design_decisions:
+  - question: Where is the threshold for "nothing relevant enough"?
+    tension: >-
+      Any value published here would be wrong; what matters is that the decision
+      exists in the harness rather than being an emergent property of prompt
+      wording, and that the threshold is part of the resolved configuration so
+      changing it is a reviewable change.
+  - question: Does an abstention still cost a model call?
+    tension: >-
+      Abstaining before generation is free and cannot use the model's judgement
+      that a marginal passage was in fact sufficient. Generating first is more
+      accurate and pays for every unanswerable question.
+  - question: Is a partial answer with an abstention allowed?
+    tension: >-
+      Answering the supported half and abstaining on the rest is the most useful
+      response and is the hardest state for a consumer to handle correctly,
+      since it is neither wholly grounded nor wholly refused.
+
+realization_policy: own
+
+see_also: [AHC-0017, AHC-0060, AHC-0061]

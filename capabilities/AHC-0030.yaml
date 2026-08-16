@@ -1,0 +1,53 @@
+# AHC-0030 — A ceiling exists that can stop work already in flight
+id: AHC-0030
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L13]
+positions: [P4, P3, P2]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  A ceiling exists that can stop work already in flight
+
+requirement: |-
+  Spend and token ceilings are checked before each call against the unit's accumulated total, so a unit that crosses its ceiling stops rather than completing and reporting the overage afterwards. The ceiling is enforced by a component in the request path, not by an alert on a dashboard.
+
+failure_mode: |-
+  A ceiling that is only reported after the fact is a notification, not a control — it tells you what was already spent. The case it exists for is a loop that will consume a month's budget in an afternoon, and by the time an alert fires on an hourly aggregate, the spend has happened and the only remaining lever is switching something off manually.
+
+discharges: [AAC-0093, AAC-0008, AAC-0077]
+
+design_decisions:
+  - question: Estimate before the call, or reconcile after?
+    tension: >-
+      The true cost of a call is known only once it returns, so a ceiling
+      checked beforehand is checked against an estimate and can be overshot by
+      one call. Reconciling after is exact and cannot prevent anything.
+    resolution: >-
+      Check before with a reserved margin for the largest single call, and
+      reconcile after. A ceiling that cannot prevent is a report.
+  - question: What does the caller see when the ceiling fires?
+    tension: >-
+      A hard refusal is unambiguous and takes a production feature down
+      mid-afternoon with no warning to the user in front of it. A degraded
+      response keeps the feature alive on a cheaper route and changes quality
+      silently.
+    resolution: >-
+      Whichever is chosen, alert well before the ceiling. A cap that is first
+      encountered as an outage was set without an operator in mind.
+  - question: Per unit, per caller, or per organisation?
+    tension: >-
+      Per unit catches the runaway task and lets a thousand ordinary units drain
+      the budget. Per organisation catches the drain and lets one task consume
+      everyone's headroom before it trips.
+    resolution: >-
+      Both, at different positions — the loop enforces per unit, the gateway
+      enforces per key.
+
+realization_policy: own
+
+see_also: [AHC-0007, AHC-0020, AHC-0024]

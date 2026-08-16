@@ -1,0 +1,45 @@
+# AHC-0071 — Each node has a typed contract on both edges
+id: AHC-0071
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L6, L4]
+positions: [P3]
+
+archetypes: [A5]
+core: false
+
+title: |-
+  Each node has a typed contract on both edges
+
+requirement: |-
+  Every step in the graph declares what it accepts and what it produces, and the harness enforces both at the seam rather than at the step's convenience. A step can be exercised in isolation from its declared input type without running the steps before it.
+
+failure_mode: |-
+  Where steps pass loosely-shaped values, a change to what one produces breaks a consumer two steps away, and the break surfaces as a wrong answer rather than an error — the downstream step reads a field that is now absent, treats it as empty, and continues. In a pipeline, the seams are the new failure surface, and untyped seams make every change a change to everything downstream.
+
+discharges: [AAC-0044, AAC-0045, AAC-0049]
+
+design_decisions:
+  - question: Validate at every seam, or only at the boundaries?
+    tension: >-
+      Validating everywhere catches drift at its origin and adds overhead per
+      step, which on a long pipeline is measurable. Validating at the edges is
+      cheap and localises nothing.
+    resolution: >-
+      Every seam. The cost is a type check; the alternative is debugging a wrong
+      value backwards through a graph.
+  - question: Does a node see the whole accumulated state, or only its input?
+    tension: >-
+      Passing everything is convenient and means every node can quietly depend
+      on anything, so the declared contract stops describing the real coupling.
+      Passing only the declared input keeps the graph honest and forces explicit
+      plumbing for genuinely cross-cutting values.
+    resolution: >-
+      Only its input. The convenience is how a graph becomes a monolith with
+      arrows drawn on it.
+
+realization_policy: own
+
+see_also: [AHC-0001, AHC-0072, AHC-0074]

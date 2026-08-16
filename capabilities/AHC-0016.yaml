@@ -1,0 +1,46 @@
+# AHC-0016 — Input is validated before any model call is made
+id: AHC-0016
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L6]
+positions: [P3, P1]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Input is validated before any model call is made
+
+requirement: |-
+  Requests entering the harness are checked against a declared input type — required fields, size bounds, encoding, and the degenerate cases of empty, whitespace-only and oversized — and rejected at the boundary. No model call is issued for a request the harness could have refused for free.
+
+failure_mode: |-
+  Unvalidated, an empty string, a nine-megabyte paste and a null field each become a paid model call that returns something confident and useless. Under any kind of automated retry from a caller, this is also the cheapest denial-of-wallet available to anyone who finds the endpoint.
+
+discharges: [AAC-0015, AAC-0008, AAC-0093]
+
+design_decisions:
+  - question: Where is the size bound set relative to the token budget?
+    tension: >-
+      Bounding input at the same size as the context budget guarantees the
+      assembler never has to drop anything, and rejects requests the system
+      could have served by summarising. Bounding higher accepts them and pushes
+      the decision into AHC-0012.
+  - question: Does validation failure look like a model refusal to the caller?
+    tension: >-
+      Collapsing them simplifies the interface and hides an integration bug —
+      the caller sees "the model would not answer" when the truth is "you sent
+      an empty field", and debugs the wrong system.
+    resolution: >-
+      Distinct outcomes. A rejection the harness made is not a result the model
+      produced.
+  - question: Is the same validation available to the caller before sending?
+    tension: >-
+      Publishing the input type lets callers fail locally and free; it also
+      fixes the shape earlier than you may want it fixed.
+
+realization_policy: own
+
+see_also: [AHC-0001, AHC-0017]

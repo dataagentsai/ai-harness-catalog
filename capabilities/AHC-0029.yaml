@@ -1,0 +1,49 @@
+# AHC-0029 — A production record can become a dataset row without re-keying
+id: AHC-0029
+status: active
+since: "0.2.0"
+
+level: SHOULD
+layers: [L12, L11]
+positions: [P7]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  A production record can become a dataset row without re-keying
+
+requirement: |-
+  What a captured run records and what the eval entrypoint accepts are the same shape, so promoting a real interaction into a curated set is a copy plus an expected value, not a transcription. The promoted row retains a reference back to the run it came from.
+
+failure_mode: |-
+  Where the shapes differ, promotion is manual, so it happens once during a push and never again. The curated set then freezes at the inputs someone imagined in the first month while the real input distribution moves, and the widening gap is invisible precisely because the set keeps passing.
+
+discharges: [AAC-0014, AAC-0013, AAC-0001]
+
+design_decisions:
+  - question: What is copied — the input, or the assembled context?
+    tension: >-
+      Copying the input re-runs assembly and retrieval, so the row keeps
+      exercising the whole system and stops being reproducible when the corpus
+      changes underneath it. Copying the assembled context is stable and freezes
+      retrieval, so a retrieval regression can never be caught by that row.
+    resolution: >-
+      Both, as two kinds of row with different purposes. Conflating them
+      produces a set that answers neither question.
+  - question: Who supplies the expected value?
+    tension: >-
+      A human label is ground truth and does not scale. Accepting the
+      production output as expected bakes today's behaviour in as the standard,
+      including whatever is currently wrong with it.
+  - question: Does the promoted row carry the customer's data forward?
+    tension: >-
+      A row promoted from production inherits real content, and a curated set
+      is copied, shared and kept far longer than a trace retention window.
+    resolution: >-
+      Redaction under AHC-0019 applies to the promotion path, not only the
+      telemetry path.
+
+realization_policy: own
+
+see_also: [AHC-0010, AHC-0019, AHC-0028]

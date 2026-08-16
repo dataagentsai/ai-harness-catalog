@@ -1,0 +1,45 @@
+# AHC-0075 — The end-to-end budget is allocated, not summed after the fact
+id: AHC-0075
+status: active
+since: "0.2.0"
+
+level: SHOULD
+layers: [L13, L4]
+positions: [P3, P4]
+
+archetypes: [A5]
+core: false
+
+title: |-
+  The end-to-end budget is allocated, not summed after the fact
+
+requirement: |-
+  Latency and spend ceilings are set for the run as a whole and divided among steps before execution, with each step receiving a remaining allowance rather than its own independent limit. A step that overruns reduces what is left for the rest, and the run's ceiling holds regardless of how the overrun was distributed.
+
+failure_mode: |-
+  Per-step limits that were each set reasonably sum to a total nobody chose: ten steps at thirty seconds is five minutes, which no one would have approved as a stated figure. The same applies to spend, and to retries under AHC-0024, which multiply within each step's own allowance while the run-level total is not being watched at all.
+
+discharges: [AAC-0050, AAC-0007, AAC-0008]
+
+design_decisions:
+  - question: Equal division, or weighted by expected cost?
+    tension: >-
+      Equal division is simple and starves the one genuinely expensive step.
+      Weighting is accurate and encodes an estimate that will be wrong as the
+      pipeline changes, quietly, in whichever direction nobody re-checks.
+  - question: What happens when the remaining allowance runs out mid-graph?
+    tension: >-
+      Stopping returns a partial result under AHC-0025 and abandons work already
+      paid for. Continuing past the ceiling means the ceiling was advisory.
+    resolution: >-
+      Stop, and return what completed. A budget that yields to the sunk cost is
+      not a budget.
+  - question: Does a parallel branch draw from the same allowance?
+    tension: >-
+      Sharing keeps the total honest and makes branches interfere with each
+      other in ways that depend on scheduling. Separate allowances are
+      predictable and multiply the total by the fan-out.
+
+realization_policy: own
+
+see_also: [AHC-0030, AHC-0041, AHC-0024]

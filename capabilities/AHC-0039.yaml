@@ -1,0 +1,50 @@
+# AHC-0039 — Tools are classified by reversibility, and the class gates dispatch
+id: AHC-0039
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L3, L14]
+positions: [P5, P8]
+
+archetypes: [A6, A7, A9]
+core: false
+
+title: |-
+  Tools are classified by reversibility, and the class gates dispatch
+
+requirement: |-
+  Every tool declares whether it reads, writes reversibly, or writes irreversibly, and the dispatcher treats the classes differently — the irreversible class requires an explicit grant that the model cannot issue to itself. A tool with no declared class is treated as irreversible until one is declared.
+
+failure_mode: |-
+  Undeclared, every tool is equally available, and the only thing standing between a model and a destructive action is the instruction asking it not to — which is text an attacker can address and a confused agent can rationalise past. The default-open failure is the dangerous one: a tool added without thought about its class inherits whatever the loop already permits.
+
+discharges: [AAC-0056, AAC-0078, AAC-0081]
+
+design_decisions:
+  - question: What counts as irreversible?
+    tension: >-
+      A narrow reading covers deletion and payment and misses the messages sent,
+      tickets filed and records shared that cannot be unsent. A broad reading
+      catches them and puts an approval in front of routine work until people
+      route around it.
+    resolution: >-
+      Externally visible effects count as irreversible even when technically
+      undoable. The recipient already saw it.
+  - question: Who issues the grant, and for how long?
+    tension: >-
+      Per-action approval is safe and unusable at any volume. A session-scoped
+      grant is workable and is exactly the standing permission an injected
+      instruction would want to exploit.
+    resolution: >-
+      Scope the grant to the action class and the specific resource, not to the
+      session. "This agent may act for the next hour" is not a control.
+  - question: Does a dry-run mode exist?
+    tension: >-
+      Being able to run the trajectory with writes disabled is the single most
+      useful rehearsal available, and maintaining a parallel no-op path for
+      every write tool is real, permanent work that rots quietly.
+
+realization_policy: own
+
+see_also: [AHC-0037, AHC-0057, AHC-0058]

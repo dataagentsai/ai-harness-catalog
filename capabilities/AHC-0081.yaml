@@ -1,0 +1,49 @@
+# AHC-0081 — The judge is a component with its own version and record
+id: AHC-0081
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L12, L15]
+positions: [P3, P7]
+
+archetypes: [A10]
+core: false
+
+title: |-
+  The judge is a component with its own version and record
+
+requirement: |-
+  A model used to score, classify or route is constructed through the same choke point as any other model call, with its own pin, its own prompt version and its own resolved configuration, and its calls appear in the record distinguishable from the calls it is judging.
+
+failure_mode: |-
+  Embedded as a helper function, the judge's model and rubric move without anyone treating those as releases, and its own cost and latency are invisible — folded into the step that invoked it. A system whose judge quietly changed will show a shift in scores that everyone attributes to the thing being judged, and the investigation starts in the wrong place and stays there.
+
+discharges: [AAC-0090, AAC-0098, AAC-0100]
+
+design_decisions:
+  - question: Same model as the system it judges?
+    tension: >-
+      Sharing a pin is cheap and correlates their failures — a model that
+      misreads a prompt in a particular way will also misread the output of that
+      misreading as correct. Different models are independent and add a second
+      dependency to manage.
+    resolution: >-
+      Different pin at minimum, and treat shared-family judging as a known
+      correlation rather than an independent check.
+  - question: Is the judge's cost attributed to the unit it judged?
+    tension: >-
+      Attributing it is honest and makes the cost per successful task include
+      the quality machinery, which is where it belongs and where it is
+      uncomfortable to see.
+    resolution: >-
+      Attribute it under AHC-0007. A judge on every request can rival the cost
+      of the request.
+  - question: Does the judge run inline or asynchronously?
+    tension: >-
+      Inline can block a bad answer and doubles latency. Asynchronous is free of
+      latency cost and can only raise an alert after the answer has shipped.
+
+realization_policy: own
+
+see_also: [AHC-0004, AHC-0028, AHC-0082]

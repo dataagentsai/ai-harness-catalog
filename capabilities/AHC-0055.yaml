@@ -1,0 +1,49 @@
+# AHC-0055 — Silence is an alertable condition
+id: AHC-0055
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L11, L14]
+positions: [P7, P8]
+
+archetypes: [A9]
+core: false
+
+title: |-
+  Silence is an alertable condition
+
+requirement: |-
+  The absence of an expected run raises an alert on its own, driven by a schedule the monitoring side holds independently of the agent. A run that never started, a trigger that never fired and a process that died before emitting anything are each detectable without a signal from the thing that failed.
+
+failure_mode: |-
+  Monitoring built on the records a run emits cannot see a run that emitted nothing, and an unattended agent that silently stops is indistinguishable from an unattended agent with nothing to do. The failure is discovered weeks later by whoever depended on the output, and the intervening period has no data in it because there was nothing to record.
+
+discharges: [AAC-0079, AAC-0082, AAC-0016]
+
+design_decisions:
+  - question: Who holds the expected schedule?
+    tension: >-
+      Deriving it from the agent's own configuration keeps the two in step and
+      means a configuration error that disables the schedule also disables the
+      alarm about it. Holding it separately catches that and drifts whenever the
+      real schedule changes.
+    resolution: >-
+      Separately. The failure this exists to catch includes the schedule itself
+      being wrong.
+  - question: What is the expected interval when work is genuinely sporadic?
+    tension: >-
+      An agent that only acts when there is something to do produces no
+      heartbeat, so absence carries no information.
+    resolution: >-
+      Emit a completion record even when the run did nothing. "Ran, found
+      nothing" and "did not run" must be different observations.
+  - question: Does a run reporting failure count as silence?
+    tension: >-
+      A run that fails loudly every time is working as designed from the
+      monitoring side and is broken from every other side; alerting only on
+      silence would treat it as healthy.
+
+realization_policy: own
+
+see_also: [AHC-0054, AHC-0056, AHC-0006]

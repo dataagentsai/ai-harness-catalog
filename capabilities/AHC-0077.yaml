@@ -1,0 +1,50 @@
+# AHC-0077 — Generated artifacts execute only in a bounded sandbox
+id: AHC-0077
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L3, L16]
+positions: [P5]
+
+archetypes: [A8]
+core: false
+
+title: |-
+  Generated artifacts execute only in a bounded sandbox
+
+requirement: |-
+  Where the harness runs what the model produced, it runs inside an environment with declared limits on filesystem reach, network egress, CPU, memory and wall-clock, holding no credentials beyond what that execution needs. The limits are enforced by the environment, not by the artifact agreeing to stay inside them.
+
+failure_mode: |-
+  Executing generated code in the harness's own process gives it the harness's credentials, network position and filesystem — so a generated query with an unintended join, an infinite loop, or a snippet influenced by injected content runs with full production authority. Egress is the most commonly forgotten limit: a sandbox that bounds CPU and memory but permits outbound network is an exfiltration path.
+
+discharges: [AAC-0069, AAC-0072, AAC-0073]
+
+design_decisions:
+  - question: How isolated does the sandbox need to be?
+    tension: >-
+      Process-level isolation is fast enough to run per request and shares a
+      kernel with everything else. Stronger isolation is genuinely safe and adds
+      startup latency to every generation.
+    resolution: >-
+      Match it to what the artifact can reach. Code that touches only supplied
+      data needs less than code that reaches the network.
+  - question: Does the sandbox get real data?
+    tension: >-
+      Real data is the only way to establish that the artifact does what was
+      asked, and it places production data inside an environment running
+      unreviewed code. Synthetic data is safe and misses the shape problems that
+      only appear on real distributions.
+  - question: What are the limits when the artifact is a query?
+    tension: >-
+      A generated query runs inside a database that has its own resource
+      governance, or none, and a query is exactly the artifact most likely to be
+      accidentally unbounded.
+    resolution: >-
+      Row and time limits imposed by the connection, plus a read-only role. The
+      sandbox for a query is the session it runs in.
+
+realization_policy: own
+
+see_also: [AHC-0040, AHC-0076, AHC-0078]

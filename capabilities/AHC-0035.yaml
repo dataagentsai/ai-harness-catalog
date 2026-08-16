@@ -1,0 +1,50 @@
+# AHC-0035 — Secrets never enter assembled context
+id: AHC-0035
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L16, L1]
+positions: [P3]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Secrets never enter assembled context
+
+requirement: |-
+  Credentials, keys and tokens are held by the components that use them and are never placed into the text sent to the model, including inside tool definitions, tool results, error messages and retrieved material. A tool that needs a credential resolves it at dispatch from its own store, rather than receiving it as an argument the model produced or saw.
+
+failure_mode: |-
+  A secret that enters context is in the provider's request, in whatever payload capture is enabled, in the conversation state, and in any dataset row later promoted from that run. It is also now something the model can be asked to repeat. The usual route in is an error message from a failing tool that helpfully includes the request it attempted, headers and all.
+
+discharges: [AAC-0006, AAC-0095, AAC-0057]
+
+design_decisions:
+  - question: How do tool results get sanitised?
+    tension: >-
+      Sanitising at the tool boundary catches the error-message case and depends
+      on every tool author remembering. Sanitising centrally on the way back
+      into context catches everything and must inspect content it does not
+      understand.
+    resolution: >-
+      Centrally, at the point results re-enter context, with tool authors
+      responsible in addition rather than instead.
+  - question: Can a tool argument ever legitimately be a credential?
+    tension: >-
+      Passing a user-supplied token through as an argument is occasionally the
+      simplest integration and means the model generated, and therefore saw, a
+      credential.
+    resolution: >-
+      Never. A tool that needs a credential holds a reference the model can
+      name; the dispatcher resolves the reference to the secret.
+  - question: What happens when a secret is detected in context?
+    tension: >-
+      Blocking the call is safe and turns a leak into an outage. Redacting and
+      continuing preserves service and means the system carries on with material
+      it has already established should not be there.
+
+realization_policy: own
+
+see_also: [AHC-0011, AHC-0019, AHC-0034]

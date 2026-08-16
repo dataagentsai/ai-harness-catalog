@@ -1,0 +1,49 @@
+# AHC-0052 — Cycles between agents are detected by the harness
+id: AHC-0052
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L4]
+positions: [P4]
+
+archetypes: [A7]
+core: false
+
+title: |-
+  Cycles between agents are detected by the harness
+
+requirement: |-
+  The harness tracks the delegation path within a unit of work and terminates when an agent is re-entered with materially the same task it has already handled. Detection uses the recorded path, not a limit on total steps.
+
+failure_mode: |-
+  Two agents that each believe the other is better suited will hand work back and forth indefinitely, each acting reasonably in isolation. A step ceiling eventually stops it, having spent the whole budget on transport — and the record shows an ordinary budget exhaustion rather than a ping-pong, so the topology bug survives to do it again.
+
+discharges: [AAC-0063, AAC-0055, AAC-0054]
+
+design_decisions:
+  - question: What makes two delegations "the same task"?
+    tension: >-
+      Comparing the target alone is cheap and forbids a legitimate second
+      consultation after new information arrived. Comparing the payload is
+      accurate and needs a stable notion of equality over model-authored text.
+    resolution: >-
+      Target plus a hash of the carried constraint set. Two consultations with
+      genuinely new facts differ; a ping-pong does not.
+  - question: Terminate, or force a decision?
+    tension: >-
+      Terminating is safe and abandons a task that a nudge might complete.
+      Forcing the current agent to answer without delegating gets an answer that
+      the agent has already indicated it is not confident about.
+  - question: Is a cycle a defect or an expected condition?
+    tension: >-
+      Treating it as expected means quietly handling it forever, so the topology
+      problem is never fixed. Treating it as a defect means a real production
+      failure whenever an unanticipated legitimate cycle occurs.
+    resolution: >-
+      Handle it at runtime, record it as a distinct outcome, and treat a rising
+      rate as a design finding rather than an operational one.
+
+realization_policy: own
+
+see_also: [AHC-0042, AHC-0046, AHC-0048]

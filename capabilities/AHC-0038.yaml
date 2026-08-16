@@ -1,0 +1,49 @@
+# AHC-0038 — Tool results are bounded before they enter context
+id: AHC-0038
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L3, L1]
+positions: [P5, P3]
+
+archetypes: [A6, A7, A9]
+core: false
+
+title: |-
+  Tool results are bounded before they enter context
+
+requirement: |-
+  What a tool returns is shaped to a declared size and structure before it is added to context — truncated, summarised, paginated or projected to the fields that matter — and the shaping records what it removed. The bound is set by the harness, not by whatever the tool happened to return.
+
+failure_mode: |-
+  A query returning ten thousand rows, a file read of an unexpectedly large file, or an endpoint returning a verbose envelope will consume the entire remaining context in one step. The loop then has no room to reason about what it just fetched, and the usual symptom is an agent that reads something successfully and immediately loses the thread of what it was doing.
+
+discharges: [AAC-0105, AAC-0053, AAC-0019]
+
+design_decisions:
+  - question: Truncate, summarise, or paginate?
+    tension: >-
+      Truncation is free and cuts arbitrarily, often removing the rows that
+      mattered. Summarising costs a model call inside a step and introduces a
+      second thing that can be wrong. Pagination preserves everything and turns
+      one step into many, each with its own budget draw.
+    resolution: >-
+      Declared per tool, because the right answer differs per tool and a global
+      policy is wrong for most of them.
+  - question: Does the model learn that truncation happened?
+    tension: >-
+      Telling it lets it paginate or narrow the query deliberately. Not telling
+      it means the agent treats a partial result as complete and reasons from a
+      subset without knowing it.
+    resolution: >-
+      Tell it, and say how much was removed. A silently truncated result is the
+      agent equivalent of a lie.
+  - question: Is the full result retained outside context?
+    tension: >-
+      Retaining it makes the step reconstructable afterwards and stores a large
+      payload that may carry material AHC-0019 would rather not persist.
+
+realization_policy: own
+
+see_also: [AHC-0012, AHC-0041, AHC-0045]

@@ -1,0 +1,46 @@
+# AHC-0014 — Sampling parameters are explicit, never inherited
+id: AHC-0014
+status: active
+since: "0.2.0"
+
+level: SHOULD
+layers: [L2, L9]
+positions: [P3]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Sampling parameters are explicit, never inherited
+
+requirement: |-
+  Temperature, top-p, maximum output length, stop sequences and any seed are set explicitly at the choke point and appear in the resolved configuration record. A parameter the system relies on is never left to a client library default or a provider default.
+
+failure_mode: |-
+  Defaults differ between client libraries, between providers and between versions of the same library, and they change in minor releases. A system that relies on an inherited default has its output variance decided by a dependency upgrade nobody reviewed, and the change surfaces as unexplained inconsistency weeks later.
+
+discharges: [AAC-0010, AAC-0012, AAC-0018]
+
+design_decisions:
+  - question: One parameter set, or one per task?
+    tension: >-
+      A single set is simple and forces extraction work and open-ended drafting
+      to share a temperature that suits neither. Per-task sets are correct and
+      multiply the surface that must be recorded and reasoned about.
+    resolution: >-
+      Per task, resolved through AHC-0003 so the record stays single even when
+      the sets do not.
+  - question: Is a fixed seed worth using where the provider offers one?
+    tension: >-
+      It reduces run-to-run variance substantially, and it is best-effort on
+      every provider that offers it — a seed makes variance smaller, never zero,
+      and a system designed as though it were zero breaks on the exception.
+  - question: Who owns maximum output length?
+    tension: >-
+      Set low it truncates legitimate long answers mid-sentence; set high it is
+      an open-ended cost exposure on a single call, and the truncation when it
+      does fire arrives at the worst possible moment.
+
+realization_policy: own
+
+see_also: [AHC-0003, AHC-0004, AHC-0022]

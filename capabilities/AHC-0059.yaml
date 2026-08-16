@@ -1,0 +1,49 @@
+# AHC-0059 — Blast radius is bounded by configuration, not by intent
+id: AHC-0059
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L15, L16]
+positions: [P5, P6]
+
+archetypes: [A9]
+core: false
+
+title: |-
+  Blast radius is bounded by configuration, not by intent
+
+requirement: |-
+  The set of resources a run may affect and the number of actions it may take against them are declared as configuration and enforced at dispatch. The bound holds regardless of what the run concludes it should do, and reaching it stops the run rather than being reported alongside the work it already completed.
+
+failure_mode: |-
+  An agent whose scope is described only in its instructions will act on whatever it can reach when its reasoning goes wrong — and reasoning going wrong at scale is the characteristic failure of unattended operation. A remediation agent that concludes every instance is unhealthy will remediate every instance, competently and quickly, because nothing in the system disagreed with it.
+
+discharges: [AAC-0083, AAC-0072, AAC-0077]
+
+design_decisions:
+  - question: Bound by resource set, by action count, or both?
+    tension: >-
+      A resource allow-list prevents reaching the wrong things and permits
+      unlimited actions against the right ones. A count limits damage anywhere
+      and permits touching things that were never in scope.
+    resolution: >-
+      Both. They fail differently, and the incidents that motivate each are
+      different incidents.
+  - question: Does the bound scale with the environment?
+    tension: >-
+      A bound tuned for production is uselessly loose in staging, so rehearsals
+      never exercise it. A bound tight enough to be exercised in staging blocks
+      legitimate production work.
+    resolution: >-
+      Express it as a proportion of the addressable set as well as an absolute,
+      so a rehearsal at small scale still meets the limit.
+  - question: What happens at the bound — stop, or ask?
+    tension: >-
+      Stopping is safe and abandons a genuinely large legitimate job halfway.
+      Escalating for a raised limit keeps the job alive and puts a person under
+      time pressure in the path of the control.
+
+realization_policy: own
+
+see_also: [AHC-0040, AHC-0054, AHC-0057]

@@ -1,0 +1,45 @@
+# AHC-0088 — The scope of refusal is declared, not discovered
+id: AHC-0088
+status: active
+since: "0.2.0"
+
+level: SHOULD
+layers: [L1, L6]
+positions: [P3]
+
+archetypes: [A1]
+core: false
+
+title: |-
+  The scope of refusal is declared, not discovered
+
+requirement: |-
+  What the system is for, and what it will decline, is stated once in the standing instruction from AHC-0013 as an enumerated set, and a refusal maps onto the declined outcome of AHC-0017 rather than being returned as ordinary text. The set is part of the resolved configuration, so changing it is a reviewable change.
+
+failure_mode: |-
+  Where scope is implied rather than declared, refusal behaviour is emergent: the system declines some in-scope requests and accepts some out-of-scope ones, and neither is visible because both look like ordinary responses. Over-refusal is the half nobody measures — it is invisible to anyone reading successful outputs, and users experience it as the product simply not working for them.
+
+discharges: [AAC-0020, AAC-0003, AAC-0005]
+
+design_decisions:
+  - question: Enumerate what is refused, or what is permitted?
+    tension: >-
+      Enumerating refusals is concrete and leaves everything unlisted permitted,
+      which is unbounded. Enumerating what is permitted is bounded and refuses
+      legitimate adjacent requests nobody thought to list.
+  - question: Does the refusal explain itself?
+    tension: >-
+      Explaining helps a user rephrase into something in scope, and it also
+      describes the boundary precisely enough for someone to work around it.
+  - question: Is a refusal a success?
+    tension: >-
+      Counting a correct refusal as a failure makes reliability figures punish
+      the behaviour you asked for. Counting it as a success hides a system that
+      has started refusing everything.
+    resolution: >-
+      Its own outcome, counted separately in both directions. Both rates matter
+      and they move independently.
+
+realization_policy: own
+
+see_also: [AHC-0013, AHC-0017, AHC-0089]

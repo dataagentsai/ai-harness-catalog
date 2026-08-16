@@ -1,0 +1,50 @@
+# AHC-0084 — A human-labelled set exists for the judge itself
+id: AHC-0084
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L12]
+positions: [P8, P7]
+
+archetypes: [A10]
+core: false
+
+title: |-
+  A human-labelled set exists for the judge itself
+
+requirement: |-
+  The harness holds a set of cases labelled by people, held apart from the material used to develop the judge, and the judge's agreement with those labels is recorded alongside every score it produces. A judge with no such set is marked as uncalibrated wherever its scores are reported.
+
+failure_mode: |-
+  An uncalibrated judge produces numbers that look exactly like measurements and may correlate with nothing. Teams then gate releases on them, tune prompts against them, and report them upward — building a quality process on an instrument nobody has ever compared against reality. Because the numbers are stable and plausible, nothing about the situation feels wrong from inside it.
+
+discharges: [AAC-0084, AAC-0086, AAC-0090]
+
+design_decisions:
+  - question: How many labelled cases are enough?
+    tension: >-
+      Any number published here would be wrong. What matters is that the set
+      spans the disagreement cases rather than the easy ones — a judge agrees
+      with humans on obvious material regardless of whether it works.
+    resolution: >-
+      Weight the set toward cases where labellers themselves disagreed. That is
+      where a judge's value and its failure both live.
+  - question: Who labels, and does it stay stable?
+    tension: >-
+      Domain experts are accurate and scarce. Non-experts scale and produce
+      labels for a definition of quality that may not be the one the product
+      needs. Either way, labellers drift over time and the drift looks like
+      judge drift.
+  - question: When is the judge re-checked?
+    tension: >-
+      Re-checking on every judge change is correct and makes rubric edits
+      expensive, so they stop happening. Re-checking on a schedule is cheap and
+      lets an uncalibrated judge run in the interval.
+    resolution: >-
+      On any change to the judge's pin or rubric, since those are the changes
+      that invalidate the previous result.
+
+realization_policy: own
+
+see_also: [AHC-0028, AHC-0081, AHC-0082]

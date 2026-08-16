@@ -1,0 +1,49 @@
+# AHC-0027 — The record states which route served the call, and why
+id: AHC-0027
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L11, L2]
+positions: [P2, P3]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  The record states which route served the call, and why
+
+requirement: |-
+  Where more than one route can serve a request — several deployments, several providers, a cache, a fallback, a cheaper tier — the record names the route that served it, the reason it was selected, and whether the response came from a cache rather than the model.
+
+failure_mode: |-
+  Without the route in the record, quality variation caused by a fallback firing looks like the model becoming unreliable, and the team spends the investigation on prompt changes. A cache hit is worse: the record shows a call that never reached a model, so latency, cost and quality figures all describe something that did not happen.
+
+discharges: [AAC-0100, AAC-0101, AAC-0098, AAC-0096, AAC-0089]
+
+design_decisions:
+  - question: Is the reason recorded, or just the route?
+    tension: >-
+      The route alone tells you what happened; the reason tells you whether it
+      was a health check, a rate limit, a cost policy or a deliberate weight.
+      Recording the reason means the routing component must surface a decision
+      it currently makes internally.
+    resolution: >-
+      Both. Without the reason, every routing question becomes an inspection of
+      configuration as it was at a past moment.
+  - question: How is a cache hit distinguished in cost and latency figures?
+    tension: >-
+      Counting it as a zero-cost call flatters the average and is what actually
+      happened. Excluding it entirely loses the fact that a request was served.
+    resolution: >-
+      Record it as a served unit with a cache marker, so both figures can be
+      computed and neither is silently wrong.
+  - question: Does a semantic cache hit record what it matched against?
+    tension: >-
+      Recording the source entry makes an incorrect hit diagnosable and is the
+      only way to detect a match served across a boundary it should not have
+      crossed; it also stores a second request's content beside the first.
+
+realization_policy: own
+
+see_also: [AHC-0005, AHC-0006, AHC-0017]

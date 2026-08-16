@@ -1,0 +1,50 @@
+# AHC-0017 — The caller receives a discriminated outcome, never a bare value
+id: AHC-0017
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L6, L10]
+positions: [P3]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  The caller receives a discriminated outcome, never a bare value
+
+requirement: |-
+  The harness returns a value that names which of its terminal states occurred — succeeded, refused by policy, abstained for lack of grounds, degraded to a fallback, exhausted a budget, or failed — and the caller cannot read the payload without having handled the discriminator. Each state is reachable by the caller's own code paths.
+
+failure_mode: |-
+  Where every state returns a string, a policy refusal, an abstention and a real answer are indistinguishable to the consumer, and all three get rendered to the user or written to a database as though they were results. The system that stores "I don't have enough information to answer that" as a customer record is the standard symptom.
+
+discharges: [AAC-0002, AAC-0009, AAC-0091]
+
+design_decisions:
+  - question: How many terminal states should there be?
+    tension: >-
+      Few states are easy to consume and force distinct situations into one
+      branch, so callers cannot respond differently to a refusal and an outage.
+      Many states are precise and push a large match statement onto every
+      caller, most of whom will collapse it back.
+    resolution: >-
+      Start with the states a caller would genuinely act on differently. A state
+      nobody branches on is a log line, not a return type.
+  - question: Does a degraded result look like a success?
+    tension: >-
+      Marking it degraded is honest and means callers must decide what to do
+      with a usable answer from an unintended route. Not marking it means
+      quality changed and nothing recorded that it did.
+    resolution: >-
+      Mark it. The route taken is already in the record under AHC-0027; the
+      return type should agree with the record.
+  - question: Is abstention a success or a failure?
+    tension: >-
+      Treating a correct refusal to answer as a failure makes reliability
+      metrics punish exactly the behaviour you wanted. Treating it as a success
+      hides a corpus that cannot answer anything.
+
+realization_policy: own
+
+see_also: [AHC-0001, AHC-0005, AHC-0016]

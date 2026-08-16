@@ -1,0 +1,45 @@
+# AHC-0021 — Throttling is handled as a distinct condition from failure
+id: AHC-0021
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L8, L10]
+positions: [P3, P2]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Throttling is handled as a distinct condition from failure
+
+requirement: |-
+  A rate-limit response is classified separately from an error, and drives a different path: wait for the interval the provider indicated, reduce the rate in flight, and only then retry. Any retry after a throttle is spaced with randomised backoff so that concurrent callers do not resume in step.
+
+failure_mode: |-
+  Collapsed into the generic error path, a throttle is retried immediately, which produces another throttle. Where several callers were throttled at the same moment, they retry at the same moment, and the system converges on a synchronised burst that guarantees the limit stays exceeded. The provider is not down, and the system behaves as though it were.
+
+discharges: [AAC-0009, AAC-0007]
+
+design_decisions:
+  - question: Honour the provider's stated wait, or use your own backoff?
+    tension: >-
+      The provider's hint is authoritative and can exceed the caller's timeout,
+      turning a wait into a failure anyway. Local backoff is bounded and guesses.
+    resolution: >-
+      Honour the hint where it fits inside the remaining budget; otherwise fail
+      into a declared outcome rather than waiting past the deadline.
+  - question: Does a throttle on one route trigger a switch to another?
+    tension: >-
+      Switching keeps throughput and moves load onto a route whose behaviour may
+      differ from the one that was evaluated. Not switching preserves
+      consistency and accepts the reduced rate.
+  - question: Should the limit adapt downward after repeated throttling?
+    tension: >-
+      Adaptive reduction settles quickly on a sustainable rate and can ratchet
+      down on a transient blip and stay there, quietly capping throughput long
+      after the cause is gone.
+
+realization_policy: own
+
+see_also: [AHC-0005, AHC-0020, AHC-0024]

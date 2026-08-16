@@ -1,0 +1,48 @@
+# AHC-0023 — Recorded fixtures carry a capture date and a re-cut path
+id: AHC-0023
+status: active
+since: "0.2.0"
+
+level: SHOULD
+layers: [L9]
+positions: [P7]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Recorded fixtures carry a capture date and a re-cut path
+
+requirement: |-
+  Every recorded provider response stores the date it was captured and the resolved configuration that produced it, and there is a single command that re-captures the set against the current configuration. Age is visible wherever the fixtures are used.
+
+failure_mode: |-
+  Recordings rot invisibly. A fixture captured against a model version that has since been retired keeps passing forever, because it is a recording of itself — it will never disagree with what it recorded. The suite stays green while describing behaviour the system no longer has, which is worse than having no suite, since it is now producing false assurance on a schedule.
+
+discharges: [AAC-0016, AAC-0012]
+
+design_decisions:
+  - question: What forces a re-cut?
+    tension: >-
+      A schedule catches drift and re-cuts fixtures that were fine, changing
+      them under a suite that then passes for a new reason. Re-cutting on model
+      pin change is precise and misses provider-side drift within a pin, which
+      is the case the recording was supposed to catch.
+    resolution: >-
+      Both, and treat a re-cut as a reviewable change. A fixture diff nobody
+      reads is a fixture nobody owns.
+  - question: Are fixtures committed, or generated?
+    tension: >-
+      Committed fixtures make a run reproducible from a clone and add large,
+      noisy diffs of model prose to code review. Generated ones keep the
+      repository clean and make the run depend on something that must be
+      available.
+  - question: How old is too old?
+    tension: >-
+      Any threshold published here would be wrong; what matters is that the age
+      is visible at the point of use rather than discoverable by reading file
+      metadata.
+
+realization_policy: own
+
+see_also: [AHC-0022, AHC-0003]

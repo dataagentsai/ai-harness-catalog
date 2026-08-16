@@ -1,0 +1,49 @@
+# AHC-0056 — Every action leaves a record written before the effect
+id: AHC-0056
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L11, L5]
+positions: [P5, P6]
+
+archetypes: [A9, A8]
+core: false
+
+title: |-
+  Every action leaves a record written before the effect
+
+requirement: |-
+  For each action with an external effect, the harness durably records the intent — what, to which resource, under whose identity, on whose behalf, and why — before dispatching, and records the outcome after. The record does not depend on the run surviving to write it.
+
+failure_mode: |-
+  Recording only after the fact means the actions with no record are exactly the ones that crashed midway, which are the ones an investigation needs most. An unattended agent that changed production and then died has left effects nobody can attribute, and the reconstruction is done by reading the changed systems backwards — which cannot recover intent, only outcome.
+
+discharges: [AAC-0080, AAC-0060, AAC-0081]
+
+design_decisions:
+  - question: Intent before, outcome after — or one record at the end?
+    tension: >-
+      One record is half the writes and is missing precisely when the process
+      dies between dispatch and completion. Two records cover that gap and mean
+      the log contains intents whose outcome is permanently unknown.
+    resolution: >-
+      Two. An intent with no outcome is the most important line in the file
+      during an incident.
+  - question: Does the record capture the reasoning?
+    tension: >-
+      The model's stated justification is the only account of why an autonomous
+      action was taken, and it is a post-hoc narration that may not reflect what
+      actually drove the choice — so it reads as authoritative while being
+      unreliable.
+    resolution: >-
+      Record it, marked as the model's stated reason rather than as cause.
+  - question: Is the action log the same store as telemetry?
+    tension: >-
+      Sharing is cheap and subjects an audit record to sampling and short
+      retention. Separating costs a second path and gives the record a lifetime
+      set by the question it answers.
+
+realization_policy: own
+
+see_also: [AHC-0044, AHC-0053, AHC-0058]

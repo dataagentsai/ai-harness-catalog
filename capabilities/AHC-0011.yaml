@@ -1,0 +1,50 @@
+# AHC-0011 — Untrusted content is fenced and labelled at assembly
+id: AHC-0011
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L1]
+positions: [P3]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Untrusted content is fenced and labelled at assembly
+
+requirement: |-
+  The assembly function distinguishes text the system authored from text it did not — user input, retrieved passages, tool results, file contents — and every segment it emits carries that distinction. Untrusted segments are delimited by a marker the untrusted content itself cannot contain or forge, and the assembled record retains which segments were untrusted.
+
+failure_mode: |-
+  Without the distinction made structurally, it exists only in the author's head, and the first component to concatenate a retrieved passage into an instruction slot erases it silently. Every downstream control that depends on knowing what was untrusted — screening, attribution, incident reconstruction — then operates on a string in which the boundary is unrecoverable.
+
+discharges: [AAC-0004, AAC-0106]
+
+design_decisions:
+  - question: How is the fence made unforgeable?
+    tension: >-
+      A fixed delimiter is simple and is exactly what an attacker writes into
+      their input. A per-request random token cannot be guessed but must be
+      generated, threaded through and stripped, and it appears in anything that
+      logs the raw context.
+    resolution: >-
+      Per-request nonce where the input is genuinely hostile. A fixed delimiter
+      is acceptable only where the assembler also rejects input containing it.
+  - question: Does the label reach the model, or only the record?
+    tension: >-
+      In-band labelling gives the model something to reason about and is itself
+      inside the text an attacker controls. Out-of-band labelling is unspoofable
+      and gives the model nothing to act on.
+    resolution: >-
+      Both, for different consumers. In-band for the model as a hint that may
+      fail; out-of-band as the record that downstream controls trust.
+  - question: What happens to untrusted content that arrives already containing a fence?
+    tension: >-
+      Rejecting is safe and turns a legitimate document containing the delimiter
+      into an outage. Escaping preserves the document and adds a transformation
+      that must itself be correct.
+
+realization_policy: own
+
+see_also: [AHC-0002, AHC-0013]

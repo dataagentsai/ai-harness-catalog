@@ -1,0 +1,49 @@
+# AHC-0044 — The trajectory is checkpointed, not held only in memory
+id: AHC-0044
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L5, L4]
+positions: [P6, P4]
+
+archetypes: [A6, A7, A9]
+core: false
+
+title: |-
+  The trajectory is checkpointed, not held only in memory
+
+requirement: |-
+  After each step, the loop's state — the steps taken, their results, the accumulated budget and the current position — is written somewhere that survives the process. A trajectory can be resumed from its last checkpoint, and can be replayed from the record without re-executing tools that write.
+
+failure_mode: |-
+  Held only in process memory, a deployment, a crash or a scale-in event during a long trajectory destroys every step of work and every token spent on it, with no way to resume and frequently no record of how far it got. Where the agent had already taken irreversible actions, the system is now in a state nobody can reconstruct: the effects happened and the account of them did not survive.
+
+discharges: [AAC-0059, AAC-0060, AAC-0080, AAC-0046]
+
+design_decisions:
+  - question: Checkpoint every step, or at boundaries?
+    tension: >-
+      Every step is safest and adds a durable write to the latency and cost of
+      each iteration. At boundaries is cheaper and loses whatever happened since
+      the last one — which, for an agent, may include an irreversible action.
+    resolution: >-
+      Checkpoint before any irreversible dispatch, whatever the general policy.
+      That write must land before the effect does.
+  - question: Does resumption re-run the last step or continue past it?
+    tension: >-
+      Re-running is simple and repeats an effect that may already have applied.
+      Continuing assumes the last step completed, which is exactly what a crash
+      makes uncertain.
+    resolution: >-
+      Record the dispatch intent before the call and the outcome after, so
+      resumption can tell the difference rather than guessing.
+  - question: How long does a checkpoint live?
+    tension: >-
+      Retention long enough for reconstruction means storing full trajectories
+      including tool results, which is a large, sensitive corpus growing with
+      traffic.
+
+realization_policy: own
+
+see_also: [AHC-0041, AHC-0026, AHC-0019]

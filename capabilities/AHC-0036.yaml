@@ -1,0 +1,46 @@
+# AHC-0036 — Every tool has a declared argument contract
+id: AHC-0036
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L3]
+positions: [P5, P3]
+
+archetypes: [A6, A7, A9]
+core: false
+
+title: |-
+  Every tool has a declared argument contract
+
+requirement: |-
+  A tool is registered with a machine-readable description of its arguments — names, types, constraints, which are required — and that same declaration is what the model is shown and what the dispatcher enforces. There is one declaration, not a description written for the model and a signature written for the code.
+
+failure_mode: |-
+  Where the two drift apart, the model is told about a parameter the dispatcher does not accept, or a required argument the description never mentioned. The model then produces confidently wrong calls forever, and the fix is applied to whichever copy the debugger happened to open. Tool-selection quality degrades for a reason that looks like model behaviour and is actually a stale string.
+
+discharges: [AAC-0051, AAC-0052]
+
+design_decisions:
+  - question: Generated from the code, or authored separately?
+    tension: >-
+      Generating from the implementation's signature keeps them in sync and
+      produces descriptions written for a compiler rather than for a reader —
+      the model gets parameter names and no sense of when to use the tool.
+      Authoring separately reads well and drifts.
+    resolution: >-
+      Generate the shape, author the prose, and keep them in one file so the
+      prose is in front of whoever changes the shape.
+  - question: How much does the description explain about when *not* to use it?
+    tension: >-
+      Negative guidance measurably reduces wrong selection and costs resident
+      tokens on every call, whether or not the tool is used — see AHC-0031.
+  - question: Are all tools always visible?
+    tension: >-
+      A fixed set is predictable and grows until the declarations dominate the
+      context. A set filtered per request is lean and makes behaviour depend on
+      a filter that is now part of the system's correctness.
+
+realization_policy: own
+
+see_also: [AHC-0037, AHC-0031]

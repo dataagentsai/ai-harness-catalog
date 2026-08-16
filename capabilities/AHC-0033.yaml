@@ -1,0 +1,41 @@
+# AHC-0033 — What serves traffic is the artifact that was assessed
+# Points at the assurance catalog for build options — see realization_policy.
+id: AHC-0033
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L15]
+positions: [P7]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  What serves traffic is the artifact that was assessed
+
+requirement: |-
+  The resolved configuration promoted to production is byte-identical to the one that went through the release process, carried forward as an artifact rather than rebuilt from source at the destination. Promotion moves a thing; it does not reconstruct one.
+
+failure_mode: |-
+  Where each environment resolves its own configuration from source, a default that differs between environments, a registry that returned a newer prompt, or a dependency that floated produces a production configuration that differs from the one assessed — in a way no diff shows, because both were generated from the same commit.
+
+discharges: [AAC-0107, AAC-0012]
+
+design_decisions:
+  - question: What is the artifact, concretely?
+    tension: >-
+      A container image is unambiguous and does not cover a prompt fetched at
+      runtime from a registry. A resolved manifest covers the fetch and is only
+      as good as the enforcement that nothing re-resolves after it.
+  - question: Does the promoted artifact pin transitive dependencies?
+    tension: >-
+      Pinning everything is reproducible and freezes security updates until
+      someone deliberately moves the pin. Floating keeps patches flowing and
+      means the artifact is not one.
+
+realization_policy: see_aac
+realization_note: |-
+  AAC-0107 already enumerates the machinery for establishing that serving artifacts match assessed ones — registry promotion, digest pinning, signature checks. This catalog adds one constraint and no options: the unit that is promoted is the resolved configuration record defined by AHC-0003, so prompt, model pin and policy set travel as one artifact rather than three independently resolved lookups.
+
+see_also: [AHC-0003, AHC-0032]

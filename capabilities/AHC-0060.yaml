@@ -1,0 +1,45 @@
+# AHC-0060 — Retrieval is a substitutable step with its own record
+id: AHC-0060
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L1, L12]
+positions: [P3, P7]
+
+archetypes: [A3]
+core: false
+
+title: |-
+  Retrieval is a substitutable step with its own record
+
+requirement: |-
+  Retrieval sits behind an interface the harness can replace with a fixed set of passages, and every retrieval emits a record of the query it issued, the candidates it returned and their ranking scores. The generation step can be exercised against supplied passages without the retriever running at all.
+
+failure_mode: |-
+  Fused into one call, a wrong answer has two possible causes that cannot be separated: the retriever found nothing useful, or the generator ignored what it found. Teams debug the prompt because the prompt is visible, and spend weeks on generation quality when the retriever was returning the wrong documents the entire time.
+
+discharges: [AAC-0028, AAC-0033, AAC-0044]
+
+design_decisions:
+  - question: Does the record store the passages, or references to them?
+    tension: >-
+      Storing passages makes a past answer fully reconstructable and duplicates
+      corpus content into telemetry, at volume, including whatever the corpus
+      contains that AHC-0019 would rather not persist. References are compact
+      and resolve to whatever the document says today, not what it said then.
+    resolution: >-
+      References plus a content hash. The hash detects that the source moved,
+      which is the fact reconstruction actually needs.
+  - question: Is the rewritten query recorded as well as the original?
+    tension: >-
+      Where a model rewrites the user's question before searching, the rewrite
+      is the query that actually ran and is invisible in every user-facing view
+      — so relevance failures get attributed to the corpus rather than to a
+      rewrite that changed the meaning.
+    resolution: >-
+      Record both. The rewrite is a generation step and can be wrong.
+
+realization_policy: own
+
+see_also: [AHC-0022, AHC-0061, AHC-0064]

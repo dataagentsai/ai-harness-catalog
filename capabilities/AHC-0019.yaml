@@ -1,0 +1,47 @@
+# AHC-0019 — Redaction happens before a payload leaves the process
+id: AHC-0019
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L7, L11]
+positions: [P3, P2]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Redaction happens before a payload leaves the process
+
+requirement: |-
+  Prompts and responses are transformed at the point of capture, so that no unredacted copy is written to a queue, an exporter, a log file or a backend. Redaction is a property of the capture path, not a filter applied at read time by whatever reads it.
+
+failure_mode: |-
+  Redacting at query time means the unredacted copy exists at rest, replicated wherever the telemetry backend replicates, retained for whatever the backend's default retention is, and reachable by everyone with read access to observability. The organisation has then built a searchable archive of customer data, and discovers it during a review rather than a design.
+
+discharges: [AAC-0095, AAC-0006]
+
+design_decisions:
+  - question: Redact, or never capture?
+    tension: >-
+      Redacting keeps the shape of the payload for debugging and depends on a
+      detector that will miss things. Not capturing is absolute and removes the
+      single most useful artefact for explaining a bad answer.
+    resolution: >-
+      Decide per field class, not globally. Structured identifiers can be
+      dropped outright; free text needs the detector and the acceptance that it
+      is imperfect.
+  - question: Is the redaction reversible?
+    tension: >-
+      A reversible token lets an authorised investigator recover the original
+      and means the mapping is now a secret of the same sensitivity as the data.
+      Irreversible masking has no such secret and no path back.
+  - question: Does the same redaction apply to the eval path?
+    tension: >-
+      Datasets built from production traces inherit whatever was captured. If
+      redaction runs only on the telemetry path, the dataset becomes the
+      unredacted copy nobody thought about.
+
+realization_policy: own
+
+see_also: [AHC-0006, AHC-0018, AHC-0029]

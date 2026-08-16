@@ -1,0 +1,47 @@
+# AHC-0065 — Ingestion is a controlled path with recorded provenance
+id: AHC-0065
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L16, L5]
+positions: [P6, P7]
+
+archetypes: [A3]
+core: false
+
+title: |-
+  Ingestion is a controlled path with recorded provenance
+
+requirement: |-
+  Content enters the corpus through a defined path that records where each document came from, who or what submitted it, and when. Which sources may contribute is declared configuration, and a document's origin remains attached to every passage derived from it.
+
+failure_mode: |-
+  A corpus that accepts documents from wherever is a standing injection surface: text placed in an ingested source is retrieved later and read by the model as authoritative reference material. Without provenance, a poisoned or simply wrong document cannot be traced to its source or removed with its siblings, so remediation becomes a rebuild of the whole index.
+
+discharges: [AAC-0108, AAC-0036, AAC-0035]
+
+design_decisions:
+  - question: Is user-contributed content ingested at all?
+    tension: >-
+      Ingesting it makes the system far more useful and turns any user into a
+      contributor to what the model treats as reference. Excluding it is safe
+      and discards the material that is often most current.
+    resolution: >-
+      If ingested, it retains a provenance class that AHC-0011 treats as
+      untrusted at assembly, however trusted the corpus around it is.
+  - question: Does removing a source remove its derived passages?
+    tension: >-
+      Cascading deletion is correct and requires the derivation chain to be
+      recorded through chunking and embedding. Without it, deleting a document
+      leaves its chunks retrievable, which is the standard way removed content
+      keeps being cited.
+  - question: How is a stale document detected?
+    tension: >-
+      Recording an as-of date lets staleness be reasoned about and depends on
+      the source exposing one. Refreshing on a schedule is uniform and expensive
+      across a corpus that mostly does not change.
+
+realization_policy: own
+
+see_also: [AHC-0011, AHC-0061, AHC-0064]

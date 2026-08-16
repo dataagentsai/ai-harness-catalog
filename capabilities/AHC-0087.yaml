@@ -1,0 +1,44 @@
+# AHC-0087 — Normalisation happens in the harness, not in the model
+id: AHC-0087
+status: active
+since: "0.2.0"
+
+level: SHOULD
+layers: [L6]
+positions: [P3]
+
+archetypes: [A2]
+core: false
+
+title: |-
+  Normalisation happens in the harness, not in the model
+
+requirement: |-
+  Converting an extracted value into its canonical form — a date into a calendar representation, an amount into a currency and a scale, a name into a reference — is performed by deterministic code after extraction. The model is asked for the value as the source expressed it, and the harness converts.
+
+failure_mode: |-
+  Asking a model to normalise makes every conversion a probabilistic step: an ambiguous numeric date is resolved to one of two readings with no record of the ambiguity, an amount loses its currency, a unit is silently converted. These errors are unrecoverable because the original string was never retained, and they are invisible because the output is well-formed and plausible in every case.
+
+discharges: [AAC-0023, AAC-0025, AAC-0002]
+
+design_decisions:
+  - question: Retain the raw string alongside the canonical value?
+    tension: >-
+      Retaining it makes every conversion re-checkable and re-runnable when the
+      normalisation rules change, and roughly doubles the size of the record.
+    resolution: >-
+      Retain it. Normalisation rules change more often than the extraction does,
+      and without the raw value a rule fix cannot be applied retrospectively.
+  - question: What happens to a value that will not normalise?
+    tension: >-
+      Rejecting the record loses everything else it contained. Passing the raw
+      value through in a canonical field defeats the field's type. Marking it
+      unresolved is correct and gives consumers a state to handle.
+  - question: Does the model see the canonical format at all?
+    tension: >-
+      Showing it improves the chance the raw value is already close, and invites
+      the model to convert anyway, which is the behaviour being removed.
+
+realization_policy: own
+
+see_also: [AHC-0001, AHC-0086]

@@ -1,0 +1,45 @@
+# AHC-0073 — Step results are persisted so the graph can resume
+id: AHC-0073
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L5, L10]
+positions: [P6]
+
+archetypes: [A5]
+core: false
+
+title: |-
+  Step results are persisted so the graph can resume
+
+requirement: |-
+  Each completed step's output is written durably against the run's identifier before the next step begins, so a run interrupted partway can continue from its last completed step rather than from the start. The record distinguishes a step that completed from one that was dispatched and never confirmed.
+
+failure_mode: |-
+  Without persistence, an interruption at step nine of ten discards nine steps of paid model calls, and the retry pays for all of them again. Where steps had external effects, restarting from the beginning repeats those effects — the enrichment pipeline that writes as it goes will write twice, and the second pass will be indistinguishable from the first in the destination.
+
+discharges: [AAC-0046, AAC-0047, AAC-0050]
+
+design_decisions:
+  - question: Persist every step, or only expensive ones?
+    tension: >-
+      Every step is uniform and adds a durable write to steps whose recomputation
+      would have been cheaper than the write. Selective persistence is efficient
+      and makes resumption logic conditional, which is where it goes wrong.
+  - question: How long do step results live after the run completes?
+    tension: >-
+      Retaining them makes a completed run reconstructable and stores
+      intermediate model output at the volume of every step of every run.
+    resolution: >-
+      Short retention for successful runs, longer for failed ones. The failures
+      are what anyone will look at.
+  - question: Does resumption re-validate the persisted input?
+    tension: >-
+      Re-validating catches a schema change since the run began and costs work
+      on every resume. Trusting it is fast and can feed a step a shape its
+      current version no longer accepts.
+
+realization_policy: own
+
+see_also: [AHC-0044, AHC-0074, AHC-0026]

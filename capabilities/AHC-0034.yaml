@@ -1,0 +1,47 @@
+# AHC-0034 — The end user's identity reaches every downstream decision
+id: AHC-0034
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L16]
+positions: [P3, P5, P6]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  The end user's identity reaches every downstream decision
+
+requirement: |-
+  The identity on whose behalf the system is acting is carried through the harness to every component that makes an access decision — retrieval, tool dispatch, state reads and writes — and those components decide using that identity rather than the service's own. The identity is part of the call, not ambient state a component may or may not consult.
+
+failure_mode: |-
+  Where components authorise as the service, the system can reach everything any of its users can reach, and the model decides which of it to surface. Retrieval returns documents the requester was never entitled to, and the only thing preventing disclosure is the model choosing not to mention them — which makes an access control out of a request that can be reworded.
+
+discharges: [AAC-0032, AAC-0040, AAC-0006]
+
+design_decisions:
+  - question: Delegated identity, or the service's own with a filter?
+    tension: >-
+      Delegation makes the downstream system enforce, which is where enforcement
+      belongs and requires it to understand your identities. A service identity
+      plus a filter applied by the harness works everywhere and puts the
+      enforcement in the component with the least context and the most code churn.
+    resolution: >-
+      Delegate where the downstream can. A filter you apply yourself is a
+      control you must get right on every path, forever.
+  - question: What identity does a scheduled or triggered run carry?
+    tension: >-
+      Running as the operator who configured it is traceable and grants standing
+      access to whoever happened to set it up. A dedicated identity is scoped
+      and detaches the action from any person accountable for it.
+  - question: Does the identity reach the record?
+    tension: >-
+      Recording it is what makes an access question answerable afterwards, and
+      it places an identifier for a person into telemetry that is retained and
+      widely readable.
+
+realization_policy: own
+
+see_also: [AHC-0008, AHC-0035]

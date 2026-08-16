@@ -1,0 +1,46 @@
+# AHC-0013 — Standing instruction is separable from turn content
+id: AHC-0013
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L1]
+positions: [P3]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Standing instruction is separable from turn content
+
+requirement: |-
+  The durable instruction that defines the system's behaviour is held and versioned apart from the material of any individual request. Changing the instruction does not require reconstructing a request, and reconstructing a past request does not require reconstructing the instruction that was in force at the time — the record identifies which version applied.
+
+failure_mode: |-
+  Fused, the instruction is copied into each call site and drifts between them, so the same system behaves differently depending on which entry point was used. Reconstructing why a past response looked the way it did becomes impossible, because the instruction that produced it has since been edited in place with no version to point at.
+
+discharges: [AAC-0003, AAC-0106, AAC-0012]
+
+design_decisions:
+  - question: One standing instruction, or one per task?
+    tension: >-
+      One shared instruction keeps behaviour consistent and accumulates
+      conditional clauses for every task that needed an exception, until it is
+      long, expensive on every call, and nobody will delete a line from it.
+      Per-task instructions stay sharp and drift apart on the constraints that
+      should have been global.
+    resolution: >-
+      A shared core plus a task overlay, with the split explicit. The core holds
+      what must never vary; nothing conditional belongs in it.
+  - question: Does the instruction carry security-relevant rules?
+    tension: >-
+      Putting an access rule in the instruction is fast and places enforcement
+      inside text the model may be argued out of. Putting it in code is
+      unarguable and slower to change.
+    resolution: >-
+      Instruction states intent; enforcement lives at the position established
+      by AHC-0008. An instruction is a preference, not a boundary.
+
+realization_policy: own
+
+see_also: [AHC-0002, AHC-0003, AHC-0011]

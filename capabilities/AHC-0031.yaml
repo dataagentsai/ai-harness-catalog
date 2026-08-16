@@ -1,0 +1,48 @@
+# AHC-0031 — Context size is observable per release, not only per call
+id: AHC-0031
+status: active
+since: "0.2.0"
+
+level: SHOULD
+layers: [L13, L1]
+positions: [P3, P7]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Context size is observable per release, not only per call
+
+requirement: |-
+  The assembler reports the size of what it produced, broken down by segment class — standing instruction, tool definitions, retrieved material, conversation history — and that breakdown is comparable across releases of the system.
+
+failure_mode: |-
+  Context grows by accretion: a clause added to the instruction, a tool registered and never removed, a retrieval depth raised for one hard case. Each change is individually reasonable and invisible, and the aggregate is a per-call tax on every request the system will ever serve. Without the breakdown, the growth is discovered as a cost trend with no attributable cause, and the usual response is to blame traffic.
+
+discharges: [AAC-0103, AAC-0102, AAC-0008]
+
+design_decisions:
+  - question: Which segment classes are worth separating?
+    tension: >-
+      Too few and the number moves without saying why. Too many and the
+      breakdown becomes a schema that every assembler change has to maintain.
+    resolution: >-
+      Separate the classes that grow for different reasons and are owned by
+      different people. That is usually four.
+  - question: Is tool-definition size counted?
+    tension: >-
+      It is easy to overlook because no one authored it as prose, and on a
+      tool-heavy system it is frequently the largest resident segment — present
+      on every call whether or not any tool is used.
+    resolution: >-
+      Count it separately. It is the most common source of growth nobody
+      attributes.
+  - question: Where is the comparison made?
+    tension: >-
+      Comparing in production reflects real inputs and mixes a change in the
+      system with a change in traffic. Comparing on a fixed set isolates the
+      system's contribution and misses growth driven by what users actually send.
+
+realization_policy: own
+
+see_also: [AHC-0002, AHC-0012, AHC-0007]

@@ -1,0 +1,49 @@
+# AHC-0024 — Retries are bounded, attributed and visible
+id: AHC-0024
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L10, L13]
+positions: [P3, P2]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Retries are bounded, attributed and visible
+
+requirement: |-
+  A retry count exists per unit of work, not per call site, and it is bounded. Every attempt is counted against the unit's token and spend accumulation, and the number of attempts appears on the unit's record. Nested layers do not each apply their own retry budget on top of one another.
+
+failure_mode: |-
+  Retries stacked at three layers multiply rather than add: three at the client, three at the harness and three at the gateway is twenty-seven calls for one logical request, and every one of them is billed. Because each layer counts only its own, no single record shows the multiplication, and the spend appears as ordinary traffic volume.
+
+discharges: [AAC-0008, AAC-0009, AAC-0102]
+
+design_decisions:
+  - question: Which layer owns the retry budget?
+    tension: >-
+      The gateway can retry for callers that never entered the harness and
+      cannot tell a retry-safe call from one that already acted. The harness
+      knows, and covers only its own callers.
+    resolution: >-
+      One owner, declared, with the others explicitly set to none. Two owners
+      is the multiplication case, and it is always discovered from a bill.
+  - question: Does a retry after a partially streamed response start over?
+    tension: >-
+      Starting over is simple and pays for the discarded tokens twice, and the
+      user may have already seen the abandoned prefix.
+  - question: Is a repair attempt a retry?
+    tension: >-
+      Re-asking the model to fix malformed output is a second call with a second
+      cost, and it is frequently counted as part of the first request rather
+      than as an attempt — so retry-until-valid hides a quality regression
+      inside a cost increase.
+    resolution: >-
+      Count it. A repair is an attempt, and the count is the signal that the
+      contract is being missed.
+
+realization_policy: own
+
+see_also: [AHC-0005, AHC-0007, AHC-0021]

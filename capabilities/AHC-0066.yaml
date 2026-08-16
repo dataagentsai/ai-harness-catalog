@@ -1,0 +1,46 @@
+# AHC-0066 — Session state has a declared boundary and lifetime
+id: AHC-0066
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L5]
+positions: [P6, P3]
+
+archetypes: [A4]
+core: false
+
+title: |-
+  Session state has a declared boundary and lifetime
+
+requirement: |-
+  What constitutes one conversation is defined by the harness — what starts it, what ends it, how long it survives inactivity — and the state is addressed by an identifier the harness issues rather than inferred from a connection, a cookie or the presence of prior messages. Expiry is a declared behaviour, not the eviction policy of whatever store is underneath.
+
+failure_mode: |-
+  Where the boundary is implicit, sessions end when infrastructure decides they do: a load balancer moves the connection, a process restarts, a cache evicts under pressure. The user experiences an assistant that abruptly forgets mid-conversation, and the cause is a configuration two layers away that nobody associated with conversation quality.
+
+discharges: [AAC-0038, AAC-0040, AAC-0037]
+
+design_decisions:
+  - question: Does the user own the session boundary, or the system?
+    tension: >-
+      User-controlled boundaries match intent and mean state accumulates
+      indefinitely for anyone who never starts a new one. System-controlled
+      expiry is bounded and cuts across a conversation someone was still having.
+  - question: Where does the state live?
+    tension: >-
+      In-process is fast and ties the conversation to one instance, so any
+      deployment ends every live session. External is durable, survives
+      restarts, and adds a dependency on the request path of every turn.
+    resolution: >-
+      External wherever more than one instance runs. Sticky routing is a
+      deployment constraint disguised as an architecture.
+  - question: What is retained after the session ends?
+    tension: >-
+      Retaining the transcript enables review and long-term memory and turns an
+      ephemeral exchange into a stored record with a retention obligation
+      attached.
+
+realization_policy: own
+
+see_also: [AHC-0067, AHC-0068, AHC-0069]

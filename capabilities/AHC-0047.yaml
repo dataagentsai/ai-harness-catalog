@@ -1,0 +1,48 @@
+# AHC-0047 — The handoff payload is complete and bounded
+id: AHC-0047
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L4, L5]
+positions: [P4]
+
+archetypes: [A7]
+core: false
+
+title: |-
+  The handoff payload is complete and bounded
+
+requirement: |-
+  What crosses a delegation boundary is constructed deliberately — the task, the constraints that still apply, the results the recipient needs, and the identity from AHC-0034 — rather than being either the whole accumulated transcript or a one-line summary. The payload has a declared shape and a size bound.
+
+failure_mode: |-
+  Passing the entire transcript means every delegation multiplies context cost and carries the supervisor's reasoning into an agent that should be working from facts, and by the third hop the payload is mostly the history of how it got there. Passing too little is the opposite and more common: the recipient does its job competently against a constraint it was never told about, and the supervisor accepts the answer because it looks right.
+
+discharges: [AAC-0062, AAC-0045, AAC-0103]
+
+design_decisions:
+  - question: What must always travel?
+    tension: >-
+      Constraints set at the top — the user's actual request, entitlements, the
+      output contract — are the things most often dropped in transit, because
+      each hop passes on what seemed relevant to the sub-task.
+    resolution: >-
+      Declare a carried set that every handoff includes regardless of the task,
+      separate from the task-specific payload.
+  - question: Does the recipient see who delegated to it?
+    tension: >-
+      Knowing the caller helps it shape a useful answer and invites it to reason
+      about the orchestration rather than its own job.
+  - question: Is the payload model-authored or harness-assembled?
+    tension: >-
+      Model-authored payloads carry nuance and can silently omit a constraint or
+      invent a fact. Harness-assembled payloads are faithful and can only carry
+      what the designer anticipated.
+    resolution: >-
+      Harness-assembled envelope with a model-authored task description inside
+      it, so the constraints are structural and the framing is flexible.
+
+realization_policy: own
+
+see_also: [AHC-0046, AHC-0034, AHC-0012]

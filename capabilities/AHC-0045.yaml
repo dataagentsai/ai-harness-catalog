@@ -1,0 +1,48 @@
+# AHC-0045 — Tool output is re-fenced on the way back into context
+id: AHC-0045
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L5, L1]
+positions: [P5, P3]
+
+archetypes: [A6, A7, A9]
+core: false
+
+title: |-
+  Tool output is re-fenced on the way back into context
+
+requirement: |-
+  Content returned by a tool re-enters context through the same assembly path as any other untrusted material, carrying the provenance label from AHC-0011. It is never appended directly to the conversation as though the system had authored it, regardless of how trusted the tool itself is.
+
+failure_mode: |-
+  A tool that reads a web page, a ticket, a file or a database field returns whatever someone else wrote there. Appended unlabelled, that text sits in the same position as the system's own instructions, and an instruction planted in a ticket description is read by the model as coming from the operator. This is the injection path that survives every input filter, because the hostile text never passed through the input.
+
+discharges: [AAC-0058, AAC-0036, AAC-0041]
+
+design_decisions:
+  - question: Are some tools trusted enough to skip fencing?
+    tension: >-
+      A tool returning a number from your own database looks obviously safe, and
+      the exemption list is maintained by hand, so the first tool that starts
+      returning a user-supplied free-text field inherits the exemption silently.
+    resolution: >-
+      No exemptions. The cost of fencing is a delimiter; the cost of the
+      exception being wrong once is the whole control.
+  - question: Does fencing survive summarisation?
+    tension: >-
+      Where a large tool result is summarised under AHC-0038, the summary is
+      model-authored text about untrusted content, and the provenance boundary
+      is exactly where it gets lost.
+    resolution: >-
+      The summary inherits the provenance of its source. A summary of untrusted
+      content is untrusted content.
+  - question: What about the agent's own prior reasoning?
+    tension: >-
+      Treating it as trusted is natural and lets injected content laundered
+      through one step arrive as trusted in the next.
+
+realization_policy: own
+
+see_also: [AHC-0011, AHC-0038, AHC-0044]

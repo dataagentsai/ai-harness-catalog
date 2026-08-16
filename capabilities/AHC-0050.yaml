@@ -1,0 +1,45 @@
+# AHC-0050 — Each agent is attributable within one trace tree
+id: AHC-0050
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L11, L13]
+positions: [P4, P3]
+
+archetypes: [A7]
+core: false
+
+title: |-
+  Each agent is attributable within one trace tree
+
+requirement: |-
+  Every span, cost record and policy decision carries the identity of the agent that produced it and its position in the delegation tree, while sharing the single unit-of-work identifier from AHC-0026. Spend and step counts are readable both per agent and for the whole tree.
+
+failure_mode: |-
+  Without per-agent attribution inside a shared trace, a multi-agent run is one undifferentiated pile of calls, and the question every such system eventually asks — which agent is burning the budget, which one loops, which one produced the wrong claim — has no answer. Teams respond by giving each agent its own trace, which makes per-agent questions answerable and destroys the ability to see the run as one task.
+
+discharges: [AAC-0067, AAC-0060, AAC-0104]
+
+design_decisions:
+  - question: Agent identity, or agent role?
+    tension: >-
+      Identity distinguishes two instances of the same specialist running
+      concurrently, which is what you need to untangle a fan-out. Role
+      aggregates cleanly across runs, which is what you need for trends.
+    resolution: >-
+      Both as separate attributes. One instance identifier, one stable role.
+  - question: How is the tree position encoded?
+    tension: >-
+      Parent references reconstruct the tree and require every consumer to walk
+      it. A materialised path is directly readable and goes stale if the
+      topology is ever rewritten mid-run.
+  - question: Does a shared trace survive an asynchronous handoff?
+    tension: >-
+      Where delegation goes through a queue, the trace context must be carried
+      in the message, and a message schema that predates the tracing decision
+      usually has nowhere to put it.
+
+realization_policy: own
+
+see_also: [AHC-0026, AHC-0006, AHC-0007]

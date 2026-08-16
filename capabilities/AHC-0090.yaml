@@ -1,0 +1,46 @@
+# AHC-0090 — Segment labels are attached at the boundary, not derived later
+id: AHC-0090
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L11, L12]
+positions: [P3, P1]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Segment labels are attached at the boundary, not derived later
+
+requirement: |-
+  Each unit of work carries the dimensions along which its behaviour will later be examined — input class, language, tenant tier, channel, document type — attached where the unit begins and stored on its record. The label set is declared, and a unit with no applicable label carries an explicit unknown rather than nothing.
+
+failure_mode: |-
+  Without labels captured at the boundary, only aggregates are computable, and an aggregate hides the segment that is broken — a system at ninety percent overall can be at forty percent for one document type and nobody can see it, because the dimension was never recorded. Reconstructing labels afterwards means inferring them from stored inputs, which is expensive, approximate, and never done.
+
+discharges: [AAC-0017, AAC-0014, AAC-0104]
+
+design_decisions:
+  - question: Which dimensions are worth carrying?
+    tension: >-
+      Too few and the aggregate stays opaque. Too many and every label becomes a
+      cardinality problem in telemetry and a field that arrives empty because
+      the caller did not know what to put in it.
+    resolution: >-
+      The dimensions along which you already suspect behaviour differs, plus the
+      ones a customer would complain along. Both are usually known on day one.
+  - question: Does the caller supply them, or does the harness infer them?
+    tension: >-
+      Caller-supplied is accurate and depends on every caller being updated when
+      a dimension is added. Inferred is uniform and makes the label a derived
+      value that can itself be wrong.
+  - question: Are labels part of the eval row?
+    tension: >-
+      Carrying them into curated sets under AHC-0029 is what makes offline
+      results sliceable the same way production is; omitting them means the two
+      views cannot be compared along the axis that matters.
+
+realization_policy: own
+
+see_also: [AHC-0026, AHC-0029, AHC-0007]

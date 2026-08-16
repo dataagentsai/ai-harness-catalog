@@ -1,0 +1,48 @@
+# AHC-0069 — Memory writes go through a gate, not straight from the model
+id: AHC-0069
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L5]
+positions: [P6, P3]
+
+archetypes: [A4]
+core: false
+
+title: |-
+  Memory writes go through a gate, not straight from the model
+
+requirement: |-
+  What is promoted from a conversation into durable memory passes through a component that decides what is eligible, records where each remembered item came from, and can remove it. The model may propose what to remember; it does not write directly to the store.
+
+failure_mode: |-
+  Where the model writes freely, anything said in a conversation becomes a durable fact about the user — including things the user was quoting, hypothesising or being told by an injected instruction in retrieved content. A wrong memory is worse than no memory: it is retrieved into every future conversation and reinforces itself, and without provenance nobody can find where it came from to remove it.
+
+discharges: [AAC-0041, AAC-0038, AAC-0040]
+
+design_decisions:
+  - question: What is eligible to be remembered?
+    tension: >-
+      A permissive gate captures genuinely useful preferences and captures
+      transient context that will be wrong next week. A restrictive gate is
+      accurate and makes memory too sparse to be worth the machinery.
+    resolution: >-
+      Declared categories rather than open-ended text. A memory whose type
+      nobody can name is one nobody can audit or expire.
+  - question: Can a memory be written from untrusted content?
+    tension: >-
+      Allowing it lets the system learn from documents and tool results, and
+      makes memory an injection target with permanent effect — the highest-value
+      target in the system, since it persists across sessions.
+    resolution: >-
+      Only from turns the user authored, and never from material carrying the
+      untrusted provenance of AHC-0011.
+  - question: Can the user see and delete what is remembered?
+    tension: >-
+      Exposure builds confidence and is frequently a legal requirement; it also
+      surfaces inferences the user may find unsettling to see written down.
+
+realization_policy: own
+
+see_also: [AHC-0011, AHC-0066, AHC-0068]

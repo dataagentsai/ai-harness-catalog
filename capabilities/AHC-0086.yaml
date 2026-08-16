@@ -1,0 +1,46 @@
+# AHC-0086 — Absence is representable, and distinct from unknown
+id: AHC-0086
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L6]
+positions: [P3]
+
+archetypes: [A2]
+core: false
+
+title: |-
+  Absence is representable, and distinct from unknown
+
+requirement: |-
+  The output type provides distinct representations for a field that the source did not contain, a field the extractor could not determine, and a field whose value is genuinely empty. The contract shown to the model names these states explicitly, and the boundary rejects an object that uses a placeholder value in place of one.
+
+failure_mode: |-
+  Where a schema requires a value and offers no way to say there was none, a model will supply something — a plausible date, a zero, an empty string, a repeated value from a neighbouring field. That fabrication is then indistinguishable from an extraction, and it is stored as fact. This is the single most damaging failure mode of structured extraction, and it is caused by the schema, not the model.
+
+discharges: [AAC-0024, AAC-0025, AAC-0023]
+
+design_decisions:
+  - question: One null, or three states?
+    tension: >-
+      A single null is simple and conflates "the document does not say" with
+      "the extractor could not tell", which are different facts with different
+      remedies — one is a source problem and one is a system problem.
+    resolution: >-
+      At least two. Whether "empty" needs its own state depends on whether an
+      empty value is meaningful in the domain.
+  - question: Is a confidence value worth carrying per field?
+    tension: >-
+      Per-field confidence lets a consumer route low-confidence records to
+      review and is only useful if calibrated under AHC-0084, which for a
+      self-reported confidence is rarely done.
+  - question: Does the extractor return the span it extracted from?
+    tension: >-
+      Returning source offsets makes every value checkable against the document
+      and enlarges the output substantially, which for high-volume extraction is
+      a real storage decision.
+
+realization_policy: own
+
+see_also: [AHC-0001, AHC-0085, AHC-0087]

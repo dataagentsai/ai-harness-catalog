@@ -2,9 +2,10 @@
 
 **Harness capabilities for AI applications, by architecture archetype.**
 
-Status: **working draft 0.1.0** — Phase 0. Ten core capabilities, the taxonomy,
-the schema and the linter. Identifiers are stable from the first tagged release.
-Nothing here is externally binding.
+Status: **working draft 0.2.0** — the normative catalog is complete.
+92 capabilities across all 16 harness layers and all 10 archetypes, every one of
+the assurance catalog's 108 obligations discharged. Identifiers are stable from
+the first tagged release. Nothing here is externally binding.
 
 ---
 
@@ -133,20 +134,31 @@ The linter checks `discharges` against a real checkout of the assurance catalog
 when one is reachable at `../ai-assurance-catalog` or `$AAC_CATALOG_PATH`, and
 warns rather than fails when it is not — this repository must lint standalone.
 
-## Roadmap
+## Status
 
-- [x] **Phase 0** — taxonomy, schema, linter with both boundary rules, 10 core capabilities
-- [ ] **Phase 1** — the full core layer, ~35 capabilities
-- [ ] **Phase 2** — archetype deltas for all ten shapes, ~54 capabilities
+| | Count |
+|---|---|
+| Capabilities | **92** |
+| Core — owed by every shape | 37 |
+| Archetype deltas | 55 |
+| Harness layers covered | **16 of 16** |
+| `discharges` references | 273 |
+| Assurance obligations covered | **108 of 108** |
+
+Landed close to the projected ~89, for the structural reason the assurance
+catalog lands at 108: a core every shape owes, plus what is genuinely *new*
+about each shape. Deltas per archetype run from 2 (single-turn transform) to 10
+(tool-using agent) — that spread is the taxonomy earning its keep.
+
+### Roadmap
+
+- [x] **Phase 0** — taxonomy, schema, linter with both boundary rules
+- [x] **Phase 1** — the full core layer, 37 capabilities
+- [x] **Phase 2** — archetype deltas for all ten shapes, 55 capabilities
 - [ ] **Phase 3** — blueprints: requirements, architecture and design per archetype
 - [ ] **Phase 4** — realizations, authored in one dated pass, not incrementally
 - [ ] **Phase 5** — three reference skeletons, one per control-flow tier
-- [ ] **Phase 6** — bidirectional coverage: every gating assurance obligation has a discharging capability
-
-Expected total is **~89 capabilities** — the same order as the assurance
-catalog's 108, for the same structural reason: a core every shape owes, plus
-what is genuinely *new* about each shape. If it passes 150, deltas are being
-written that are really core.
+- [x] **Phase 6** — bidirectional coverage against the assurance catalog
 
 Phase 4 is deliberately last. Products are the fastest-rotting layer; authoring
 them alongside each capability means writing them two or three times before the

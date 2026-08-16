@@ -1,0 +1,48 @@
+# AHC-0043 — A tool failure is a loop state, not an exception
+id: AHC-0043
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L4, L3]
+positions: [P4, P5]
+
+archetypes: [A6, A7, A9]
+core: false
+
+title: |-
+  A tool failure is a loop state, not an exception
+
+requirement: |-
+  When a tool errors, times out or returns nothing, the dispatcher converts that into a structured result the loop feeds back as an ordinary observation, distinguishing a transient failure from a permanent one and an empty result from an error. The loop continues under its existing budget rather than unwinding.
+
+failure_mode: |-
+  Where a tool error propagates as an exception, one failing dependency ends the whole trajectory, discarding every step of work already paid for — even when the agent had six other ways to make progress. The opposite failure is equally common: an empty result rendered as a bare empty string, which the model reads as "nothing exists" rather than "that query matched nothing", and confidently reports absence as fact.
+
+discharges: [AAC-0053, AAC-0065, AAC-0046]
+
+design_decisions:
+  - question: How much of the error does the model see?
+    tension: >-
+      A detailed error helps the model correct — a different query, a different
+      tool — and may contain internal hostnames, stack frames or credentials
+      that AHC-0035 exists to keep out of context.
+    resolution: >-
+      A classified failure with a safe message. The raw error belongs in the
+      record, not in context.
+  - question: Is a transient failure retried by the dispatcher or by the model?
+    tension: >-
+      Dispatcher retry is cheap, invisible to the trajectory and can duplicate
+      an effect that already happened. Model-driven retry costs a full step and
+      is visible in the trajectory where it can be reasoned about.
+    resolution: >-
+      Dispatcher retries reads; writes go back to the model, because only the
+      loop knows whether repeating the action is acceptable.
+  - question: Does an empty result look different from an error?
+    tension: >-
+      Collapsing them is simpler and is the direct cause of an agent reporting
+      that a record does not exist when the search backend was merely down.
+
+realization_policy: own
+
+see_also: [AHC-0037, AHC-0042, AHC-0005]

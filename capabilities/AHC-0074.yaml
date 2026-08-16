@@ -1,0 +1,47 @@
+# AHC-0074 — Every step declares whether repeating it is safe
+id: AHC-0074
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L10, L4]
+positions: [P3, P6]
+
+archetypes: [A5, A9]
+core: false
+
+title: |-
+  Every step declares whether repeating it is safe
+
+requirement: |-
+  Each step states whether it can be re-executed with the same input without additional effect. Steps that cannot are given an idempotency key derived from the run and the step, carried to the downstream system, so a repeat is recognised there rather than being prevented only by the harness remembering not to retry.
+
+failure_mode: |-
+  Retry logic added generically at the harness level treats all steps alike, and the first step with an external effect turns a transient timeout into a duplicate. Timeouts are the specific trap: the call succeeded and the response was lost, so the harness believes it failed and the downstream system has already applied it. Without a key at the destination, nothing can tell the two apart.
+
+discharges: [AAC-0047, AAC-0046, AAC-0076]
+
+design_decisions:
+  - question: Where does the idempotency key come from?
+    tension: >-
+      Deriving it from run and step identity is stable across retries and
+      collides if the same step legitimately runs twice in one run — inside a
+      loop, for instance. Including an attempt counter avoids the collision and
+      defeats deduplication entirely.
+    resolution: >-
+      Run, step and iteration index. A retry keeps all three; a legitimate
+      second execution changes the third.
+  - question: What if the downstream system has no idempotency support?
+    tension: >-
+      Building a deduplication record on your side works and is a second store
+      that must be consistent with theirs, and it cannot see effects applied
+      through any other path.
+  - question: Is a model call itself idempotent?
+    tension: >-
+      It has no external effect and is not idempotent in result — repeating it
+      costs money and may return something different, which for a step whose
+      output feeds a branch means the graph can take a different path on retry.
+
+realization_policy: own
+
+see_also: [AHC-0024, AHC-0073, AHC-0053]

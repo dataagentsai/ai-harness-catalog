@@ -1,0 +1,46 @@
+# AHC-0026 — One identifier spans the whole unit of work
+id: AHC-0026
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L11]
+positions: [P3, P2]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  One identifier spans the whole unit of work
+
+requirement: |-
+  A single identifier is created where a unit of work begins and is carried by every model call, retrieval, tool call, policy decision and cost record that unit produces, across process and service boundaries. It is the same unit boundary that AHC-0007 accounts spend against.
+
+failure_mode: |-
+  Without it, the records exist but cannot be joined: the spend is in one system, the spans in another, the policy decisions in a third, and nothing links the fourteen calls that were one task. Every question worth asking in an incident — what did this cost, what did it retrieve, why did it stop — becomes a manual correlation by timestamp, which fails first under concurrency, which is when incidents happen.
+
+discharges: [AAC-0011, AAC-0060, AAC-0104]
+
+design_decisions:
+  - question: Reuse the tracing identifier, or mint a business one?
+    tension: >-
+      Reusing the trace identifier is free and ties the unit's lifetime to
+      telemetry sampling and retention — sample the trace away and the join key
+      goes with it. A separate identifier survives independently and is one more
+      thing to propagate.
+    resolution: >-
+      Mint one and carry it as an attribute on the trace. Cost and audit records
+      must outlive whatever the observability retention policy is.
+  - question: Where does the unit begin for a scheduled or queued trigger?
+    tension: >-
+      Beginning at dequeue loses the link to whatever enqueued it; beginning at
+      enqueue means the unit is open for an unbounded time before any work starts.
+  - question: Does the identifier reach the caller?
+    tension: >-
+      Returning it lets a user quote it in a support request and turns an
+      internal correlation key into a public surface with whatever that implies
+      about guessability and enumeration.
+
+realization_policy: own
+
+see_also: [AHC-0006, AHC-0007]

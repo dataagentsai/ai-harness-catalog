@@ -1,0 +1,48 @@
+# AHC-0046 — Delegation is a typed handoff, not a prompt convention
+id: AHC-0046
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L4, L6]
+positions: [P4, P3]
+
+archetypes: [A7]
+core: false
+
+title: |-
+  Delegation is a typed handoff, not a prompt convention
+
+requirement: |-
+  Passing work from one agent to another goes through a declared interface with a named target, a typed payload and a typed return, dispatched by the harness. Which agent receives the work is a decision the harness executes, not a string the model emits and another component parses back out of prose.
+
+failure_mode: |-
+  Where delegation is a convention — a marker in the output, a phrase the supervisor looks for — routing breaks whenever the model phrases it differently, and it breaks silently: the work is simply never handed off, and the supervisor continues as though it had been. Because the failure produces plausible prose rather than an error, it surfaces as a task that quietly did half of itself.
+
+discharges: [AAC-0061, AAC-0062, AAC-0045]
+
+design_decisions:
+  - question: Does the supervisor choose the target, or does the model?
+    tension: >-
+      Model-chosen routing adapts to work the designer did not anticipate and
+      makes the topology unpredictable, so no trace of it can be compared with
+      another. Supervisor-chosen routing is inspectable and cannot handle the
+      case nobody enumerated.
+    resolution: >-
+      The model may propose; the harness disposes against a declared set of
+      targets. An unknown target is a rejection, not a new agent.
+  - question: Is delegation a call, or a transfer?
+    tension: >-
+      A call returns to the caller, keeping one owner of the overall task and
+      paying to carry the context back and forth. A transfer hands over
+      ownership entirely, which is cheaper and leaves nobody holding the thread
+      if the recipient fails.
+  - question: Can an agent delegate back to its own caller?
+    tension: >-
+      Allowing it handles genuine escalation and opens the cycle that AHC-0052
+      then has to detect. Forbidding it is simple and forces a real escalation
+      to fail instead.
+
+realization_policy: own
+
+see_also: [AHC-0047, AHC-0052, AHC-0017]

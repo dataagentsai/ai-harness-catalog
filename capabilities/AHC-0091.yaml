@@ -1,0 +1,45 @@
+# AHC-0091 — A supplied functional suite can be run against the artifact
+id: AHC-0091
+status: active
+since: "0.2.0"
+
+level: SHOULD
+layers: [L12, L3]
+positions: [P7, P5]
+
+archetypes: [A8]
+core: false
+
+title: |-
+  A supplied functional suite can be run against the artifact
+
+requirement: |-
+  The harness can execute a caller-supplied suite of behavioural checks against a generated artifact inside the sandbox of AHC-0077, and return the individual results as part of the outcome. The suite is an input to generation, not a fixture belonging to the harness.
+
+failure_mode: |-
+  Parsing and linting establish that an artifact is well-formed, not that it does what was asked — and well-formed code that does the wrong thing is the characteristic output of a capable model given an ambiguous request. Without a functional path, the only remaining check is a person reading it, which does not scale and is exactly where attention runs out on the twentieth generated file.
+
+discharges: [AAC-0070, AAC-0069, AAC-0068]
+
+design_decisions:
+  - question: Who writes the suite?
+    tension: >-
+      A caller-supplied suite states the actual requirement and is work the
+      caller wanted the generator to save them. A model-generated suite is free
+      and is written by the same reasoning that wrote the artifact, so it agrees
+      with whatever the artifact does.
+    resolution: >-
+      Caller-supplied is the only one that carries evidence. A generated suite
+      is a drafting aid, and must never be the gate.
+  - question: Does a failing suite return to the model?
+    tension: >-
+      Feeding failures back is a strong correction signal and lets the model
+      converge on passing the suite rather than solving the problem — including
+      by special-casing the inputs the suite happens to use.
+    resolution: >-
+      Bounded attempts, and hold back part of the suite from the correction
+      loop so convergence on the visible half is detectable.
+
+realization_policy: own
+
+see_also: [AHC-0076, AHC-0077, AHC-0080]

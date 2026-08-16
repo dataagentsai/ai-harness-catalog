@@ -1,0 +1,49 @@
+# AHC-0092 — The processing region is pinned and recorded per call
+id: AHC-0092
+status: active
+since: "0.2.0"
+
+level: MAY
+layers: [L2, L15]
+positions: [P2, P3]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  The processing region is pinned and recorded per call
+
+requirement: |-
+  Where a jurisdiction constrains where content may be processed, the reachable routes are restricted to endpoints in permitted regions as configuration under AHC-0009, and the region that actually served each call is recorded alongside the route under AHC-0027. Applies when a data-residency obligation exists.
+
+failure_mode: |-
+  Region is the constraint most often satisfied by the primary route and broken by every other one: a fallback to a different provider, a load-balanced overflow deployment, an edge cache, or a third-party router in the path. Because the primary route is the one anyone checks, the breach happens during a provider incident and is discovered later from records — if the region was recorded at all, which is the usual reason it is not discovered.
+
+discharges: [AAC-0097, AAC-0094, AAC-0096]
+
+design_decisions:
+  - question: Refuse, or degrade, when no in-region route is available?
+    tension: >-
+      Refusing is compliant and takes the feature down for a whole region during
+      a provider incident. Degrading keeps it alive and is the exact breach the
+      constraint exists to prevent.
+    resolution: >-
+      Refuse. A residency obligation that yields to an availability target was
+      not an obligation.
+  - question: Does the constraint reach caching and telemetry?
+    tension: >-
+      The model call is the visible hop; the cached response, the trace payload
+      and the curated dataset are copies of the same content, frequently stored
+      in whichever region the tooling defaults to.
+    resolution: >-
+      The boundary applies to every copy. A compliant inference path feeding a
+      cross-region telemetry backend has moved the data anyway.
+  - question: Is the region derived from the endpoint or asserted by the provider?
+    tension: >-
+      An endpoint name is a convention that can change; a provider assertion is
+      authoritative and may not be exposed per call, leaving the record to state
+      what was intended rather than what happened.
+
+realization_policy: own
+
+see_also: [AHC-0009, AHC-0027, AHC-0068]

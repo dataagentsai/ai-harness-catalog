@@ -1,0 +1,46 @@
+# AHC-0015 — Streaming has a completion and abort contract
+id: AHC-0015
+status: active
+since: "0.2.0"
+
+level: SHOULD
+layers: [L2, L6]
+positions: [P3, P1]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Streaming has a completion and abort contract
+
+requirement: |-
+  Where output is streamed, the stream carries an explicit terminal event distinguishing normal completion from abort, refusal and provider failure, and the caller can cancel it such that work downstream actually stops. A stream that simply ends is indistinguishable from a connection that dropped, and the contract must make them distinguishable.
+
+failure_mode: |-
+  Without a terminal event, a truncated response and a complete one look identical to the consumer, and a system that persists streamed output stores half an answer as though it were whole. Without real cancellation, a user closing the tab leaves the loop running and billing, which is the most common source of spend nobody can account for.
+
+discharges: [AAC-0092, AAC-0002, AAC-0008]
+
+design_decisions:
+  - question: Is output screened before or during the stream?
+    tension: >-
+      Screening the completed response means buffering, which discards the
+      latency benefit that motivated streaming at all. Screening incrementally
+      preserves it and cannot recall tokens already delivered.
+    resolution: >-
+      Buffer where a policy must hold absolutely; stream with incremental
+      screening where the risk is tolerable, and state which was chosen.
+  - question: Does cancellation propagate past the model call?
+    tension: >-
+      Propagating it stops the spend and may abandon a tool call midway, leaving
+      a side effect half-applied. Not propagating is safe for state and keeps
+      paying for output nobody will read.
+  - question: How does a partial stream reach the record?
+    tension: >-
+      Recording only completed responses leaves the aborted ones — the
+      interesting ones — invisible. Recording partials means storing fragments
+      that were never a valid output.
+
+realization_policy: own
+
+see_also: [AHC-0001, AHC-0025]

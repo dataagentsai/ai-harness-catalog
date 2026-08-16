@@ -1,0 +1,47 @@
+# AHC-0012 — The token budget is applied by the assembler, and its application is recorded
+id: AHC-0012
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L1, L13]
+positions: [P3]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  The token budget is applied by the assembler, and its application is recorded
+
+requirement: |-
+  Context is bounded before the call, by the component that assembles it, using a declared strategy — drop, truncate, summarise or refuse. When the strategy fires, the assembled record states that it fired, which segments it acted on, and how much was removed.
+
+failure_mode: |-
+  Applied further down, or left to the provider, the boundary is enforced by whatever component happens to notice first, and the usual outcome is a silent truncation of the tail of the retrieved set. The system then answers from a subset of the evidence with no indication that it did, and quality drops for a reason no trace explains.
+
+discharges: [AAC-0019, AAC-0103]
+
+design_decisions:
+  - question: What gets dropped first?
+    tension: >-
+      Dropping the lowest-ranked retrieved passages is the obvious answer and
+      removes exactly the material that recency ranked low but relevance did
+      not. Dropping oldest conversation turns loses the constraint the user set
+      at the start, which is frequently the one that mattered.
+    resolution: >-
+      Priority is declared per segment class by the assembler's caller, not
+      inferred from position in a list.
+  - question: Summarise, or refuse?
+    tension: >-
+      Summarising keeps the request alive and costs a model call whose output is
+      a second thing that can be wrong, inside the context of the first.
+      Refusing is honest and pushes an unhandled case onto the caller.
+  - question: Is the budget measured in provider tokens or an approximation?
+    tension: >-
+      An exact count requires the provider's tokeniser and couples the assembler
+      to the model in use. An approximation is portable and wrong by a margin
+      that must then be reserved as headroom.
+
+realization_policy: own
+
+see_also: [AHC-0002, AHC-0031]

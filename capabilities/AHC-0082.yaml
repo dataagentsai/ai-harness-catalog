@@ -1,0 +1,49 @@
+# AHC-0082 — A verdict is typed, and includes an explicit uncertain state
+id: AHC-0082
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L6, L12]
+positions: [P3]
+
+archetypes: [A10]
+core: false
+
+title: |-
+  A verdict is typed, and includes an explicit uncertain state
+
+requirement: |-
+  A judge returns a value from a declared set, parsed and validated at the boundary, and that set contains a state meaning the judge could not decide. Output that does not parse into the declared set is a judge failure with its own handling, never coerced into the nearest valid verdict.
+
+failure_mode: |-
+  Where a verdict is free text matched against expected words, anything unexpected falls through to a default — and the default is usually "pass", so a judge that has stopped working reports everything as fine. Without an uncertain state, a genuinely ambiguous case is forced into a confident verdict, and the resulting number carries no trace of the coin-flip that produced it.
+
+discharges: [AAC-0087, AAC-0088, AAC-0002]
+
+design_decisions:
+  - question: What is the default when parsing fails?
+    tension: >-
+      Defaulting to pass keeps traffic flowing and silently disables the
+      control. Defaulting to fail is safe and converts a judge outage into a
+      product outage.
+    resolution: >-
+      Neither. Route a parse failure to its own path so it can be alerted on;
+      the open-or-closed decision is then made deliberately under AHC-0008.
+  - question: Is a numeric score or a category better?
+    tension: >-
+      A score is comparable across releases and implies a precision the judge
+      does not have — the gap between 0.72 and 0.78 is usually noise. Categories
+      are honest and lose the ability to observe a small movement.
+  - question: What happens to an uncertain verdict downstream?
+    tension: >-
+      Treating it as a failure makes the judge's hesitancy indistinguishable
+      from the subject's fault. Treating it as a pass makes it a route around
+      the control.
+    resolution: >-
+      Escalate it. An uncertain state that is quietly mapped to one of the
+      confident ones has no reason to exist.
+
+realization_policy: own
+
+see_also: [AHC-0001, AHC-0017, AHC-0081]

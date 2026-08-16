@@ -1,0 +1,46 @@
+# AHC-0025 — Partial results are typed, never silently truncated
+id: AHC-0025
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L10, L6]
+positions: [P3]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Partial results are typed, never silently truncated
+
+requirement: |-
+  Where the harness stops before completing — output length reached, budget exhausted, deadline hit, stream aborted — what it returns is marked as incomplete, states why, and carries whatever was produced separately from a completed result. Incompleteness is a property of the return value, not something a caller infers from the text.
+
+failure_mode: |-
+  An answer cut off at a token limit reads as a finished answer that happens to end oddly, and downstream systems store it, index it or act on it. The single most damaging version is an artifact producer whose output was truncated mid-statement and remains syntactically valid — the truncation is then indistinguishable from an intended result until something runs it.
+
+discharges: [AAC-0015, AAC-0002, AAC-0019]
+
+design_decisions:
+  - question: Return the partial content, or discard it?
+    tension: >-
+      Returning it lets a caller salvage something and puts material into their
+      hands that was never a valid output. Discarding is safe and throws away
+      work that was paid for and may be most of the answer.
+    resolution: >-
+      Return it behind the incomplete marker, so salvaging is a deliberate act
+      by the caller rather than the default.
+  - question: Is hitting the output limit an error or an outcome?
+    tension: >-
+      Treating it as an error routes a routine, expected condition to the
+      failure path and makes reliability figures track prompt design. Treating
+      it as an outcome is accurate and risks it never being looked at.
+  - question: Can the harness continue from where it stopped?
+    tension: >-
+      Continuation recovers the answer and doubles the context cost, and the
+      seam between the two halves is a place the model may repeat or contradict
+      itself.
+
+realization_policy: own
+
+see_also: [AHC-0015, AHC-0017]

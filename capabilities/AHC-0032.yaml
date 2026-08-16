@@ -1,0 +1,53 @@
+# AHC-0032 — Rollback restores prompt, model and policy together
+id: AHC-0032
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L15]
+positions: [P7, P3]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Rollback restores prompt, model and policy together
+
+requirement: |-
+  The unit of rollback is the whole resolved configuration from AHC-0003, not one of its parts. Reverting returns prompt version, model pin, parameters, tool set and policy set to a combination that previously ran together, and the mechanism to do it is one action.
+
+failure_mode: |-
+  Where the parts roll back independently, a revert produces a combination that has never run anywhere — last week's prompt against this week's model, with a tool that did not exist when the prompt was written. The system is now in a state nobody has seen, during an incident, which is the moment with the least appetite for a novel configuration.
+
+discharges: [AAC-0012, AAC-0107, AAC-0101]
+
+design_decisions:
+  - question: Is a prompt change a deployment?
+    tension: >-
+      Treating it as one gives it review, staging and a revert path, and removes
+      the speed that motivated putting prompts in a registry. Treating it as
+      data makes it fast and creates a change that reaches production outside
+      the mechanism everything else uses.
+    resolution: >-
+      Whichever is chosen, the resolved record must capture it, so a rollback
+      knows what to restore.
+  - question: How far back does a known-good combination stay available?
+    tension: >-
+      Retaining many is cheap in storage and means an old prompt may reference a
+      model pin the provider has since retired, so the rollback target is not
+      actually reachable.
+    resolution: >-
+      Retention should be bounded by what the provider still serves, not by what
+      storage allows.
+  - question: Does rollback include the policy set?
+    tension: >-
+      Including it is consistent and can revert a safety control that was
+      tightened for a reason unrelated to the incident being rolled back.
+    resolution: >-
+      Policy tightenings are excluded from automatic revert and named
+      explicitly. Rolling back a control while rolling back a prompt is how one
+      incident becomes two.
+
+realization_policy: own
+
+see_also: [AHC-0003, AHC-0033]

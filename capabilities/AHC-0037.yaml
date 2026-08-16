@@ -1,0 +1,50 @@
+# AHC-0037 — Arguments are validated at dispatch, before the tool runs
+id: AHC-0037
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L3]
+positions: [P5]
+
+archetypes: [A6, A7, A9]
+core: false
+
+title: |-
+  Arguments are validated at dispatch, before the tool runs
+
+requirement: |-
+  The dispatcher checks model-produced arguments against the declared contract and against semantic constraints the type system cannot express — an identifier that must exist, a range that must be ordered, a reference the caller is entitled to — and rejects invalid calls without executing them. A rejection returns to the loop as a usable result, not as a crash.
+
+failure_mode: |-
+  Unvalidated arguments reach the implementation, which was written expecting a caller that read the documentation. Syntactically valid but semantically wrong arguments are the dangerous case: a well-formed date range with the end before the start, or a well-formed identifier belonging to another tenant. These execute successfully and return a wrong answer the model then presents with full confidence.
+
+discharges: [AAC-0052, AAC-0053, AAC-0057]
+
+design_decisions:
+  - question: Does a rejection go back to the model, or to the caller?
+    tension: >-
+      Returning it to the model lets it correct itself and costs another call,
+      and an unbounded correction cycle is one of the commonest ways a loop
+      burns its budget without progressing. Failing to the caller is cheap and
+      abandons a task the model could have completed on the second attempt.
+    resolution: >-
+      Back to the model, with the correction attempts counted against the loop's
+      step budget rather than treated as free.
+  - question: How much does the error message tell the model?
+    tension: >-
+      A precise message — which field, which constraint — dramatically improves
+      correction. It can also disclose the shape of data the requester was not
+      entitled to know exists.
+  - question: Where does entitlement checking happen?
+    tension: >-
+      Checking at dispatch is central and duplicates a rule the downstream
+      system also enforces. Deferring to downstream is authoritative and means
+      the call is issued before it is refused.
+    resolution: >-
+      Downstream is authoritative under AHC-0034. Dispatch-level checks are an
+      optimisation, never the control.
+
+realization_policy: own
+
+see_also: [AHC-0036, AHC-0034, AHC-0043]

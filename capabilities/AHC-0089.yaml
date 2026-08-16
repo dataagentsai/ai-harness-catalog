@@ -1,0 +1,47 @@
+# AHC-0089 — Input shape is normalised before assembly, not by the model
+id: AHC-0089
+status: active
+since: "0.2.0"
+
+level: SHOULD
+layers: [L1, L6]
+positions: [P3]
+
+archetypes: [A1, A2]
+core: false
+
+title: |-
+  Input shape is normalised before assembly, not by the model
+
+requirement: |-
+  Whitespace, encoding, markup, boilerplate and structural noise are handled by deterministic code before the input reaches assembly, so that inputs meaning the same thing produce the same assembled context. What the normaliser removed is recorded.
+
+failure_mode: |-
+  Without normalisation, the same document pasted from two sources produces different outputs, and the difference is attributed to model instability rather than to input variation. The cost side is quieter: extraction markup, navigation boilerplate and repeated headers can be most of what is sent, so a large share of the token bill is spent on material that carries no information.
+
+discharges: [AAC-0018, AAC-0021, AAC-0103]
+
+design_decisions:
+  - question: How much structure is removed?
+    tension: >-
+      Stripping to plain text is uniform and destroys tables, headings and lists
+      whose structure carries meaning the model would otherwise use. Preserving
+      structure keeps the meaning and keeps the noise with it.
+    resolution: >-
+      Preserve structure that carries semantics, remove presentation. The line
+      is domain-specific and belongs in the normaliser, not in the prompt.
+  - question: Does normalisation apply to the eval path?
+    tension: >-
+      A curated set built from already-normalised inputs cannot detect a
+      normaliser regression, which then behaves like an unexplained quality drop.
+    resolution: >-
+      Hold some rows as raw input so the normaliser is exercised as part of the
+      path under AHC-0029.
+  - question: Is the pre-normalisation input retained?
+    tension: >-
+      Retaining it makes an over-aggressive strip diagnosable and stores a
+      second copy of every input, with the same obligations as the first.
+
+realization_policy: own
+
+see_also: [AHC-0002, AHC-0016, AHC-0088]

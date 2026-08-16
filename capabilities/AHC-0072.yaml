@@ -1,0 +1,45 @@
+# AHC-0072 — The topology is data, inspectable without executing it
+id: AHC-0072
+status: active
+since: "0.2.0"
+
+level: SHOULD
+layers: [L4, L15]
+positions: [P3, P7]
+
+archetypes: [A5]
+core: false
+
+title: |-
+  The topology is data, inspectable without executing it
+
+requirement: |-
+  The graph's nodes and edges can be enumerated as a structure, so the set of reachable paths is knowable without running anything. Where a branch is chosen by a model, the set of destinations it may choose among is declared rather than open-ended.
+
+failure_mode: |-
+  A topology that exists only as control flow scattered through code cannot be reviewed, drawn, or checked for branches nobody exercises. A model-chosen branch with an open destination set is worse: the reachable states are unbounded, so no amount of exercising establishes that the dangerous path is unreachable, because it was never enumerable.
+
+discharges: [AAC-0049, AAC-0048, AAC-0044]
+
+design_decisions:
+  - question: Declared graph, or plain code?
+    tension: >-
+      A declared structure is inspectable and introduces a description language
+      that will not express something you need by the third month. Plain code
+      expresses anything and can only be understood by reading it.
+    resolution: >-
+      Plain code is fine provided the destination set of every branch is
+      enumerable. Inspectability is the requirement; a graph DSL is one way to
+      get it.
+  - question: Is an unreachable node an error?
+    tension: >-
+      Flagging it catches dead paths left by refactoring and fires constantly on
+      nodes reachable only under conditions the analysis cannot see.
+  - question: Does the topology version with the code?
+    tension: >-
+      A topology loaded from configuration can be changed without a deploy,
+      which means the running system's shape is not described by any commit.
+
+realization_policy: own
+
+see_also: [AHC-0003, AHC-0071, AHC-0075]

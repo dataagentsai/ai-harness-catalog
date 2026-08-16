@@ -1,0 +1,46 @@
+# AHC-0058 — Each action class declares its compensating path
+id: AHC-0058
+status: active
+since: "0.2.0"
+
+level: SHOULD
+layers: [L10, L14]
+positions: [P5, P8]
+
+archetypes: [A9, A7, A5]
+core: false
+
+title: |-
+  Each action class declares its compensating path
+
+requirement: |-
+  For every action the system can take, the harness holds either a declared way to undo it, a declared way to counteract it, or an explicit statement that neither exists. Where a compensating path exists, it is invocable on its own, from the record in AHC-0056, without re-running the trajectory that produced the action.
+
+failure_mode: |-
+  When an unattended run does the wrong thing across two hundred resources, recovery without declared compensation is a person reading logs and undoing changes by hand under time pressure — which is slow, error-prone, and frequently makes a second incident. The declaration matters as much as the mechanism: knowing in advance that an action cannot be undone changes whether it should have been automated at all.
+
+discharges: [AAC-0081, AAC-0046, AAC-0083]
+
+design_decisions:
+  - question: Undo, or counteract?
+    tension: >-
+      True undo restores the prior state and is available for a minority of real
+      actions. Counteraction — a credit, a correction, a retraction — is almost
+      always available and leaves both events in the record permanently.
+    resolution: >-
+      Name which one each action has. Treating a counteraction as an undo is how
+      a reconciliation later finds two entries where the story says none.
+  - question: Is compensation automatic or operator-initiated?
+    tension: >-
+      Automatic rollback contains damage in seconds and is itself an autonomous
+      agent acting on production during an incident, which is when confidence in
+      automation is lowest. Operator-initiated is deliberate and slow.
+  - question: What is recorded when no compensating path exists?
+    tension: >-
+      An explicit "cannot be undone" is uncomfortable to write and is the single
+      most useful line in a design review, because it converts an implicit
+      assumption into a decision someone has to accept.
+
+realization_policy: own
+
+see_also: [AHC-0039, AHC-0056, AHC-0057]

@@ -1,0 +1,47 @@
+# AHC-0053 — A trigger produces exactly one run
+id: AHC-0053
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L15, L10]
+positions: [P1, P6]
+
+archetypes: [A9]
+core: false
+
+title: |-
+  A trigger produces exactly one run
+
+requirement: |-
+  Every trigger carries an identifier derived from the occasion that caused it, and the harness records that identifier durably before work begins, refusing a second run for the same occasion. Overlap is handled explicitly: a run still in flight when the next trigger arrives either blocks it, queues it or cancels itself, by declared policy.
+
+failure_mode: |-
+  Schedulers deliver at least once, retry on ambiguous outcomes, and fire twice across a deployment or a clock adjustment. An unattended agent that takes actions will take them twice — two remediations, two messages, two refunds — and because nobody is watching in real time, the duplicate is discovered from its effects. Overlapping runs are the same failure with concurrency added: two instances acting on the same state, each unaware of the other.
+
+discharges: [AAC-0076, AAC-0047, AAC-0080]
+
+design_decisions:
+  - question: What is the identifier derived from?
+    tension: >-
+      The scheduled instant is stable across retries and collides when a run is
+      deliberately re-triggered for the same window. A delivery identifier is
+      unique per attempt, which defeats the purpose entirely, since a retry is
+      exactly what must be deduplicated.
+    resolution: >-
+      The occasion, not the delivery. If a re-run is legitimate, it is a new
+      occasion and says so.
+  - question: Where is the claim recorded?
+    tension: >-
+      Recording in the same store the run writes to keeps it consistent and
+      unavailable when that store is the thing that is down. A separate store
+      is available and can disagree with reality.
+  - question: What if a run dies holding the claim?
+    tension: >-
+      A claim with no expiry blocks the schedule forever after one crash. A
+      claim that expires permits the duplicate it existed to prevent, at
+      precisely the moment when a partially-completed run is most likely.
+
+realization_policy: own
+
+see_also: [AHC-0044, AHC-0054, AHC-0058]

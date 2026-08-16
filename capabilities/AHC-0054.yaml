@@ -1,0 +1,48 @@
+# AHC-0054 — An operator can stop a run from outside it
+id: AHC-0054
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L14, L4]
+positions: [P8, P6, P2]
+
+archetypes: [A9, A7]
+core: false
+
+title: |-
+  An operator can stop a run from outside it
+
+requirement: |-
+  A control exists, reachable without a deployment, that halts an in-flight run or suspends the whole class of runs, and the loop checks it between steps. The control operates at the harness level and does not depend on the run's own code choosing to observe it.
+
+failure_mode: |-
+  When an unattended agent starts doing something wrong at two in the morning, the available options without this control are revoking a credential, scaling the service to zero, or waiting. Each of those is a broader outage than the problem, and each leaves the run's state torn at whatever step it reached. The first incident is where teams discover the stop control was never built.
+
+discharges: [AAC-0077, AAC-0079, AAC-0083]
+
+design_decisions:
+  - question: Halt immediately, or at the next safe point?
+    tension: >-
+      Immediate stops contain damage fastest and can abandon a multi-part action
+      halfway through, leaving inconsistent state. Stopping at a declared safe
+      point is clean and keeps acting for however long the current step runs.
+    resolution: >-
+      Both, as two controls. The incident where you want the clean one and the
+      incident where you want the immediate one are different incidents.
+  - question: Per run, per class, or global?
+    tension: >-
+      Per run is surgical and useless when you do not yet know which run is
+      misbehaving. Global is decisive and takes down everything including the
+      agents that were working correctly.
+  - question: Who may operate it, at three in the morning?
+    tension: >-
+      Restricting it to a small group means the person on call may not hold the
+      permission. Widening it makes an outage control broadly available.
+    resolution: >-
+      Whoever is on call must be able to use it without waking anyone. A control
+      that requires an escalation is not an emergency control.
+
+realization_policy: own
+
+see_also: [AHC-0041, AHC-0030, AHC-0055]

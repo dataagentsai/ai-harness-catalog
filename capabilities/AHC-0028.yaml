@@ -1,0 +1,49 @@
+# AHC-0028 — Graders are injectable and versioned apart from the system
+id: AHC-0028
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L12]
+positions: [P7]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Graders are injectable and versioned apart from the system
+
+requirement: |-
+  The functions that judge an output are supplied to the eval entrypoint rather than compiled into it, and each carries its own version. Changing a grader is a change to the grader's version, distinguishable in the record from a change to the system it grades.
+
+failure_mode: |-
+  Fused, a score movement has two possible causes and no way to tell them apart — the system improved, or the rubric was edited. Teams resolve this by never touching the graders, which freezes the definition of quality at whatever it was in the first month, or by editing them freely, which makes the score history meaningless. Both are common and both are silent.
+
+discharges: [AAC-0001, AAC-0013, AAC-0090]
+
+design_decisions:
+  - question: Does a grader version change invalidate history?
+    tension: >-
+      Treating past scores as incomparable is correct and discards the trend
+      that motivated collecting them. Carrying them forward keeps the trend and
+      makes it a line through two different measurements.
+    resolution: >-
+      Store the grader version with every score, so comparison is a query
+      constraint rather than an act of faith.
+  - question: Where does a model-graded rubric live?
+    tension: >-
+      Beside the system's prompts it drifts toward describing what the system
+      does rather than what the task requires — the rubric slowly becomes a
+      restatement of the implementation. Held separately it lags and rots.
+  - question: Is the grader's own model pinned separately?
+    tension: >-
+      Pinning it separately means a judge upgrade is a deliberate act; sharing
+      the system's pin means every model change silently moves the measuring
+      instrument at the same moment it moves the thing being measured.
+    resolution: >-
+      Separately pinned. Moving the instrument and the subject together makes
+      the reading uninterpretable.
+
+realization_policy: own
+
+see_also: [AHC-0010, AHC-0029]

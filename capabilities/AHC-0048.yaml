@@ -1,0 +1,46 @@
+# AHC-0048 — Delegation depth and fan-out are bounded by the harness
+id: AHC-0048
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L4]
+positions: [P4]
+
+archetypes: [A7]
+core: false
+
+title: |-
+  Delegation depth and fan-out are bounded by the harness
+
+requirement: |-
+  The harness limits how deep a chain of delegations may go and how many sub-agents any one agent may start, counting across the whole tree rather than per agent. Reaching either limit is a terminal outcome, distinct from exhausting a token or step budget.
+
+failure_mode: |-
+  Without a depth bound, a supervisor that delegates to a specialist which delegates onward can recurse until something else stops it, and with a fan-out of even three the tree grows faster than any per-agent budget notices. The system spends its entire ceiling in a burst of concurrent sub-agents, none of which individually did anything unreasonable.
+
+discharges: [AAC-0064, AAC-0063, AAC-0050]
+
+design_decisions:
+  - question: Is fan-out counted per agent or across the tree?
+    tension: >-
+      Per agent is easy to enforce locally and permits exponential growth, since
+      three agents each starting three is nine at the next level. Tree-wide
+      requires shared accounting on the delegation path.
+    resolution: >-
+      Tree-wide, sharing the same unit-of-work identifier from AHC-0026. Local
+      counting is the exponential case.
+  - question: Do concurrent sub-agents share a concurrency limit?
+    tension: >-
+      Sharing one limit prevents the burst and serialises work that was
+      parallelised for latency. Separate limits keep the latency benefit and
+      multiply peak load by the fan-out.
+  - question: What happens to sub-agents in flight when the limit trips?
+    tension: >-
+      Cancelling them recovers budget immediately and may abandon irreversible
+      work half-applied. Letting them finish is safe for state and overshoots
+      the ceiling by however much they had left.
+
+realization_policy: own
+
+see_also: [AHC-0041, AHC-0020, AHC-0052]

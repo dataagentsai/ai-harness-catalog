@@ -1,0 +1,54 @@
+# AHC-0041 — Budget enforcement outside the model's control
+id: AHC-0041
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L4]
+positions: [P4, P2]
+
+archetypes: [A6, A7, A9]
+core: false
+
+title: |-
+  Budget enforcement outside the model's control
+
+requirement: |-
+  Step count, wall-clock time and token spend are counted by the loop itself and checked before each iteration. The limits are not stated in the prompt, and no tool exposed to the model can read or raise them. Termination yields a typed terminal outcome the caller must handle, carrying whatever partial work exists.
+
+failure_mode: |-
+  A budget expressed as an instruction is a request, and a model under pressure to complete a task will exceed it, rationalise it, or lose track of the count entirely across a long trajectory. Where the only limit is the model's own discipline, the failure is unbounded in both time and money, and it arrives at whatever hour the trigger happened to fire.
+
+discharges: [AAC-0055, AAC-0064, AAC-0077, AAC-0050]
+
+design_decisions:
+  - question: Loop, or gateway?
+    tension: >-
+      In-loop sees the trajectory but misses calls that bypassed it; the gateway
+      sees every call but cannot distinguish one runaway agent from a busy
+      service.
+    resolution: >-
+      Both — the loop owns the trajectory, the gateway backstops the spend.
+      Neither alone covers both failures.
+  - question: What does the caller get at cutoff?
+    tension: >-
+      Partial result versus error. Silent truncation is the failure mode, and it
+      is the default in most hand-written loops.
+    resolution: >-
+      A typed terminal outcome under AHC-0017, never a bare truncated string.
+  - question: Do sub-agent and tool costs count against the parent's budget?
+    tension: >-
+      Counting them makes the ceiling meaningful and requires the accounting to
+      be threaded through every delegation. Not counting them means a supervisor
+      with a small budget can spawn unlimited work beneath it.
+    resolution: >-
+      They count. A budget that stops at the first delegation is not a budget.
+  - question: Is the wall-clock limit separate from the step limit?
+    tension: >-
+      Steps bound cost; wall-clock bounds the user's patience and the holding of
+      resources. A loop can exhaust one without approaching the other, and each
+      alone leaves a real failure uncovered.
+
+realization_policy: own
+
+see_also: [AHC-0030, AHC-0042, AHC-0017]

@@ -1,0 +1,49 @@
+# AHC-0080 — Rejection is a supported path, not a discard
+id: AHC-0080
+status: active
+since: "0.2.0"
+
+level: SHOULD
+layers: [L14, L12]
+positions: [P8, P7]
+
+archetypes: [A8]
+core: false
+
+title: |-
+  Rejection is a supported path, not a discard
+
+requirement: |-
+  When a person declines a generated artifact, the harness captures the artifact, the request that produced it and the stated reason, in a form that can be promoted into a curated set under AHC-0029. Rejection is an event the system records, not the absence of an acceptance.
+
+failure_mode: |-
+  Where rejection is just closing a window, the most valuable signal the system produces is discarded at the moment it is generated — a human has just labelled an output as wrong, for free, with a reason. Without capture, the same defect is regenerated indefinitely, and the team's belief about quality is formed from the outputs that happened to be accepted.
+
+discharges: [AAC-0014, AAC-0001, AAC-0074]
+
+design_decisions:
+  - question: Is a reason mandatory?
+    tension: >-
+      Requiring one produces far more useful signal and adds friction at the
+      exact moment the user wants to move on, so it gets satisfied with a single
+      character. Optional reasons are frictionless and mostly absent.
+    resolution: >-
+      A small set of pre-declared categories with optional free text. A category
+      is one click and is analysable; free text is neither.
+  - question: Does an edited-then-accepted artifact count as a rejection?
+    tension: >-
+      Treating an edit as acceptance loses the strongest signal available — the
+      diff between what was generated and what was actually used, which states
+      precisely what was wrong.
+    resolution: >-
+      Capture the diff. It is a labelled correction, which is the most expensive
+      kind of data to obtain deliberately.
+  - question: What is retained when the artifact contains sensitive material?
+    tension: >-
+      Rejected artifacts are stored longer than accepted ones because they feed
+      the curated set, and they carry the same content redaction obligations as
+      any other capture.
+
+realization_policy: own
+
+see_also: [AHC-0029, AHC-0019, AHC-0078]

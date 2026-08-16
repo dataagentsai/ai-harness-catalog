@@ -1,0 +1,49 @@
+# AHC-0068 — Isolation between sessions and tenants is structural
+id: AHC-0068
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L5, L16]
+positions: [P6, P3]
+
+archetypes: [A4]
+core: false
+
+title: |-
+  Isolation between sessions and tenants is structural
+
+requirement: |-
+  Every read and write of conversation state, memory and cached responses is scoped by session and tenant in the key itself, so that a query omitting the scope cannot return another party's data. The scope is applied by the storage layer, not by a filter each call site is expected to include.
+
+failure_mode: |-
+  Where scoping is a predicate callers add, one path that forgets it returns another customer's conversation, and that path is usually a later addition — an admin view, an analytics job, a cache introduced for latency. The semantic cache is the most dangerous instance: two users asking the same question in different words are a match by design, so a cache keyed on meaning alone serves one customer's answer to another.
+
+discharges: [AAC-0040, AAC-0096, AAC-0006]
+
+design_decisions:
+  - question: Scope in the key, or scope in the query?
+    tension: >-
+      Composite keys make cross-scope reads impossible to express and make
+      legitimate cross-tenant operations, such as a migration, awkward. Query
+      predicates are flexible and are one omission away from disclosure.
+    resolution: >-
+      In the key. A control that depends on every future author remembering is
+      not a control.
+  - question: Is the cache scoped as tightly as the store?
+    tension: >-
+      Caching per tenant multiplies entries and reduces hit rate, which is the
+      benefit that motivated the cache. Caching globally is efficient and is a
+      disclosure path.
+    resolution: >-
+      As tightly as the store. A cache is a copy of the data and inherits its
+      boundary.
+  - question: Does telemetry preserve the boundary?
+    tension: >-
+      Traces and datasets are copies too, and they are typically stored in one
+      pool with broad read access, which quietly relocates tenant data outside
+      the boundary the store enforces.
+
+realization_policy: own
+
+see_also: [AHC-0019, AHC-0027, AHC-0066]

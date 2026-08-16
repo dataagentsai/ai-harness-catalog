@@ -1,0 +1,49 @@
+# AHC-0064 — The corpus version is part of the resolved configuration
+id: AHC-0064
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L15, L9]
+positions: [P6, P7]
+
+archetypes: [A3]
+core: false
+
+title: |-
+  The corpus version is part of the resolved configuration
+
+requirement: |-
+  The index a run searched is identified in the same resolved record as the model pin and the prompt version, and index rebuilds produce a new identified version rather than mutating the one in service. A past run states which corpus version answered it.
+
+failure_mode: |-
+  An index rebuilt in place changes the behaviour of a system whose code, prompts and model pins are all unchanged. Every offline result gathered before the rebuild describes a system that no longer exists, and the regression this causes is uniquely hard to attribute because every artifact under version control is identical on both sides of it.
+
+discharges: [AAC-0034, AAC-0012, AAC-0016]
+
+design_decisions:
+  - question: Rebuild in place, or build and swap?
+    tension: >-
+      In-place is cheap in storage and makes rollback impossible and the
+      changeover unobservable. Build-and-swap gives an atomic cutover and a
+      revert target, at the cost of holding two copies of the corpus.
+    resolution: >-
+      Build and swap wherever the corpus fits twice. The revert target is the
+      point.
+  - question: What about a continuously updated corpus?
+    tension: >-
+      A stream of small updates has no natural version boundary, and pinning a
+      moving index is not possible. Snapshotting periodically gives boundaries
+      and means the served index is not the current one.
+    resolution: >-
+      Record a watermark per run even where a snapshot is impractical. A
+      timestamp is a weaker identity than a version and far better than none.
+  - question: Does an embedding model change count as a corpus change?
+    tension: >-
+      It is not a content change and it invalidates every vector in the index,
+      so it is the largest possible corpus change while looking like a
+      dependency upgrade.
+
+realization_policy: own
+
+see_also: [AHC-0003, AHC-0060, AHC-0065]

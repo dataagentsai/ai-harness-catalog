@@ -1,0 +1,50 @@
+# AHC-0042 — The loop has a no-progress condition, not only a step ceiling
+id: AHC-0042
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L4]
+positions: [P4]
+
+archetypes: [A6, A7, A9]
+core: false
+
+title: |-
+  The loop has a no-progress condition, not only a step ceiling
+
+requirement: |-
+  The loop detects that it is repeating — the same tool with the same arguments, an alternation between two states, a sequence of steps that changes nothing observable — and terminates on that condition independently of whether the step ceiling has been reached. Progress is defined by the harness in terms it can observe, not by asking the model whether it is making any.
+
+failure_mode: |-
+  A step ceiling alone converts an infinite loop into an expensive finite one: the agent repeats the same failing call forty times and stops because it ran out of steps, having spent the entire budget on one mistake. The user waits the full duration to receive nothing, and the record shows a normal budget exhaustion rather than a stuck loop.
+
+discharges: [AAC-0055, AAC-0063, AAC-0054]
+
+design_decisions:
+  - question: What counts as progress?
+    tension: >-
+      Defining it as a state change is observable and misses genuine reasoning
+      steps that legitimately change nothing outside the model. Defining it as
+      novelty of tool calls is easy and treats a legitimate retry after a
+      transient failure as a repeat.
+    resolution: >-
+      Repetition of an identical call with an identical result, more than a
+      small number of times. Anything cleverer needs evidence before it earns
+      the complexity.
+  - question: Does the loop tell the model it appears stuck?
+    tension: >-
+      Telling it sometimes breaks the pattern and is another turn of context
+      spent on a trajectory already going badly, and the model frequently
+      acknowledges being stuck and then repeats itself.
+  - question: Is a stuck termination reported differently from a budget one?
+    tension: >-
+      Distinguishing them makes the two most common agent failures separable in
+      the record, which is what tells you whether to fix the tools or the
+      budget. Collapsing them is simpler and hides the distinction that matters.
+    resolution: >-
+      Distinct terminal outcomes. They have different causes and different fixes.
+
+realization_policy: own
+
+see_also: [AHC-0041, AHC-0043, AHC-0052]

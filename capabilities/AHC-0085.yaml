@@ -1,0 +1,45 @@
+# AHC-0085 — The output schema is versioned and consumers are pinned
+id: AHC-0085
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L6, L15]
+positions: [P3]
+
+archetypes: [A2]
+core: false
+
+title: |-
+  The output schema is versioned and consumers are pinned
+
+requirement: |-
+  The typed structure the extractor produces carries a version, that version travels with every emitted object, and consumers declare which versions they accept. Adding a field, tightening a constraint or changing an enumeration is a version change, not an edit.
+
+failure_mode: |-
+  An extractor's output is read by code, not by a person, so a schema change breaks the consumer rather than confusing a reader. Where the version is implicit, a tightened enumeration silently drops records the consumer used to receive, and the loss shows up as a downstream count that is quietly lower than expected — with nothing in either system indicating why.
+
+discharges: [AAC-0026, AAC-0027, AAC-0022]
+
+design_decisions:
+  - question: Is adding an optional field a breaking change?
+    tension: >-
+      Formally no, and consumers that validate strictly will reject it, while
+      consumers that project fields by position will misread it. The answer
+      depends on how the consumers you do not control were written.
+    resolution: >-
+      Treat it as a version change and let consumers opt in. The cost is a
+      version number.
+  - question: Does the model see the schema version?
+    tension: >-
+      Including it in the contract shown to the model is harmless and gives the
+      model a token it may echo into a field where it does not belong.
+  - question: How long are old versions served?
+    tension: >-
+      Supporting several is kind to consumers and multiplies the surface that
+      must keep working. Cutting over fast is clean and breaks whoever was not
+      watching.
+
+realization_policy: own
+
+see_also: [AHC-0001, AHC-0086, AHC-0087]

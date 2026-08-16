@@ -1,0 +1,52 @@
+# AHC-0022 — Provider interaction is substitutable without changing the system
+id: AHC-0022
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L9, L12]
+positions: [P7, P3]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Provider interaction is substitutable without changing the system
+
+requirement: |-
+  The choke point can be given a substitute that returns recorded or synthetic responses, selected by configuration, with no change to the code above it. The substitute exercises the same parsing, the same policy path and the same outcome types as the live route.
+
+failure_mode: |-
+  Without a seam, every check of the surrounding logic needs a live call, which makes the fast feedback loop slow and expensive enough that it stops being run. Teams then reach for a substitute that bypasses parsing and policy, and the plumbing they most wanted to exercise is the part the substitute skipped.
+
+discharges: [AAC-0010, AAC-0059, AAC-0048]
+
+design_decisions:
+  - question: Substitute at the client, or at the network?
+    tension: >-
+      Substituting the client object is simple and skips serialisation, so
+      encoding and streaming bugs never surface. Intercepting at the network
+      layer exercises the whole path and needs more machinery to run.
+    resolution: >-
+      Network-level where streaming or serialisation matter; client-level is
+      acceptable for logic that never touches the wire format.
+  - question: Recorded responses, or synthetic ones?
+    tension: >-
+      Recordings are realistic and go stale silently against a model that has
+      moved on. Synthetic responses never go stale and encode what the author
+      imagined rather than what the model does.
+    resolution: >-
+      Recordings for realism, synthetic for the edge cases a recording will
+      never contain — refusals, malformed output, empty results.
+  - question: Can the substitute be selected in production by accident?
+    tension: >-
+      A configuration switch that reaches production returns fabricated answers
+      that look entirely normal. This is the failure mode with the longest time
+      to detection in the whole catalog.
+    resolution: >-
+      The substitute refuses to construct outside a non-production
+      configuration, rather than relying on the switch being set correctly.
+
+realization_policy: own
+
+see_also: [AHC-0010, AHC-0023]

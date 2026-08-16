@@ -1,0 +1,46 @@
+# AHC-0076 — The artifact is checked by running its own toolchain
+id: AHC-0076
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L6, L12]
+positions: [P3, P7]
+
+archetypes: [A8]
+core: false
+
+title: |-
+  The artifact is checked by running its own toolchain
+
+requirement: |-
+  Before generated code, query, configuration or markup is returned, the harness passes it through the parser, compiler, schema validator or linter that the target platform itself uses, and the result of that pass is part of the returned outcome. The toolchain is the real one, at the version the destination runs.
+
+failure_mode: |-
+  Judging a generated artifact by reading it, or by asking a model whether it looks right, misses the entire class of failure that a compiler catches for free. Where the check runs a different version from the destination, it passes artifacts the destination rejects — and the failure appears at deployment, attributed to the pipeline rather than to the generator.
+
+discharges: [AAC-0068, AAC-0071, AAC-0002]
+
+design_decisions:
+  - question: Does a failed check return to the model or to the caller?
+    tension: >-
+      Returning it to the model with the compiler's own error is the single
+      highest-yield correction loop available anywhere in this catalog, and it
+      is unbounded unless the attempts are counted against a budget.
+    resolution: >-
+      Back to the model, bounded, with attempts counted under AHC-0024. The
+      compiler error is better feedback than any rubric.
+  - question: How far does checking go — parse, compile, or execute?
+    tension: >-
+      Parsing is instant and catches least. Compiling needs the dependency
+      graph. Executing catches most and requires the sandbox of AHC-0077 and
+      real time per attempt.
+  - question: Is a warning a failure?
+    tension: >-
+      Treating warnings as failures raises quality and blocks on stylistic
+      opinions the destination tolerates. Ignoring them lets a real defect
+      through under a category the linter had already flagged.
+
+realization_policy: own
+
+see_also: [AHC-0001, AHC-0077, AHC-0079]

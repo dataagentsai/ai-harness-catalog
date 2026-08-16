@@ -1,0 +1,50 @@
+# AHC-0078 — The edit scope is declared and enforced outside the model
+id: AHC-0078
+status: active
+since: "0.2.0"
+
+level: MUST
+layers: [L3, L6]
+positions: [P5, P3]
+
+archetypes: [A8]
+core: false
+
+title: |-
+  The edit scope is declared and enforced outside the model
+
+requirement: |-
+  Where output modifies existing material, the set of files, regions or objects it may change is declared before generation and enforced when the change is applied. A change touching anything outside that set is rejected rather than applied and reported.
+
+failure_mode: |-
+  A model asked to fix one function will reformat the file, reorder imports, adjust an unrelated constant it judged wrong, or helpfully update a second call site. Each individual change may be defensible; the aggregate is a diff nobody asked for, arriving where a reviewer expected three lines. At scale this is how a generated change set becomes unreviewable and gets approved anyway.
+
+discharges: [AAC-0075, AAC-0074, AAC-0072]
+
+design_decisions:
+  - question: Whole-file rewrite, or a targeted patch?
+    tension: >-
+      A rewrite is reliable to produce and makes every change look like a change
+      to everything, destroying the reviewability that scope enforcement exists
+      to protect. A patch preserves the diff and fails more often to apply.
+    resolution: >-
+      Patch where the format supports it. A clean diff is the product, not a
+      presentation detail.
+  - question: Is scope declared by the caller or inferred from the request?
+    tension: >-
+      Caller-declared scope is unambiguous and requires the caller to know in
+      advance which files matter, which is often the thing they were asking
+      about. Inferred scope adapts and is decided by the same model whose
+      overreach the scope exists to bound.
+  - question: What happens to a rejected out-of-scope change?
+    tension: >-
+      Discarding it silently loses a change that may have been correct and
+      necessary. Surfacing it separately preserves the information and puts a
+      second decision in front of the reviewer.
+    resolution: >-
+      Surface it as a proposal outside the diff. A correct change in the wrong
+      place is still information.
+
+realization_policy: own
+
+see_also: [AHC-0076, AHC-0079, AHC-0039]
