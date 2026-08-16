@@ -1,0 +1,47 @@
+# AHC-0094 — Output-side enforcement is its own point, with its own semantics
+id: AHC-0094
+status: active
+since: "0.3.0"
+
+level: MUST
+layers: [L7, L6]
+positions: [P3, P2]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Output-side enforcement is its own point, with its own semantics
+
+requirement: |-
+  The position that screens what the system produces is distinct from the one that screens what it receives, and declares its own open-or-closed behaviour, its own ordering under AHC-0093, and what the caller receives when it acts. A block on the way out maps to the refused outcome of AHC-0017 rather than returning altered content as though the model had produced it.
+
+failure_mode: |-
+  Treating input and output screening as one configuration applies input semantics to a situation that does not share them. The asymmetries are real: an input block costs nothing, while an output block discards a paid generation; input arrives complete, while output may be streaming and partly delivered; and content the model produced from legitimate input is a different risk from content someone sent you. Systems built with one point typically screen input thoroughly and output barely, which is the wrong way round for the failure that reaches a user.
+
+discharges: [AAC-0092, AAC-0091, AAC-0005]
+
+design_decisions:
+  - question: What does the caller receive when output is blocked?
+    tension: >-
+      Returning nothing is safe and gives a user no idea whether the system
+      failed or refused. Returning a substitute is friendly and is content the
+      system authored while claiming to be the model's answer.
+    resolution: >-
+      The refused outcome under AHC-0017, with a reason class. A substitute
+      returned as an ordinary result is the system lying about its own behaviour.
+  - question: Is a blocked generation retried?
+    tension: >-
+      Retrying may produce a compliant answer and pays twice for one request,
+      and a model that produced disallowed content once will frequently do so
+      again — so the retry budget drains against a case it cannot fix.
+  - question: Does output screening see the input that produced it?
+    tension: >-
+      Seeing the request makes the judgement far better — the same sentence can
+      be fine as an answer to one question and not another — and doubles the
+      material entering the screening component, including under AHC-0083 the
+      untrusted half.
+
+realization_policy: own
+
+see_also: [AHC-0008, AHC-0015, AHC-0093]

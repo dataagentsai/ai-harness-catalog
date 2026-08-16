@@ -1,0 +1,52 @@
+# AHC-0096 — A deadline propagates, and every layer honours the remainder
+id: AHC-0096
+status: active
+since: "0.3.0"
+
+level: MUST
+layers: [L8, L10]
+positions: [P3, P4, P2]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  A deadline propagates, and every layer honours the remainder
+
+requirement: |-
+  A request carries one absolute deadline set at the boundary, and every component beneath it — retrieval, policy evaluation, the model call, tool dispatch, a loop iteration — receives the time remaining rather than applying a timeout of its own. A component with insufficient time left declines rather than starting work it cannot finish.
+
+failure_mode: |-
+  Independent timeouts at each layer produce a shortest-wins race nobody configured: the observed timeout belongs to whichever layer happened to be tightest, and changing the one you can see has no effect. The opposite is equally common — each layer's timeout is generous, they sum past the caller's own, and the caller gives up while the system continues working and billing for a response no one will receive.
+
+discharges: [AAC-0007, AAC-0050, AAC-0009]
+
+design_decisions:
+  - question: Absolute deadline, or per-hop duration?
+    tension: >-
+      A duration is easy to pass and restarts the clock at every hop, so ten
+      hops of "five seconds" is fifty. An absolute instant is unambiguous and
+      requires clocks that agree well enough across processes.
+    resolution: >-
+      Absolute. Clock skew of a few milliseconds is a smaller error than a
+      duration silently multiplying by the hop count.
+  - question: Does exceeding the deadline cancel work in flight?
+    tension: >-
+      Cancelling stops the spend and may abandon a tool call midway, leaving an
+      effect half-applied. Letting it finish is safe for state and keeps paying
+      for a result that is already too late to use.
+    resolution: >-
+      Cancel reads, let irreversible writes complete and record them under
+      AHC-0056. Elapsed time is not a reason to leave state torn.
+  - question: What happens when too little time remains to start?
+    tension: >-
+      Declining early frees capacity and returns nothing on a request that might
+      have finished. Starting anyway is optimistic and guarantees the work is
+      wasted rather than merely likely to be.
+    resolution: >-
+      Decline, and return a distinct outcome. A request that cannot succeed
+      should not consume a model call to prove it.
+
+realization_policy: own
+
+see_also: [AHC-0005, AHC-0075, AHC-0095]

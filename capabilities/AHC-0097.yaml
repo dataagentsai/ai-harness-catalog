@@ -1,0 +1,49 @@
+# AHC-0097 — Fan-out within one unit of work is bounded
+id: AHC-0097
+status: active
+since: "0.3.0"
+
+level: MUST
+layers: [L8, L13]
+positions: [P3, P4]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Fan-out within one unit of work is bounded
+
+requirement: |-
+  Where a single request issues several model calls in parallel — one per document, per chunk, per candidate, per branch — the number is limited by the harness and drawn from the same accumulated budget as the unit under AHC-0007. The bound is separate from the process-wide concurrency limit of AHC-0020.
+
+failure_mode: |-
+  A process-wide limit constrains total load and says nothing about one request, so a single caller supplying five hundred documents issues five hundred calls that are individually reasonable and collectively the whole budget. Under a queue this is worse than a burst: the unit occupies every available slot, and every other caller waits behind one request that nobody classified as expensive because each of its calls was small.
+
+discharges: [AAC-0007, AAC-0008, AAC-0093]
+
+design_decisions:
+  - question: Reject the oversized request, or process it in batches?
+    tension: >-
+      Rejecting is honest, immediate and refuses work the caller legitimately
+      wanted. Batching completes it and turns a request the caller expected to
+      be fast into a long-running job they have no way to observe.
+    resolution: >-
+      Whichever is chosen, decide it at the boundary under AHC-0016 rather than
+      discovering the size after the calls have started.
+  - question: Does fan-out count toward the unit's deadline or extend it?
+    tension: >-
+      Sharing one deadline keeps the caller's expectation intact and means a
+      wide fan-out cannot complete. Extending it makes the work possible and
+      breaks the guarantee the deadline expressed.
+  - question: Is partial fan-out a usable result?
+    tension: >-
+      Returning the branches that completed is more useful than nothing and
+      produces a result whose completeness varies by load, so the same request
+      returns different amounts on different days.
+    resolution: >-
+      Return it marked incomplete under AHC-0025, naming which branches are
+      missing. Silent partial fan-out is the hardest failure here to notice.
+
+realization_policy: own
+
+see_also: [AHC-0020, AHC-0048, AHC-0075]

@@ -1,0 +1,52 @@
+# AHC-0093 — Policies compose in a declared order
+id: AHC-0093
+status: active
+since: "0.3.0"
+
+level: MUST
+layers: [L7]
+positions: [P2, P3]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Policies compose in a declared order
+
+requirement: |-
+  Where more than one policy applies at a position, the order they run in is declared rather than incidental, and each states whether it may modify what the next one sees. A policy that transforms content and a policy that inspects content are distinguished, and the record from AHC-0018 states the order that ran.
+
+failure_mode: |-
+  Order is invisible until it is wrong, and it is usually wrong in the same direction: redaction runs first, so the screening policy inspects text with the identifiers already removed and no longer matches the pattern it exists to catch. The system reports both policies as healthy and passing. Registration order is typically alphabetical, or the order someone added them, which means the composition was never a decision anyone made.
+
+discharges: [AAC-0091, AAC-0006, AAC-0004]
+
+design_decisions:
+  - question: Do transforming policies run before or after inspecting ones?
+    tension: >-
+      Transform-first means later inspection sees sanitised content and can miss
+      what the transform removed. Inspect-first means the inspectors see raw
+      content, which is correct for detection and puts the unmodified material
+      through more components.
+    resolution: >-
+      Inspect first, transform last, and hold the ordering as configuration
+      rather than as registration order.
+  - question: Does one policy's decision short-circuit the rest?
+    tension: >-
+      Stopping at the first block is cheap and means you never learn what else
+      would have fired, so tuning is done one policy at a time forever.
+      Evaluating all of them is complete and pays for every policy on every
+      blocked request.
+    resolution: >-
+      Evaluate all, act on the first block. The cost is bounded and the record
+      is what makes the policy set improvable.
+  - question: Can the order differ between the input and output sides?
+    tension: >-
+      A single order is simpler to reason about, and the two sides have
+      genuinely different requirements — the output side has AHC-0094's
+      streaming constraint, which forces some ordering choices that make no
+      sense on input.
+
+realization_policy: own
+
+see_also: [AHC-0008, AHC-0018, AHC-0094]

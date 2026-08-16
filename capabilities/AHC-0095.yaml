@@ -1,0 +1,50 @@
+# AHC-0095 — Policy evaluation has its own budget and a declared timeout path
+id: AHC-0095
+status: active
+since: "0.3.0"
+
+level: MUST
+layers: [L7, L8]
+positions: [P2, P3]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Policy evaluation has its own budget and a declared timeout path
+
+requirement: |-
+  Each policy runs under a latency ceiling drawn from the request's remaining deadline under AHC-0096, and exceeding it is a distinct condition with its own declared handling — separate from the policy returning a block. A policy that is slow, hung or unreachable resolves to the open-or-closed default from AHC-0008 within a bounded time.
+
+failure_mode: |-
+  The fail-closed decision is meaningless without a timeout, because a policy that hangs never returns a decision to act on — the request simply stops, and the caller sees a timeout rather than a refusal. Where several policies each carry their own generous ceiling, they sum: five policies at two seconds is ten seconds of screening on a request budgeted for three, and the screening layer becomes the system's dominant latency without appearing in any one component's numbers.
+
+discharges: [AAC-0091, AAC-0007, AAC-0009]
+
+design_decisions:
+  - question: Is a policy timeout the same as a policy block?
+    tension: >-
+      Collapsing them is simple and means an outage in the screening
+      infrastructure is indistinguishable from a surge of genuinely disallowed
+      traffic — so the dashboard shows a spike in blocks and the incident is
+      diagnosed as an attack.
+    resolution: >-
+      Distinct conditions, distinct records. They have opposite remedies.
+  - question: Do policies run in parallel or in sequence?
+    tension: >-
+      Parallel bounds total latency at the slowest rather than the sum, and
+      breaks the ordering guarantee of AHC-0093 for any policy that transforms
+      what the next one sees.
+    resolution: >-
+      Parallel within a group that only inspects; sequential where one
+      transforms. The ordering constraint decides, not the latency target.
+  - question: Where does the policy budget come from?
+    tension: >-
+      A fixed ceiling is predictable and consumes the same slice of a
+      near-expired deadline as a fresh one. Drawing from the remaining deadline
+      adapts and can leave a policy almost no time on a slow request, which is
+      the moment it silently resolves to its default.
+
+realization_policy: own
+
+see_also: [AHC-0008, AHC-0093, AHC-0096]

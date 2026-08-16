@@ -2,8 +2,8 @@
 
 **Harness capabilities for AI applications, by architecture archetype.**
 
-Status: **working draft 0.2.0** — the normative catalog is complete.
-92 capabilities across all 16 harness layers and all 10 archetypes, every one of
+Status: **working draft 0.3.0** — the normative catalog is complete.
+98 capabilities across all 16 harness layers and all 10 archetypes, every one of
 the assurance catalog's 108 obligations discharged. Identifiers are stable from
 the first tagged release. Nothing here is externally binding.
 
@@ -138,22 +138,24 @@ warns rather than fails when it is not — this repository must lint standalone.
 
 | | Count |
 |---|---|
-| Capabilities | **92** |
-| Core — owed by every shape | 37 |
+| Capabilities | **98** |
+| Core — owed by every shape | 43 |
 | Archetype deltas | 55 |
 | Harness layers covered | **16 of 16** |
-| `discharges` references | 273 |
+| Named design tensions | 292 |
+| `discharges` references | 291 |
 | Assurance obligations covered | **108 of 108** |
 
-Landed close to the projected ~89, for the structural reason the assurance
-catalog lands at 108: a core every shape owes, plus what is genuinely *new*
-about each shape. Deltas per archetype run from 2 (single-turn transform) to 10
-(tool-using agent) — that spread is the taxonomy earning its keep.
+Landed near the projected ~89, for the structural reason the assurance catalog
+lands at 108: a core every shape owes, plus what is genuinely *new* about each
+shape. Deltas per archetype run from 2 (single-turn transform) to 20
+(multi-agent, counting inherited agent capabilities) — that spread is the
+taxonomy earning its keep.
 
 ### Roadmap
 
 - [x] **Phase 0** — taxonomy, schema, linter with both boundary rules
-- [x] **Phase 1** — the full core layer, 37 capabilities
+- [x] **Phase 1** — the full core layer, 43 capabilities
 - [x] **Phase 2** — archetype deltas for all ten shapes, 55 capabilities
 - [ ] **Phase 3** — blueprints: requirements, architecture and design per archetype
 - [ ] **Phase 4** — realizations, authored in one dated pass, not incrementally

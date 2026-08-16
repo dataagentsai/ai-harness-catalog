@@ -1,0 +1,50 @@
+# AHC-0098 — Admission is by declared priority class
+id: AHC-0098
+status: active
+since: "0.3.0"
+
+level: SHOULD
+layers: [L8]
+positions: [P3, P2, P1]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Admission is by declared priority class
+
+requirement: |-
+  Work entering the harness carries a declared class — interactive, background, bulk — and the concurrency and queue capacity of AHC-0020 is allocated per class rather than shared first-come-first-served. Saturation degrades the lowest class first, and the class is recorded on the unit.
+
+failure_mode: |-
+  With one undifferentiated queue, a backfill job and a user waiting in front of a screen compete on equal terms, and the backfill wins because it submits faster and never stops. Interactive latency then collapses whenever anything bulk is running, and because both are legitimate traffic, the graphs show a healthy system under load rather than a scheduling decision nobody made.
+
+discharges: [AAC-0007, AAC-0009, AAC-0093]
+
+design_decisions:
+  - question: Who assigns the class — the caller, or the entry point?
+    tension: >-
+      Caller-declared is accurate about intent and is a field every caller will
+      eventually set to the highest value. Entry-point-derived cannot be gamed
+      and cannot distinguish two kinds of work arriving through the same door.
+    resolution: >-
+      Derive from the entry point, allow the caller to lower it only. A priority
+      that callers can raise is not a priority.
+  - question: Reserved capacity, or strict preemption?
+    tension: >-
+      Reserving a share for interactive work guarantees headroom and wastes it
+      whenever there is no interactive traffic. Strict preemption uses
+      everything and can starve background work indefinitely, so the nightly job
+      silently never completes.
+    resolution: >-
+      Reserve for the top class, allow the rest to use the remainder. Starvation
+      that is only visible at month end is the harder failure to attribute.
+  - question: Does class survive into delegation and fan-out?
+    tension: >-
+      Propagating it keeps a background task's sub-work in the background and
+      requires the class to travel with every handoff under AHC-0047. Not
+      propagating means a bulk job's sub-agents compete as interactive work.
+
+realization_policy: own
+
+see_also: [AHC-0020, AHC-0021, AHC-0090]
