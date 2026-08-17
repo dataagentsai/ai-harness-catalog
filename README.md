@@ -12,7 +12,7 @@ the first tagged release. Nothing here is externally binding.
 ## The gap this fills
 
 Its sibling, the
-[AI Assurance Catalog](https://github.com/basantchoudhary/ai-assurance-catalog),
+[AI Assurance Catalog](https://github.com/dataagentsai/ai-assurance-catalog),
 publishes 108 test obligations for AI applications. Read enough of them and a
 phrase starts recurring — *"enforced by the harness"*, *"the harness must"*,
 *"outside the model's control"*.

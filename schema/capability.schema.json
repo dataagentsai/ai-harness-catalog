@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/basantchoudhary/ai-harness-catalog/schema/capability.schema.json",
+  "$id": "https://github.com/dataagentsai/ai-harness-catalog/schema/capability.schema.json",
   "title": "AHC Capability",
   "description": "One harness capability. The normative unit of the AI Harness Catalog. A capability states WHAT MUST EXIST in a system, tags WHICH archetypes need it, names WHERE it can physically live, and records the design decisions its builder must make. A capability never states a verification obligation (that is the assurance catalog's job), never names a product, and never sets a threshold.",
   "type": "object",

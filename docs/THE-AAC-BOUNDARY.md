@@ -1,7 +1,7 @@
 # The boundary with the AI Assurance Catalog
 
 This catalog has a sibling: the
-[AI Assurance Catalog](https://github.com/basantchoudhary/ai-assurance-catalog).
+[AI Assurance Catalog](https://github.com/dataagentsai/ai-assurance-catalog).
 They share an archetype vocabulary and nothing else. Keeping them distinct is
 the single most important editorial discipline in this repository, because the
 moment they blur, one of them becomes redundant.
