@@ -39,12 +39,12 @@ jobs:
       # The page is useless if its client script dies before render() runs.
       - run: npm run check-page
 
-      # enablement turns Pages on for the repository on first run, so the site
-      # does not depend on someone remembering a settings toggle.
+      # Requires Pages to be on for the repository with its source set to
+      # GitHub Actions — Settings > Pages > Build and deployment. Enabling it
+      # from here instead was tried and refused by the token, so the toggle is
+      # a one-time manual step and this step is deliberately just a lookup.
       - uses: actions/configure-pages@v5
         if: github.event_name != 'pull_request'
-        with:
-          enablement: true
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name != 'pull_request'
         with:
