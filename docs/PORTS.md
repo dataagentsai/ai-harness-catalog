@@ -4,7 +4,7 @@ A capability says what must exist. A **port** says where the harness meets
 something it does not own, and what must hold across that meeting whoever
 implements it.
 
-Sixteen of them: eleven every harness has, five pulled in by archetype.
+Seventeen of them: eleven every harness has, six pulled in by archetype.
 
 ## Why the layer exists
 
@@ -31,7 +31,7 @@ language without this repository shipping a package.
 - **Not one per product category.** There is deliberately no prompt-registry
   port: a prompt registry is versioned storage serving content by identifier,
   which is the `config` seam with larger values. A port that exists because a
-  product category exists is how sixteen seams become sixty.
+  product category exists is how seventeen seams become sixty.
 - **Not a place for thresholds.** Same boundary as everywhere else in the
   catalog: how long a policy evaluation may take is a port concern; *two hundred
   milliseconds* is the adopter's.
@@ -73,6 +73,32 @@ can drive the real system.
 Naming it is the point. An eval harness that was never a seam gets bolted on
 late, and by then the production path is the one thing it cannot reach without a
 branch — which is exactly the branch that makes the measurement worthless.
+
+## Where the orchestrator is
+
+The commonest question on first reading: there is no `loop` port, no
+`orchestrator` port, and that is deliberate. Three different things get called
+orchestration, and they land in three different places.
+
+**The agent loop is the harness.** Every control-loop capability in the catalog
+crosses no seam — budget enforcement outside the model's control, the
+no-progress condition, delegation depth and fan-out, cycle detection,
+containment of a sub-agent's failure. They are ordering properties, and
+something selectable cannot enforce an ordering property: whatever owns the loop
+owns all of them. A catalog that offered the loop as a choice would be offering
+its own guarantees as a choice.
+
+**The step order is a composition root**, and it belongs to the adopter. Which
+port is called before which — admission before the deadline starts, the ceiling
+checked before the call rather than after, policy evaluated separately on the
+way in and on the way out, redaction before anything leaves the process — is
+implied by the capabilities and lives in the adopter's own code. This catalog
+states the constraints; it does not ship the function.
+
+**Only durable execution is a seam.** In a deterministic workflow the control
+flow belongs to the adopter's code while resumption, retry and crash recovery
+belong to infrastructure. That split is what the `workflow` port names, and it
+is why that port exists while a `loop` port does not.
 
 ## Identifiers
 

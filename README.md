@@ -92,9 +92,14 @@ in this catalog.
 
 ## The seams
 
-Sixteen **ports** — eleven every harness has, five pulled in by archetype. A
+Seventeen **ports** — eleven every harness has, six pulled in by archetype. A
 capability says what must exist; a port says where the harness meets something
 it does not own, and what must hold across that meeting whoever implements it.
+
+There is no `loop` port and no `orchestrator` port. Every control-loop
+capability crosses no seam, because ordering properties cannot be enforced by
+something selectable — whatever owns the loop owns all of them. Only durable
+execution is a seam, which is what `workflow` names.
 
 ```yaml
 port: model
@@ -117,7 +122,7 @@ substitution_test: >-       # how you tell a port from a wrapper
 
 Declared as **data**, with no signatures, types or language, so an interface can
 be generated in any stack without this repository shipping a package. A port is
-not a partition of the catalog — 27 of the 98 capabilities are structural and
+not a partition of the catalog — 26 of the 98 capabilities are structural and
 cross no seam at all. See [docs/PORTS.md](docs/PORTS.md).
 
 ## The boundary — and why there are two repositories
