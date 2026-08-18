@@ -26,7 +26,7 @@ language without this repository shipping a package.
   error taxonomy. `operations` states intent; a generated interface states
   shape, and generation belongs downstream.
 - **Not a partition of the catalog.** Most capabilities are structural and cross
-  no seam at all — 27 of 98 today. A capability with no port is normal, not a
+  no seam at all — 26 of 98 today. A capability with no port is normal, not a
   gap, and the linter reports the split as information rather than a fault.
 - **Not one per product category.** There is deliberately no prompt-registry
   port: a prompt registry is versioned storage serving content by identifier,
