@@ -7,6 +7,10 @@ Status: **working draft 0.3.0** — the normative catalog is complete.
 the assurance catalog's 108 obligations discharged. Identifiers are stable from
 the first tagged release. Nothing here is externally binding.
 
+**Read it as a page → <https://dataagentsai.github.io/ai-harness-catalog/>** —
+the catalog rendered and filterable by shape and layer, with an orientation
+section on what AHC and AAC each are and where the line between them falls.
+
 ---
 
 ## The gap this fills
@@ -121,14 +125,20 @@ blueprints/     per-archetype assembled views — the ten pages         (Phase 3
 realizations/   how each capability gets built; only place products appear (Phase 4)
 references/     runnable skeletons, copied not imported               (Phase 5)
 crosswalks/     -> assurance catalog, telemetry conventions
-tools/          linter
+tools/          linter, page renderer
 docs/           the AAC boundary, identifier policy, scope
+site/           generated page — build artifact, not in version control
 ```
 
 ```bash
 npm install
 npm run lint     # schema + identifier + both boundary disciplines
+npm run build    # lint, then render site/index.html and smoke-test it
 ```
+
+The published page is rendered from `capabilities/` by CI on every push to
+`main` and deployed to GitHub Pages. Nothing under `site/` is edited by hand — a
+generated document under version control is a second master.
 
 The linter checks `discharges` against a real checkout of the assurance catalog
 when one is reachable at `../ai-assurance-catalog` or `$AAC_CATALOG_PATH`, and

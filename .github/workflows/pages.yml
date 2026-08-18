@@ -1,0 +1,62 @@
+name: site
+
+# The published page is a build artifact of capabilities/, never a file anyone
+# edits. It is rendered here rather than committed, which is why site/ stays in
+# .gitignore — a generated document in version control is a second master.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time, and never cancel one half-done.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install --no-fund --no-audit
+
+      # Schema, identifier permanence, and both boundary disciplines. A page
+      # rendered from a catalog that does not lint is worse than no page.
+      - run: npm run lint
+
+      - run: npm run render
+
+      # The page is useless if its client script dies before render() runs.
+      - run: npm run check-page
+
+      # enablement turns Pages on for the repository on first run, so the site
+      # does not depend on someone remembering a settings toggle.
+      - uses: actions/configure-pages@v5
+        if: github.event_name != 'pull_request'
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
+        with:
+          path: site
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
