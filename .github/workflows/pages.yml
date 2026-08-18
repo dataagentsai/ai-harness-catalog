@@ -1,8 +1,9 @@
 name: site
 
-# The published page is a build artifact of capabilities/, never a file anyone
-# edits. It is rendered here rather than committed, which is why site/ stays in
-# .gitignore — a generated document in version control is a second master.
+# The page is a build artifact of capabilities/, never a file anyone edits.
+# It is committed as well as deployed, so the catalog is readable straight from
+# the repository without waiting on a deployment — and because it is committed,
+# the rebuild below fails the build if it has gone stale.
 
 on:
   push:
@@ -34,22 +35,29 @@ jobs:
       # rendered from a catalog that does not lint is worse than no page.
       - run: npm run lint
 
-      - run: npm run render
+      # A rebuild that produces a diff means someone edited generated output
+      # instead of the catalog it comes from.
+      - name: site/ is in sync with capabilities/
+        run: |
+          npm run render
+          if ! git diff --quiet -- site/; then
+            echo "::error::site/ is stale or was hand-edited. Run 'npm run build' and commit."
+            git diff --stat -- site/
+            exit 1
+          fi
 
       # The page is useless if its client script dies before render() runs.
       - run: npm run check-page
 
-      # Requires Pages to be on for the repository with its source set to
-      # GitHub Actions — Settings > Pages > Build and deployment. Enabling it
-      # from here instead was tried and refused by the token, so the toggle is
-      # a one-time manual step and this step is deliberately just a lookup.
-      - uses: actions/configure-pages@v5
-        if: github.event_name != 'pull_request'
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name != 'pull_request'
         with:
           path: site
 
+  # Deployment is kept in its own job so that a repository without Pages turned
+  # on still gets an honest green signal on the catalog itself. This job stays
+  # red until Settings > Pages > Build and deployment is set to GitHub Actions;
+  # enabling it from the workflow was tried and refused by the token.
   deploy:
     if: github.event_name != 'pull_request'
     needs: build
