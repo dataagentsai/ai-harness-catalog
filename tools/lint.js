@@ -239,6 +239,33 @@ for (const pf of portFiles) {
   if (!doc.kernel_owns || doc.kernel_owns.trim().length < 30) {
     err(pf, `kernel_owns is empty — a seam with nothing on the harness side is a client library`);
   }
+
+  /*
+   * Tier has to be earned. A core port is one every shape binds, so it must
+   * serve at least one core capability — otherwise the simplest archetype is
+   * being asked to wire up machinery with no capability behind it. This caught
+   * `state`, which serves nothing but archetype deltas.
+   */
+  const servedDocs = doc.serves.map((c) => byId.get(c)).filter(Boolean);
+  if (doc.tier === "core" && servedDocs.length && !servedDocs.some((c) => c.core)) {
+    err(pf, `tier: core but every capability it serves is an archetype delta — this is an extension port`);
+  }
+
+  /*
+   * And the other direction: a delta served by a port that no shape the port
+   * claims would ever need. Overlap is not enough to complain about — a
+   * capability tagged [A5, A7, A9] is legitimately served by a seam that only
+   * claims A7, because the other two shapes reach it through a different one.
+   * Zero overlap is the real signal: the port is serving something for nobody.
+   */
+  if (doc.tier === "extension") {
+    const required = new Set(doc.requires_archetypes || []);
+    for (const c of servedDocs.filter((c) => !c.core)) {
+      if (!c.archetypes.some((a) => required.has(a))) {
+        warn(pf, `serves ${c.id}, which belongs to ${c.archetypes.join("/")} — no shape this port claims needs it`);
+      }
+    }
+  }
   for (const s of doc.see_also || []) {
     if (!ports.has(s) && !portFiles.includes(`${s}.yaml`)) {
       err(pf, `see_also references unknown port ${s}`);

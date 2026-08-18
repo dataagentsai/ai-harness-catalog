@@ -4,7 +4,7 @@ A capability says what must exist. A **port** says where the harness meets
 something it does not own, and what must hold across that meeting whoever
 implements it.
 
-Seventeen of them: eleven every harness has, six pulled in by archetype.
+Seventeen of them: ten every harness has, seven pulled in by archetype.
 
 ## Why the layer exists
 

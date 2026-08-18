@@ -3,7 +3,8 @@ port: state
 status: active
 since: "0.4.0"
 
-tier: core
+tier: extension
+requires_archetypes: [A4, A5, A6, A7, A8, A9]
 direction: consumed
 layers: [L5]
 
@@ -66,5 +67,11 @@ substitution_test: >-
   Replace the implementation with an in-memory one. Every behaviour must be
   identical within a single process; the only permitted difference is what
   survives a restart, and that difference is already declared.
+
+notes: >-
+  Extension rather than core, which is not obvious and was wrong here first.
+  Every capability this seam serves is an archetype delta — a single-turn
+  transform, a structured extractor and a judge hold nothing between calls, so
+  binding durable storage for them is machinery with no capability behind it.
 
 see_also: [identity, trigger, recorder]

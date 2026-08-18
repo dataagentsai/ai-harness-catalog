@@ -92,7 +92,7 @@ in this catalog.
 
 ## The seams
 
-Seventeen **ports** — eleven every harness has, six pulled in by archetype. A
+Seventeen **ports** — ten every harness has, seven pulled in by archetype. A
 capability says what must exist; a port says where the harness meets something
 it does not own, and what must hold across that meeting whoever implements it.
 

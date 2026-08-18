@@ -4,7 +4,9 @@ status: active
 since: "0.4.0"
 
 tier: extension
-requires_archetypes: [A6, A7, A8, A9]
+# A4 is here because of AHC-0070: an assistant that can escalate to a person
+# needs this seam, even though it takes no autonomous action itself.
+requires_archetypes: [A4, A6, A7, A8, A9]
 direction: consumed
 layers: [L14]
 
