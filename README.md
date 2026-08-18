@@ -153,6 +153,17 @@ and construction guidance competes with every framework's documentation.
 **Tripwire:** if anything under `references/` is ever published as an importable
 dependency rather than a skeleton to copy, the boundary has been crossed.
 
+## Openness
+
+The interchange formats — port specs, and the profile and receipt schemas as
+they land — live in this repository rather than in any implementation, under CC
+BY, so that nothing needs a particular tool to produce or read them. Eleven
+rules keep that real, each forbidding something specific: no privileged
+implementation, no format declared stable on one implementation, `x_` extension
+keys instead of forks, permanent identifiers, no runtime dependency, no check
+that only works on generated code, and no tooling that reports anything to
+anyone. See [docs/OPENNESS.md](docs/OPENNESS.md).
+
 ## Layout
 
 ```
@@ -165,7 +176,7 @@ realizations/   how each capability gets built; only place products appear (Phas
 references/     runnable skeletons, copied not imported               (Phase 5)
 crosswalks/     -> assurance catalog, telemetry conventions
 tools/          linter, page renderer
-docs/           the AAC boundary, identifier policy, scope
+docs/           the AAC boundary, identifier policy, scope, ports, openness
 site/           the rendered page — generated, committed, never hand-edited
 ```
 
