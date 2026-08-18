@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/dataagentsai/ai-harness-catalog/schema/port.schema.json",
+  "title": "AHC Port",
+  "description": "One seam between the harness and something outside it. A port states WHAT MUST HOLD across the seam, which capabilities it participates in, what stays on the harness side of it, and what an outside implementation supplies. It is declared as data: no signatures, no types, no language. A port never names a product, never states a verification obligation, and is never a partition of the catalog — most capabilities are structural and have no port at all.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "port", "status", "since", "tier", "direction", "layers",
+    "summary", "serves", "kernel_owns", "supplied_outside",
+    "operations", "invariants", "substitution_test"
+  ],
+  "properties": {
+    "port": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "The port name. Permanent and never reused — this is the interchange vocabulary, and renaming one breaks every profile that binds it. Layer and archetype are metadata, never part of the name."
+    },
+    "status": {
+      "enum": ["active", "deprecated", "superseded"],
+      "description": "Deprecated ports stay declared forever so existing bindings keep resolving."
+    },
+    "since": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "superseded_by": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }
+    },
+    "tier": {
+      "enum": ["core", "extension"],
+      "description": "'core' — a harness of any shape has this seam. 'extension' — pulled in by archetype, and requires_archetypes says which. Mirrors the catalog's own core/delta split so a single-turn transform never has to think about approval queues."
+    },
+    "requires_archetypes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^A([1-9]|10)$" },
+      "description": "Required for extension ports, forbidden for core ones."
+    },
+    "direction": {
+      "enum": ["consumed", "exported"],
+      "description": "'consumed' — the harness calls out through this seam. 'exported' — the harness offers this seam to something else, which is a genuinely different shape and the reason evaluation gets bolted on late when it is not modelled."
+    },
+    "layers": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^L([1-9]|1[0-6])$" }
+    },
+    "summary": { "type": "string", "minLength": 40 },
+    "serves": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^AHC-[0-9]{4}$" },
+      "description": "Capabilities this seam participates in. Participation is not ownership: a capability listed here is usually shared with the harness side, and the split is stated in kernel_owns."
+    },
+    "kernel_owns": {
+      "type": "string",
+      "minLength": 30,
+      "description": "What stays on the harness side of the seam and is therefore not an implementation's to decide. This field is what stops a port from quietly becoming a client library — if everything is on the far side, the seam is a wrapper."
+    },
+    "supplied_outside": {
+      "type": "string",
+      "minLength": 30,
+      "description": "What an implementation on the far side actually provides. Stated as a class of thing, never as a product."
+    },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "description": "What passes through the seam, by intent. No signatures, no types, no language — those belong to a generated interface, not to the specification.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "intent"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+          "intent": { "type": "string", "minLength": 20 },
+          "optional": {
+            "type": "boolean",
+            "description": "True when an implementation may legitimately not offer it, in which case the harness must have a declared path for its absence."
+          }
+        }
+      }
+    },
+    "invariants": {
+      "type": "array",
+      "minItems": 1,
+      "description": "What must hold across this seam whoever implements it. This is the substance of a port — a seam with no invariants is a naming convention.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["must", "because"],
+        "properties": {
+          "must": { "type": "string", "minLength": 20 },
+          "because": {
+            "type": "string",
+            "minLength": 30,
+            "description": "What breaks when it does not hold. Same discipline as failure_mode on a capability: a vague one means the invariant is a preference."
+          },
+          "capability": { "type": "string", "pattern": "^AHC-[0-9]{4}$" },
+          "checkable": {
+            "enum": ["static", "dynamic", "declared"],
+            "description": "How an adopter could establish it holds. 'declared' means neither a static rule nor a replayable test can reach it, so it has to be asserted and owned — and that is worth knowing before anyone claims coverage."
+          }
+        }
+      }
+    },
+    "substitution_test": {
+      "type": "string",
+      "minLength": 40,
+      "description": "What proves this is a port rather than one implementation's API with a wrapper on it: the swap that must be possible, and what may legitimately differ afterwards. If no such swap can be described, the seam is in the wrong place."
+    },
+    "notes": { "type": "string" },
+    "see_also": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "tier": { "const": "extension" } }, "required": ["tier"] },
+      "then": { "required": ["requires_archetypes"] },
+      "else": { "not": { "required": ["requires_archetypes"] } }
+    },
+    {
+      "if": { "properties": { "status": { "const": "superseded" } }, "required": ["status"] },
+      "then": { "required": ["superseded_by"] }
+    }
+  ]
+}

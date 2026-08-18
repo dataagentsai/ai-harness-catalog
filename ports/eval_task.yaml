@@ -1,0 +1,71 @@
+# eval_task — the seam the harness OFFERS, so an evaluation can drive it.
+port: eval_task
+status: active
+since: "0.4.0"
+
+tier: core
+direction: exported
+layers: [L12]
+
+summary: >-
+  The callable entrypoint an evaluation uses to run the real system over a case,
+  with graders injected from outside and results keyed so a production record
+  and a dataset row are the same shape.
+
+serves: [AHC-0010, AHC-0028, AHC-0029, AHC-0081, AHC-0084]
+
+kernel_owns: >-
+  That the entrypoint runs the same path as production, that grading is injected
+  rather than built in, and that the case identifier is the key both an
+  evaluation and a trace can be joined on.
+
+supplied_outside: >-
+  The harness supplies this one. What sits on the far side is an evaluation
+  runner, a dataset, and graders — none of which the harness may own.
+
+operations:
+  - name: run_case
+    intent: Execute one case through the production path and return the outcome with its record identifier.
+  - name: inject_grader
+    intent: Accept a grader from outside, versioned independently of the system.
+  - name: enumerate
+    intent: List the task variants an evaluation can drive, so a suite can be built without reading the code.
+    optional: true
+
+invariants:
+  - must: The entrypoint takes the production path, with no evaluation-only branch.
+    because: >-
+      A branch that exists only under test measures a system nobody ships, and
+      the divergence grows silently because nothing fails when it does.
+    capability: AHC-0010
+    checkable: static
+  - must: Graders are injected and versioned apart from the system.
+    because: >-
+      A grader shipped inside the system changes when the system changes, so a
+      score moves for two reasons at once and neither can be isolated.
+    capability: AHC-0028
+    checkable: static
+  - must: A case identifier joins an evaluation result to the record of the run.
+    because: >-
+      Without the join, a failing score cannot be traced to what actually
+      happened, and every investigation restarts from the output alone.
+    capability: AHC-0029
+    checkable: dynamic
+  - must: A judge inside the system is itself reachable through this seam.
+    because: >-
+      A judge that cannot be evaluated is an unmeasured component steering
+      measured ones, and its errors are invisible by construction.
+    capability: AHC-0081
+    checkable: declared
+
+substitution_test: >-
+  Drive the entrypoint from a second, unrelated evaluation runner. Nothing in
+  the system may change to accommodate it; only the dataset, the graders and the
+  reporting may differ.
+
+notes: >-
+  The only exported seam in the catalog, and the reason it is worth naming: an
+  eval harness that was never a seam gets bolted on late, at which point the
+  production path is the one thing it cannot reach.
+
+see_also: [recorder, retrieval, artifact_verifier]

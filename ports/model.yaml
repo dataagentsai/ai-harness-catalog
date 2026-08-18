@@ -1,0 +1,76 @@
+# model — the seam to a model provider.
+# Normative. Edit here; anything rendered is generated from this file.
+port: model
+status: active
+since: "0.4.0"
+
+tier: core
+direction: consumed
+layers: [L2]
+
+summary: >-
+  The transport to one model provider, and nothing else. The choke point every
+  call passes through stays on the harness side of this seam; what crosses it is
+  one prepared request, and what comes back is a response, a usage record, and —
+  distinctly — a throttle or a failure.
+
+serves: [AHC-0004, AHC-0005, AHC-0009, AHC-0014, AHC-0015, AHC-0021, AHC-0022, AHC-0027, AHC-0092]
+
+kernel_owns: >-
+  The choke point itself, retry policy, the typed parse boundary, sampling
+  parameter resolution, the budget check made before the call, span emission,
+  and which model is reached for. An implementation that also decides any of
+  these has absorbed the harness.
+
+supplied_outside: >-
+  Transport to one provider or one gateway: request encoding, streaming chunks,
+  usage counts, region or route metadata, and a distinguishable throttle signal.
+
+operations:
+  - name: invoke
+    intent: Send one prepared request and return one response with its usage record.
+  - name: stream
+    intent: Send one prepared request and yield chunks, ending in a completion or an abort.
+    optional: true
+  - name: describe
+    intent: Report which models this implementation can reach, and their declared limits.
+
+invariants:
+  - must: The implementation never retries on its own.
+    because: >-
+      A retry inside the adapter is invisible to the attempt counter, so bounded
+      retries stop being bounded and one unit of work quietly costs three.
+    capability: AHC-0024
+    checkable: dynamic
+  - must: Sampling parameters pass through exactly as given, never defaulted.
+    because: >-
+      A provider default silently substituted for an unset parameter makes a run
+      unreproducible, and makes the difference invisible in the record.
+    capability: AHC-0014
+    checkable: dynamic
+  - must: Throttling is returned as its own condition, distinct from failure.
+    because: >-
+      Collapsed into a generic error, backpressure is retried like a fault, and
+      the system adds load to a provider that is already shedding it.
+    capability: AHC-0021
+    checkable: dynamic
+  - must: Usage is reported or explicitly declared unavailable, never zero by default.
+    because: >-
+      A zero meaning "unknown" is indistinguishable from a zero meaning "free",
+      so spend attribution undercounts that route forever and nobody notices.
+    capability: AHC-0007
+    checkable: static
+  - must: Nothing outside the harness side constructs an implementation of this port.
+    because: >-
+      A second construction site is a second call path, and every capability
+      downstream of the choke point acquires a hole at that moment.
+    capability: AHC-0004
+    checkable: static
+
+substitution_test: >-
+  Replace the implementation with one backed by recorded fixtures. The system
+  must behave identically with no network reachable; only latency and the
+  freshness of the response may differ. Anything else that changes is provider
+  behaviour that has leaked past the seam.
+
+see_also: [recorder, cost_ledger, config]

@@ -90,6 +90,36 @@ traded away is not a decision. **`discharges`** is the join to the assurance
 catalog, and it runs both ways: an obligation no capability discharges is a hole
 in this catalog.
 
+## The seams
+
+Sixteen **ports** — eleven every harness has, five pulled in by archetype. A
+capability says what must exist; a port says where the harness meets something
+it does not own, and what must hold across that meeting whoever implements it.
+
+```yaml
+port: model
+tier: core
+kernel_owns: >-             # what an implementation may NOT decide
+  The choke point itself, retry policy, the typed parse boundary, sampling
+  parameter resolution, the budget check made before the call, span emission,
+  and which model is reached for.
+invariants:
+  - must: The implementation never retries on its own.
+    because: >-
+      A retry inside the adapter is invisible to the attempt counter, so bounded
+      retries stop being bounded and one unit of work quietly costs three.
+    capability: AHC-0024
+    checkable: dynamic
+substitution_test: >-       # how you tell a port from a wrapper
+  Replace the implementation with one backed by recorded fixtures. The system
+  must behave identically with no network reachable.
+```
+
+Declared as **data**, with no signatures, types or language, so an interface can
+be generated in any stack without this repository shipping a package. A port is
+not a partition of the catalog — 27 of the 98 capabilities are structural and
+cross no seam at all. See [docs/PORTS.md](docs/PORTS.md).
+
 ## The boundary — and why there are two repositories
 
 > **AAC states what must be *true*. AHC states what must *exist*.**
@@ -122,8 +152,9 @@ dependency rather than a skeleton to copy, the boundary has been crossed.
 
 ```
 capabilities/   AHC-####.yaml — the normative master, one per file
+ports/          the seams: where the harness meets what it does not own
 taxonomy/       layers, positions, approaches, levels; archetypes pinned from AAC
-schema/         JSON Schema for a capability
+schema/         JSON Schema for a capability and for a port
 blueprints/     per-archetype assembled views — the ten pages         (Phase 3)
 realizations/   how each capability gets built; only place products appear (Phase 4)
 references/     runnable skeletons, copied not imported               (Phase 5)

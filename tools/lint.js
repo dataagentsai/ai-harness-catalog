@@ -35,6 +35,11 @@ const schema = JSON.parse(
 const ajv = new Ajv({ allErrors: true, strict: false });
 const validate = ajv.compile(schema);
 
+const portSchemaPath = path.join(ROOT, "schema/port.schema.json");
+const validatePort = fs.existsSync(portSchemaPath)
+  ? ajv.compile(JSON.parse(fs.readFileSync(portSchemaPath, "utf8")))
+  : null;
+
 const arch = load("taxonomy/archetypes.yaml");
 const layersDoc = load("taxonomy/layers.yaml");
 const constrDoc = load("taxonomy/construction.yaml");
@@ -171,6 +176,76 @@ if (ids.length) {
   }
 }
 
+// -------------------------------------------------------------------- ports
+/*
+ * A port is a seam, not a partition of the catalog. Most capabilities are
+ * structural and have no port at all, so an unserved capability is reported as
+ * information, never as a fault.
+ *
+ * The two rules worth enforcing are the ones that keep a port a specification:
+ * it names no product, and it says what stays on the harness side. A port whose
+ * kernel_owns is empty is a client library with a YAML file attached.
+ */
+const portDir = path.join(ROOT, "ports");
+const portFiles = fs.existsSync(portDir)
+  ? fs.readdirSync(portDir).filter((f) => f.endsWith(".yaml")).sort()
+  : [];
+const ports = new Map();
+const servedCaps = new Set();
+
+for (const pf of portFiles) {
+  let doc;
+  try {
+    doc = yaml.load(fs.readFileSync(path.join(portDir, pf), "utf8"));
+  } catch (e) {
+    err(pf, `unparseable: ${e.message}`);
+    continue;
+  }
+  if (validatePort && !validatePort(doc)) {
+    for (const e of validatePort.errors) err(pf, `schema ${e.instancePath || "/"} ${e.message}`);
+    continue;
+  }
+  if (`${doc.port}.yaml` !== pf) err(pf, `filename does not match port name ${doc.port}`);
+  if (ports.has(doc.port)) err(pf, `duplicate port ${doc.port}`);
+  ports.set(doc.port, doc);
+
+  for (const l of doc.layers) if (!LAYER_IDS.has(l)) err(pf, `unknown layer ${l}`);
+  for (const a of doc.requires_archetypes || []) {
+    if (!ARCH_IDS.has(a)) err(pf, `unknown archetype ${a}`);
+  }
+  for (const c of doc.serves) {
+    if (!byId.has(c)) err(pf, `serves unknown capability ${c}`);
+    servedCaps.add(c);
+  }
+  for (const inv of doc.invariants) {
+    if (inv.capability && !byId.has(inv.capability)) {
+      err(pf, `invariant cites unknown capability ${inv.capability}`);
+    }
+  }
+
+  // A port is normative text: the no-products rule applies here too.
+  const portText = [
+    doc.summary, doc.kernel_owns, doc.supplied_outside, doc.substitution_test, doc.notes || "",
+    ...doc.operations.map((o) => o.intent),
+    ...doc.invariants.flatMap((i) => [i.must, i.because]),
+  ].join(" ").toLowerCase();
+  for (const p of PRODUCTS) {
+    if (new RegExp(`\\b${p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(portText)) {
+      err(pf, `product name "${p}" in a port — a port names a class of thing, never a product`);
+    }
+  }
+
+  // The seam must have a harness side. Without one it is a wrapper.
+  if (!doc.kernel_owns || doc.kernel_owns.trim().length < 30) {
+    err(pf, `kernel_owns is empty — a seam with nothing on the harness side is a client library`);
+  }
+  for (const s of doc.see_also || []) {
+    if (!ports.has(s) && !portFiles.includes(`${s}.yaml`)) {
+      err(pf, `see_also references unknown port ${s}`);
+    }
+  }
+}
+
 // ------------------------------------------------------- realization discipline
 /*
  * Realizations are informative and may name products — the only layer that may.
@@ -255,6 +330,11 @@ console.log(`  capabilities   ${byId.size}`);
 console.log(`  core           ${[...byId.values()].filter((d) => d.core).length}`);
 console.log(`  layers covered ${Object.keys(layerHist).length} of ${LAYER_IDS.size}`);
 console.log(`  discharges     ${dischargeCount} references to ${dischargedAac.size} distinct obligations`);
+if (ports.size) {
+  const core = [...ports.values()].filter((p) => p.tier === "core").length;
+  console.log(`  ports          ${ports.size} (${core} core, ${ports.size - core} by archetype)`);
+  console.log(`  seam coverage  ${servedCaps.size} capabilities cross a port; ${byId.size - servedCaps.size} are structural`);
+}
 if (aacIds) console.log(`  assurance catalog reachable — ${aacIds.size} obligations, references checked`);
 
 if (warnings.length) {

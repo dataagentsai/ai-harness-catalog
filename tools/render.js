@@ -25,6 +25,16 @@ const arch = load("taxonomy/archetypes.yaml");
 const layersDoc = load("taxonomy/layers.yaml");
 const constrDoc = load("taxonomy/construction.yaml");
 
+const portDir = path.join(ROOT, "ports");
+const ports = !fs.existsSync(portDir)
+  ? []
+  : fs
+      .readdirSync(portDir)
+      .filter((f) => f.endsWith(".yaml"))
+      .sort()
+      .map((f) => yaml.load(fs.readFileSync(path.join(portDir, f), "utf8")))
+      .filter((p) => p.status === "active");
+
 const caps = fs
   .readdirSync(path.join(ROOT, "capabilities"))
   .filter((f) => f.endsWith(".yaml"))
@@ -42,6 +52,26 @@ const data = {
   positions: constrDoc.positions,
   approaches: constrDoc.approaches,
   levels: constrDoc.levels,
+  ports: ports.map((p) => ({
+    port: p.port,
+    tier: p.tier,
+    dir: p.direction,
+    layers: p.layers,
+    arch: p.requires_archetypes || [],
+    summary: trim(p.summary),
+    serves: p.serves,
+    owns: trim(p.kernel_owns),
+    outside: trim(p.supplied_outside),
+    ops: p.operations.map((o) => ({ n: o.name, i: trim(o.intent), opt: !!o.optional })),
+    inv: p.invariants.map((i) => ({
+      must: trim(i.must),
+      why: trim(i.because),
+      cap: i.capability || "",
+      how: i.checkable || "",
+    })),
+    swap: trim(p.substitution_test),
+    notes: trim(p.notes),
+  })),
   caps: caps.map((c) => ({
     id: c.id,
     level: c.level,
@@ -252,6 +282,31 @@ ul.plain li strong{color:var(--ink)}
 .phase .pstate{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;text-align:right}
 .phase .pstate.done{color:var(--alt)}
 .phase .pstate.todo{color:var(--ink-3)}
+.ports{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);margin:28px 0}
+.port{background:var(--surface);padding:18px 20px}
+.portline{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;margin-bottom:7px}
+.portline .pname{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--ink)}
+.port p.psum{margin:0 0 12px;font-size:15.5px;line-height:1.55;color:var(--ink-2);max-width:64ch}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--rule);border:1px solid var(--rule);margin:0 0 12px}
+@media(max-width:720px){.split{grid-template-columns:1fr}}
+.split div{background:var(--surface);padding:12px 14px}
+.split dt{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin:0 0 5px}
+.split dd{margin:0;font-size:14px;line-height:1.5;color:var(--ink-2)}
+.port .ops{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.port .op{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:2px;background:var(--sunk);color:var(--ink-2);border:1px solid var(--rule);cursor:help}
+.port .op.opt{opacity:.7;font-style:italic}
+.port details.inv{border-top:1px dashed var(--rule);padding-top:10px}
+.port details.inv summary{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);cursor:pointer;list-style:none}
+.port details.inv summary::-webkit-details-marker{display:none}
+.port details.inv summary::before{content:"▸ ";font-size:9px}
+.port details.inv[open] summary::before{content:"▾ "}
+.port details.inv ul{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:12px}
+.port details.inv li{max-width:64ch}
+.port .must{font-family:var(--mono);font-size:13px;color:var(--ink);display:block;margin-bottom:4px}
+.port .why{font-size:14.5px;line-height:1.55;color:var(--ink-2);display:block}
+.port .swap{margin-top:10px;font-size:14px;line-height:1.55;color:var(--ink-2);border-left:2px solid var(--accent);padding-left:12px;max-width:64ch}
+.port .swap::before{content:"substitution test — ";font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.chip.how{background:transparent;border-color:var(--rule-2);color:var(--ink-3)}
 @media(max-width:660px){.phase .pstate{text-align:left}}
 footer{padding:40px 0 64px;color:var(--ink-3);font-family:var(--mono);font-size:12px;line-height:1.7}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -265,6 +320,7 @@ const POS_NAME = Object.fromEntries(D.positions.map(p => [p.id, p.name]));
 const ARCH_NAME = Object.fromEntries(D.archetypes.map(a => [a.id, a.name]));
 const core = D.caps.filter(c => c.core);
 const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const chip = (cls, txt, title) => \`<span class="chip \${cls}" title="\${esc(title)}">\${esc(txt)}</span>\`;
 
 document.getElementById("m-caps").textContent = D.caps.length;
 document.getElementById("m-core").textContent = core.length;
@@ -291,7 +347,40 @@ document.getElementById("arch-list").innerHTML = D.archetypes.map(a => {
     <div class="acount"><b>\${n}</b>added capabilities</div></div>\`;
 }).join("");
 
-// ---- Section 5: the catalog ----
+// ---- Section 5: the seams ----
+document.getElementById("m-ports").textContent = D.ports.length;
+const CAPTITLE = Object.fromEntries(D.caps.map(c => [c.id, c.title]));
+document.getElementById("ports-out").innerHTML = D.ports.map(p => \`<div class="port" id="port-\${p.port}">
+  <div class="portline">
+    <span class="pname">\${p.port}</span>
+    <span class="chip \${p.tier === "core" ? "" : "n"}" title="\${p.tier === "core" ? "Every harness has this seam" : "Pulled in by archetype"}">\${p.tier}</span>
+    \${p.arch.map(a => chip("n", a, ARCH_NAME[a])).join("")}
+    \${p.dir === "exported" ? chip("prim","exported","The harness offers this seam rather than calling out through it") : ""}
+    \${p.layers.map(l => chip("n", l, LAYER_NAME[l])).join("")}
+  </div>
+  <p class="psum">\${esc(p.summary)}</p>
+  <div class="split">
+    <div><dt>Harness side owns</dt><dd>\${esc(p.owns)}</dd></div>
+    <div><dt>Supplied outside</dt><dd>\${esc(p.outside)}</dd></div>
+  </div>
+  <div class="ops">\${p.ops.map(o => \`<span class="op \${o.opt ? "opt" : ""}" title="\${esc(o.i)}\${o.opt ? " (optional)" : ""}">\${o.n}\${o.opt ? " ?" : ""}</span>\`).join("")}</div>
+  <div class="chips" style="margin-bottom:4px">\${p.serves.map(c => \`<a class="chip" href="#\${c}" title="\${esc(CAPTITLE[c] || "")}">\${c}</a>\`).join("")}</div>
+  <details class="inv"><summary>\${p.inv.length} invariants across this seam</summary><ul>\${
+    p.inv.map(i => \`<li><span class="must">\${esc(i.must)}</span>
+      <span class="why">\${esc(i.why)}</span>
+      <span class="chips" style="margin-top:5px">\${i.cap ? \`<a class="chip" href="#\${i.cap}">\${i.cap}</a>\` : ""}\${i.how ? chip("how", i.how + " check", "How an adopter could establish this holds") : ""}</span></li>\`).join("")
+  }</ul>
+  <div class="swap">\${esc(p.swap)}</div>
+  \${p.notes ? \`<p style="margin-top:10px;font-size:14px;color:var(--ink-3);max-width:64ch">\${esc(p.notes)}</p>\` : ""}
+  </details>
+</div>\`).join("");
+
+const served = new Set(D.ports.flatMap(p => p.serves));
+document.getElementById("p-served").textContent = served.size;
+document.getElementById("p-structural").textContent = D.caps.length - served.size;
+document.getElementById("p-core").textContent = D.ports.filter(p => p.tier === "core").length;
+
+// ---- Section 6: the catalog ----
 const tabs = document.getElementById("tabs");
 tabs.innerHTML = [\`<button role="tab" data-a="ALL" aria-selected="true">All \${D.caps.length}</button>\`,
   \`<button role="tab" data-a="CORE" aria-selected="false">Core · every shape</button>\`]
@@ -304,7 +393,6 @@ layerSel.innerHTML = \`<option value="ALL">Every layer</option>\` +
 let sel = "ALL";
 const q = document.getElementById("q"), mustonly = document.getElementById("mustonly"),
       ddonly = document.getElementById("ddonly");
-const chip = (cls, txt, title) => \`<span class="chip \${cls}" title="\${esc(title)}">\${esc(txt)}</span>\`;
 
 function ddHTML(c){
   const bits = [];
@@ -405,7 +493,7 @@ tabs.addEventListener("click", e => {
 });
 render();
 
-// ---- Section 6: coverage matrix, archetype x layer ----
+// ---- Section 7: coverage matrix, archetype x layer ----
 const rows = D.archetypes.map(a => [a.id + " " + a.name, D.caps.filter(c => !c.core && c.arch.includes(a.id))]);
 rows.push(["CORE (all shapes)", core]);
 let mt = \`<table><thead><tr><th>Archetype</th>\${D.layers.map(l => \`<th class="rot" title="\${esc(l.name)}">\${l.id}</th>\`).join("")}<th class="rot">total</th></tr></thead><tbody>\`;
@@ -415,7 +503,7 @@ for (const [label, list] of rows){
 }
 document.getElementById("matrix").innerHTML = mt + "</tbody></table>";
 
-// ---- Section 7: the join, read from the assurance side ----
+// ---- Section 8: the join, read from the assurance side ----
 const byObligation = {};
 for (const c of D.caps) for (const o of c.disc) (byObligation[o] = byObligation[o] || []).push(c);
 const OBS = Object.keys(byObligation).sort();
@@ -495,6 +583,7 @@ const html = `<!doctype html>
   <li><a href="#harness">What a harness is</a></li>
   <li><a href="#archetypes">Ten shapes</a></li>
   <li><a href="#axes">Construction axes</a></li>
+  <li><a href="#ports">The seams</a></li>
   <li><a href="#catalog">The catalog</a></li>
   <li><a href="#matrix">Coverage matrix</a></li>
   <li><a href="#join">The join to AAC</a></li>
@@ -617,8 +706,24 @@ const html = `<!doctype html>
   <p>Sharpest line in the catalog. <em>“A token budget is enforced by the assembly function and its application is recorded”</em> — a capability. <em>“The token budget is 100,000”</em> — never. The number belongs to the adopting organisation, and any value published here would be wrong for almost everyone.</p></div>
 </div></section>
 
+<section id="ports"><div class="wrap">
+  <div class="prose"><span class="snum">Section 5 — The seams</span>
+  <h2>Where the harness meets what it does not own</h2>
+  <p class="lede">A capability says what must exist. A port says where the harness meets something it did not build, and what must hold across that meeting whoever implements it.</p>
+  <p>The catalog is portable because it names no products, and the cost of that is a gap: a reader agrees that every model call needs one choke point and still has to invent the boundary between their code and a provider's library — and everyone invents a different one. Ports are that missing vocabulary, declared as data so an interface can be generated in any language without this repository ever shipping a package.</p>
+  <p><strong>A port is not a partition of the catalog.</strong> Most capabilities are structural and cross no seam at all. Two fields carry the weight: <code>kernel_owns</code>, which states what stays on the harness side and is therefore not an implementation's to decide — a seam with nothing on the harness side is a client library, and the linter fails the build for it — and the <em>substitution test</em>, which is how you tell a port from one vendor's API with a wrapper on it.</p></div>
+  <dl class="meta-grid">
+    <div><dt>Ports</dt><dd id="m-ports">—</dd></div>
+    <div><dt>Core — every harness</dt><dd id="p-core">—</dd></div>
+    <div><dt>Capabilities crossing a seam</dt><dd id="p-served">—</dd></div>
+    <div><dt>Structural, no seam</dt><dd id="p-structural">—</dd></div>
+  </dl>
+  <div class="ports" id="ports-out"></div>
+  <div class="prose"><p style="font-size:15px;color:var(--ink-3)">Operations are stated by intent, never by signature — no types, no language, no error taxonomy. Those belong to a generated interface, which is downstream of this catalog. A trailing <code>?</code> marks an operation an implementation may legitimately not offer, in which case the harness needs a declared path for its absence.</p></div>
+</div></section>
+
 <section id="catalog"><div class="wrap">
-  <div class="prose"><span class="snum">Section 5 — The catalog</span>
+  <div class="prose"><span class="snum">Section 6 — The catalog</span>
   <h2>Capabilities, in plain English</h2>
   <p class="lede">Select a shape. Core is always owed; the archetype block is what that shape adds on top.</p>
   <p>Each entry states what must exist, what breaks without it, where it can live, the obligations it makes verifiable, and — behind the disclosure — the decisions whoever builds it is forced to make.</p></div>
@@ -636,7 +741,7 @@ const html = `<!doctype html>
 </div></section>
 
 <section id="matrix"><div class="wrap">
-  <div class="prose"><span class="snum">Section 6 — Coverage matrix</span>
+  <div class="prose"><span class="snum">Section 7 — Coverage matrix</span>
   <h2>Which shapes need which layers</h2>
   <p class="lede">Archetype deltas only; the core row is listed separately since it would otherwise appear in every column.</p>
   <p>Read this as a design-review heat map. A dense cell is where that shape's harness work actually is. An empty cell for a layer you know you need means either the classification is wrong, or the requirement was already covered by core.</p></div>
@@ -644,7 +749,7 @@ const html = `<!doctype html>
 </div></section>
 
 <section id="join"><div class="wrap">
-  <div class="prose"><span class="snum">Section 7 — The join</span>
+  <div class="prose"><span class="snum">Section 8 — The join</span>
   <h2>Read from the assurance side</h2>
   <p class="lede">The same relation inverted: for each assurance obligation, what has to exist before anyone can check it.</p>
   <p>This is the table that makes the pair useful at design review. An obligation with several capabilities behind it is one where the test is cheap and the construction is not. The join is also a completeness check in both directions — an obligation no capability discharges is a hole here, and a capability citing nothing is a component with no stated assurance consequence.</p></div>
@@ -659,7 +764,7 @@ const html = `<!doctype html>
 </div></section>
 
 <section id="using"><div class="wrap prose">
-  <span class="snum">Section 8 — Using it</span>
+  <span class="snum">Section 9 — Using it</span>
   <h2>Turning the catalog into an architecture</h2>
   <ul class="plain">
     <li><strong>Classify the system.</strong> Decompose it into archetypes — most real systems are two or three. The classification is the assumption everything else rests on, and the thing most likely to be wrong.</li>
@@ -676,7 +781,7 @@ class ModelClient: ...</pre>
 </div></section>
 
 <section id="roadmap"><div class="wrap">
-  <div class="prose"><span class="snum">Section 9 — Roadmap</span>
+  <div class="prose"><span class="snum">Section 10 — Roadmap</span>
   <h2>What is normative today, and what comes next</h2>
   <p class="lede">The normative catalog is complete. What remains is the physical half — how each capability actually gets built, and skeletons to copy.</p></div>
   <div class="phases">

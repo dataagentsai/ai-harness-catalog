@@ -1,0 +1,70 @@
+# state — the seam to storage for anything that must outlive the process.
+port: state
+status: active
+since: "0.4.0"
+
+tier: core
+direction: consumed
+layers: [L5]
+
+summary: >-
+  Where conversation state, working memory, checkpoints and idempotency records
+  live, and the declared boundary between what survives a crash and what does
+  not.
+
+serves: [AHC-0044, AHC-0051, AHC-0053, AHC-0056, AHC-0066, AHC-0068, AHC-0069, AHC-0073, AHC-0074]
+
+kernel_owns: >-
+  What is worth persisting and when, the shape of a checkpoint, the gate that
+  decides whether a model-produced value may be written at all, and the rule
+  that a record is written before the effect it describes.
+
+supplied_outside: >-
+  Durable storage with single-writer semantics, expiry, and isolation strong
+  enough to keep tenants and sessions apart structurally rather than by
+  convention.
+
+operations:
+  - name: put
+    intent: Write a value under a key, durably, with a declared owner.
+  - name: get
+    intent: Read the value under a key, reporting absence distinctly from an empty value.
+  - name: claim
+    intent: Take exclusive ownership of a key for a bounded period, so two writers cannot both proceed.
+  - name: expire
+    intent: Apply the declared lifetime to a key without relying on an external cleanup job.
+  - name: reserve
+    intent: Record that an identified effect has been started, so a repeat is recognisable.
+
+invariants:
+  - must: Every key has exactly one owner at a time.
+    because: >-
+      Two writers to shared state produce a last-write-wins result neither agent
+      asked for, and the loser's work disappears with no error anywhere.
+    capability: AHC-0051
+    checkable: dynamic
+  - must: Isolation between tenants and sessions is structural, not a filter applied by callers.
+    because: >-
+      A filter is one forgotten predicate away from cross-tenant disclosure, and
+      the forgotten predicate stays invisible until it is a breach.
+    capability: AHC-0068
+    checkable: static
+  - must: An implementation declares whether a write survives process death.
+    because: >-
+      A harness that believes it checkpointed and did not will resume a
+      trajectory that no longer exists, and only a crash reveals it.
+    capability: AHC-0044
+    checkable: declared
+  - must: A reservation is visible before the effect it guards is attempted.
+    because: >-
+      Written afterwards it cannot prevent the duplicate it exists to prevent —
+      the second run reads nothing and proceeds.
+    capability: AHC-0056
+    checkable: dynamic
+
+substitution_test: >-
+  Replace the implementation with an in-memory one. Every behaviour must be
+  identical within a single process; the only permitted difference is what
+  survives a restart, and that difference is already declared.
+
+see_also: [identity, trigger, recorder]

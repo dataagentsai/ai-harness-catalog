@@ -1,0 +1,67 @@
+# retrieval — the seam to the corpus.
+port: retrieval
+status: active
+since: "0.4.0"
+
+tier: extension
+requires_archetypes: [A3]
+direction: consumed
+layers: [L1]
+
+summary: >-
+  The substitutable step that turns a question into passages, with the principal
+  applied before ranking, a resolvable source on every passage, and the corpus
+  version it answered from.
+
+serves: [AHC-0060, AHC-0061, AHC-0062, AHC-0064, AHC-0065]
+
+kernel_owns: >-
+  Where retrieved content is placed in assembled context, the fence and label
+  applied to it, the record of what was retrieved and what was used, and the
+  abstention path when nothing sufficient came back.
+
+supplied_outside: >-
+  Indexing, ranking and filtering over a corpus, the provenance carried on each
+  passage, and the ingestion path that put content there.
+
+operations:
+  - name: search
+    intent: Return ranked passages for a query, restricted to what this principal may see.
+  - name: describe_corpus
+    intent: Report the corpus version being served, so it can enter the resolved configuration.
+  - name: fetch
+    intent: Return a passage by its source reference, so a citation can be resolved later.
+    optional: true
+
+invariants:
+  - must: Search cannot be called without a principal.
+    because: >-
+      An optional principal becomes an omitted principal, and the retriever
+      happily returns documents the asker was never entitled to see.
+    capability: AHC-0062
+    checkable: static
+  - must: Entitlement is applied before ranking, never as a filter over results.
+    because: >-
+      Filtering afterwards silently shortens the result set, so an entitled user
+      gets worse answers and an audit cannot tell that anything was removed.
+    capability: AHC-0062
+    checkable: static
+  - must: Every passage carries a source reference that resolves later.
+    because: >-
+      A citation that cannot be resolved is decoration; the reader cannot check
+      it, and neither can anyone investigating a wrong answer.
+    capability: AHC-0061
+    checkable: static
+  - must: The corpus version is reported and enters the resolved configuration.
+    because: >-
+      Without it, a regression cannot be attributed between a prompt change and
+      an ingestion run, and both teams reasonably blame the other.
+    capability: AHC-0064
+    checkable: dynamic
+
+substitution_test: >-
+  Replace the implementation with a fixed in-memory passage set. Placement,
+  fencing, citation and abstention must be unchanged; only ranking quality and
+  corpus size may differ.
+
+see_also: [identity, config, eval_task]

@@ -1,0 +1,66 @@
+# admission — the seam to whatever regulates how much runs at once.
+port: admission
+status: active
+since: "0.4.0"
+
+tier: core
+direction: consumed
+layers: [L8]
+
+summary: >-
+  The gate work passes through before it consumes capacity: concurrency slots by
+  priority class, queue depth, and the deadline remainder that every layer
+  downstream is expected to honour.
+
+serves: [AHC-0020, AHC-0021, AHC-0096, AHC-0097, AHC-0098]
+
+kernel_owns: >-
+  The bounds themselves, the class a unit of work carries, the rule that a class
+  can be lowered by a caller but never raised, and the propagation of the
+  remaining deadline into every subsequent step.
+
+supplied_outside: >-
+  Slot accounting, queueing and backpressure signals, and — where work spans
+  processes — a view of capacity that is shared rather than per-instance.
+
+operations:
+  - name: acquire
+    intent: Take a slot for a declared class within the remaining deadline, or report that capacity is unavailable.
+  - name: release
+    intent: Return a slot, including on the failure and cancellation paths.
+  - name: pressure
+    intent: Report current depth or saturation so a caller can shed rather than queue.
+    optional: true
+
+invariants:
+  - must: Bounds come from the harness configuration, never from a runtime or client default.
+    because: >-
+      An unbounded default is discovered under load, when the provider throttles
+      and the retry storm makes it worse.
+    capability: AHC-0020
+    checkable: static
+  - must: A slot is released on every path, including cancellation and failure.
+    because: >-
+      A leaked slot reduces capacity permanently, and the system degrades over
+      days in a way that looks like a memory leak and is not.
+    capability: AHC-0020
+    checkable: dynamic
+  - must: Time spent waiting is deducted from the deadline, not added to it.
+    because: >-
+      A queue that resets the clock makes the caller's timeout meaningless, and
+      the caller has usually gone away by the time work starts.
+    capability: AHC-0096
+    checkable: dynamic
+  - must: The class is recorded on the unit of work.
+    because: >-
+      Without it, saturation cannot be attributed to a scheduling decision, and
+      a backfill starving interactive traffic looks like a healthy busy system.
+    capability: AHC-0098
+    checkable: static
+
+substitution_test: >-
+  Replace the implementation with an in-process semaphore. Behaviour must be
+  identical for a single instance; only fairness across instances and the
+  accuracy of a global bound may differ.
+
+see_also: [cost_ledger, policy, trigger]

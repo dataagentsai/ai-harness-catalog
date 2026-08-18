@@ -1,0 +1,63 @@
+# policy — the seam to whatever turns a rule into a decision.
+port: policy
+status: active
+since: "0.4.0"
+
+tier: core
+direction: consumed
+layers: [L7]
+
+summary: >-
+  Evaluation of a rule against traffic at a declared point, returning a decision
+  and a reason that can be recorded. The input side and the output side are two
+  distinct evaluations with different semantics, not one filter applied twice.
+
+serves: [AHC-0008, AHC-0018, AHC-0093, AHC-0094, AHC-0095]
+
+kernel_owns: >-
+  Which points exist and in what order they run, the open-or-closed default, the
+  timeout budget for evaluation, recording the decision as an event, and what
+  happens to the unit of work once a decision comes back.
+
+supplied_outside: >-
+  The evaluation itself — detectors, classifiers, rule engines, or a gateway's
+  policy layer — and the reason it attaches to a decision.
+
+operations:
+  - name: evaluate
+    intent: Apply the policy set for one declared point to one payload and its context, returning a decision with a reason.
+  - name: describe
+    intent: Report which policies are active at which points, so the composition can be inspected without running traffic.
+
+invariants:
+  - must: A timeout or an error produces the declared default, and that default is closed unless recorded otherwise.
+    because: >-
+      Failing open under load happens exactly when enforcement matters most, and
+      it is silent — the traffic looks allowed rather than unevaluated.
+    capability: AHC-0095
+    checkable: dynamic
+  - must: Composition order is declared by configuration, never by the implementation.
+    because: >-
+      Order decides the outcome when two policies disagree, so an implementation
+      that owns it owns a decision the adopter believes they made.
+    capability: AHC-0093
+    checkable: static
+  - must: Input-side and output-side evaluation are separate calls with separate results.
+    because: >-
+      One shared verdict makes an output rule inherit an input rule's semantics,
+      so a leak is judged by a detector that cannot see it.
+    capability: AHC-0094
+    checkable: static
+  - must: Every decision carries a reason identifier usable in a record.
+    because: >-
+      A denial with no reason cannot be appealed, tuned or explained, so the
+      first response to a false positive is to disable the policy.
+    capability: AHC-0018
+    checkable: dynamic
+
+substitution_test: >-
+  Move the implementation from in-process to a gateway. The decision record must
+  have the same shape for the same input; only coverage of callers who never
+  entered the harness, and the latency, may differ.
+
+see_also: [telemetry, identity, admission]

@@ -1,0 +1,61 @@
+# trigger — the seam to whatever starts an unattended run.
+port: trigger
+status: active
+since: "0.4.0"
+
+tier: extension
+requires_archetypes: [A9]
+direction: consumed
+layers: [L15]
+
+summary: >-
+  The schedule, event or queue that begins a run nobody is watching, and the
+  de-duplication that makes one trigger produce exactly one run rather than
+  three.
+
+serves: [AHC-0053, AHC-0055, AHC-0059]
+
+kernel_owns: >-
+  What a run does when it starts, the identity it carries, the bound on what it
+  may touch, and the liveness signal that makes silence detectable rather than
+  reassuring.
+
+supplied_outside: >-
+  Delivery of the trigger, at-least-once or exactly-once semantics, retry on
+  delivery failure, and the lease that keeps two workers from taking the same
+  one.
+
+operations:
+  - name: subscribe
+    intent: Receive triggers as they arrive, with a de-duplication key for each.
+  - name: acknowledge
+    intent: Confirm a trigger was handled, so it is not delivered again.
+  - name: heartbeat
+    intent: Report that a run is alive, so its absence becomes an alertable condition.
+
+invariants:
+  - must: Every trigger carries a de-duplication key.
+    because: >-
+      Without one, a redelivery is indistinguishable from a new instruction, and
+      the unattended job does its irreversible work twice.
+    capability: AHC-0053
+    checkable: static
+  - must: Absence of a run is observable, not merely the failure of one.
+    because: >-
+      A scheduler that stops firing produces no errors at all, so a job that
+      silently never ran again is discovered at month end.
+    capability: AHC-0055
+    checkable: dynamic
+  - must: The authority a triggered run carries is bounded by configuration, not inherited from the trigger.
+    because: >-
+      A run that inherits the scheduler's authority can reach everything the
+      scheduler can, which is far more than the task needs.
+    capability: AHC-0059
+    checkable: static
+
+substitution_test: >-
+  Replace the implementation with a manual invocation. De-duplication, bounded
+  authority and liveness reporting must behave identically; only what causes the
+  run to start may differ.
+
+see_also: [state, admission, approval]

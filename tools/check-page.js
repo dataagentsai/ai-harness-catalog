@@ -29,7 +29,7 @@ new Function("window", "document", js)(global.window, global.document);
 
 const out = els["catalog-out"];
 if (!out || !out.innerHTML.length) { console.error("FAIL: capability list is empty"); process.exit(1); }
-for (const id of ["layer-grid", "arch-list", "matrix", "jointbl"]) {
+for (const id of ["layer-grid", "arch-list", "ports-out", "matrix", "jointbl"]) {
   if (!els[id] || !els[id].innerHTML.length) { console.error(`FAIL: ${id} rendered nothing`); process.exit(1); }
 }
 
