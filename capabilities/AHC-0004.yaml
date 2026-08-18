@@ -23,7 +23,8 @@ failure_mode: |-
 discharges: [AAC-0011, AAC-0100, AAC-0098, AAC-0094]
 
 design_decisions:
-  - question: In-process choke point, gateway, or both?
+  - key: choke_point
+    question: In-process choke point, gateway, or both?
     tension: >-
       In-process sees types, caller identity and business context, but governs
       only code that imports it — which excludes other languages and any vendor
@@ -35,7 +36,8 @@ design_decisions:
       application context, the gateway owns anything that must hold for callers
       you do not control. Write the split down; the failure mode is each side
       assuming the other did it.
-  - question: How is direct-SDK usage kept out?
+  - key: sdk_containment
+    question: How is direct-SDK usage kept out?
     tension: >-
       Convention decays under deadline. Enforcement — a lint rule, an import
       ban, egress restricted so only the choke point can reach the provider —
@@ -43,7 +45,8 @@ design_decisions:
     resolution: >-
       Enforce at the network boundary where possible. A convention with no
       mechanism behind it is a comment.
-  - question: Does the choke point expose the provider's native interface, or its own?
+  - key: interface_shape
+    question: Does the choke point expose the provider's native interface, or its own?
     tension: >-
       Passing through the native interface is cheap and keeps provider features
       reachable the day they ship. Its own interface makes the provider

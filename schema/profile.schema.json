@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/dataagentsai/ai-harness-catalog/schema/profile.schema.json",
+  "title": "Harness profile",
+  "description": "One system's declaration of the harness it has: which shapes it is, which of the catalog's design decisions it answered and how, which thresholds it set, which implementation fills each seam, and which capabilities it is knowingly not meeting. Lives in the adopting repository, not here. This schema is specification-side and under CC BY so that no particular tool is needed to produce or read a profile — see docs/OPENNESS.md.",
+  "type": "object",
+  "required": ["apiVersion", "subject", "catalog", "decisions", "thresholds", "bindings", "accepted_gaps"],
+  "additionalProperties": false,
+  "patternProperties": { "^x_": {} },
+  "properties": {
+    "apiVersion": {
+      "const": "harness-profile/v1",
+      "description": "Named after the format, never after a tool or a company, so that moving it to neutral governance costs a repository transfer and nothing else."
+    },
+    "extends": {
+      "type": "string",
+      "minLength": 1,
+      "description": "A baseline profile this one inherits. An organisation publishes what it will not reopen per team; a system extends it. The diff between the two is the reviewable artifact."
+    },
+    "subject": {
+      "type": "object",
+      "required": ["name", "archetypes"],
+      "additionalProperties": false,
+      "patternProperties": { "^x_": {} },
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string" },
+        "repository": { "type": "string" },
+        "description": { "type": "string" },
+        "archetypes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^A([1-9]|10)$" },
+          "description": "Which shapes this system is. Most real systems are two or three. Everything downstream — which capabilities apply, which ports must be bound — follows from this, so it is the assumption most worth getting right and most likely to be wrong."
+        }
+      }
+    },
+    "catalog": {
+      "type": "object",
+      "required": ["ahc"],
+      "additionalProperties": false,
+      "patternProperties": { "^x_": {} },
+      "properties": {
+        "ahc": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "aac": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
+      },
+      "description": "Pinned catalog versions. A catalog upgrade then arrives as a reviewable diff — new capabilities to answer for, rather than a silent change in what was owed."
+    },
+    "harness": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": { "^x_": {} },
+      "properties": {
+        "loop": {
+          "type": "object",
+          "required": ["owner"],
+          "additionalProperties": false,
+          "patternProperties": { "^x_": {} },
+          "properties": {
+            "owner": {
+              "enum": ["kit-kernel", "in-house", "framework", "hosted"],
+              "description": "Who owns the control loop. Loop properties are not selectable; the implementation of them is. A black-box owner does not fail conformance — it moves capabilities from statically proven to declared, which is a cost worth seeing."
+            },
+            "adapter": { "type": "string" },
+            "settings": { "type": "object" }
+          }
+        }
+      },
+      "description": "Required in practice for any shape with a control loop. Enforced by the linter rather than here, because which shapes have a loop is catalog knowledge, not schema knowledge."
+    },
+    "decisions": {
+      "type": "object",
+      "description": "The catalog's design decisions, answered. Keyed by capability and decision so a catalog upgrade can report which ones are newly unanswered. An empty object is permitted and means every applicable decision is outstanding — which is a legitimate starting state and an illegitimate finishing one.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x_": {},
+        "^AHC-[0-9]{4}/[a-z][a-z0-9_]*$": {
+          "type": "object",
+          "required": ["value", "source"],
+          "additionalProperties": false,
+          "patternProperties": { "^x_": {} },
+          "properties": {
+            "value": {
+              "description": "Free-form: the answer this system gives. A string, a list of positions, a boolean — the catalog states the tension, not an enumeration of answers."
+            },
+            "source": {
+              "enum": ["chosen", "golden-path", "inherited", "locked"],
+              "description": "How this answer arrived. The point of the field is that a reviewer can see how much of an architecture a human actually decided. A default is permitted; a silent default is not."
+            },
+            "note": { "type": "string" },
+            "decided_by": { "type": "string" },
+            "decided_on": { "type": "string", "format": "date" }
+          }
+        }
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "description": "Budgets, limits and deadlines. The catalog refuses to publish these because any number here would be wrong for almost everyone — so the profile is where they become real, and a profile that omits one its capabilities need is incomplete rather than defaulted.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x_": {},
+        "^[a-z][a-z0-9_]*$": { "type": ["number", "string", "boolean"] }
+      }
+    },
+    "bindings": {
+      "type": "object",
+      "description": "Port name to implementation. This is the whole of the adopter's stack choice, and the only place in a profile where a product may be named.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x_": {},
+        "^[a-z][a-z0-9_]*$": {
+          "type": "object",
+          "required": ["approach", "adapter"],
+          "additionalProperties": false,
+          "patternProperties": { "^x_": {} },
+          "properties": {
+            "approach": {
+              "enum": ["in-house", "framework", "open-source", "platform", "gateway", "cloud-native"],
+              "description": "Who supplies the machinery. Same vocabulary as taxonomy/construction.yaml."
+            },
+            "adapter": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Which implementation. Free text, because the set of them is not the catalog's to enumerate."
+            },
+            "settings": { "type": "object" },
+            "proves": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "type": "string", "pattern": "^AHC-[0-9]{4}$" },
+              "description": "Optional. Capabilities the adopter claims this binding satisfies beyond the port's own invariants. A receipt entry proven this way is stale the moment the binding changes."
+            }
+          }
+        }
+      }
+    },
+    "accepted_gaps": {
+      "type": "array",
+      "description": "Capabilities knowingly not met. An owned, dated, identified gap is a defensible position; an undiscovered one is a finding. An empty list is a claim, not an absence — it says every applicable capability is accounted for elsewhere.",
+      "items": {
+        "type": "object",
+        "required": ["capability", "reason", "owner", "review"],
+        "additionalProperties": false,
+        "patternProperties": { "^x_": {} },
+        "properties": {
+          "capability": { "type": "string", "pattern": "^AHC-[0-9]{4}$" },
+          "reason": {
+            "type": "string",
+            "minLength": 20,
+            "description": "Why this system does not meet it. 'Not applicable' without a reason is silence with extra steps."
+          },
+          "owner": { "type": "string", "minLength": 1 },
+          "review": { "type": "string", "format": "date" }
+        }
+      }
+    }
+  }
+}

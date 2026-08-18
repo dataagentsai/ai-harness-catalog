@@ -25,7 +25,8 @@ failure_mode: |-
 discharges: [AAC-0002, AAC-0099, AAC-0015]
 
 design_decisions:
-  - question: What happens on a parse failure — retry, repair, or fail?
+  - key: parse_failure
+    question: What happens on a parse failure — retry, repair, or fail?
     tension: >-
       Retrying hides a quality regression inside a cost and latency increase, and
       the retry count is invisible unless someone counts it. Failing fast surfaces
@@ -34,14 +35,16 @@ design_decisions:
     resolution: >-
       Fail into a declared shape and count the failures. Retry only where the
       caller opted in, and record that a retry happened on the same span as the call.
-  - question: Does the boundary live in the harness or at the gateway?
+  - key: boundary_position
+    question: Does the boundary live in the harness or at the gateway?
     tension: >-
       In the harness it knows the expected type; at the gateway it covers calls
       that bypassed the harness entirely but only knows generic well-formedness.
     resolution: >-
       Harness owns the typed contract. A gateway check is a coarse backstop for
       unrouted callers, never the primary.
-  - question: Is the raw response retained after parsing?
+  - key: raw_retention
+    question: Is the raw response retained after parsing?
     tension: >-
       Discarding it makes the failure unexplainable later; retaining it puts raw
       model output — possibly containing sensitive input echoed back — into storage.

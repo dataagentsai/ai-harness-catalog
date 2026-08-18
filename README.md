@@ -125,6 +125,37 @@ be generated in any stack without this repository shipping a package. A port is
 not a partition of the catalog — 26 of the 98 capabilities are structural and
 cross no seam at all. See [docs/PORTS.md](docs/PORTS.md).
 
+## The profile
+
+The one file an adopter writes: which shapes a system is, which of the
+catalog's design decisions it answered and how, its thresholds, which
+implementation fills each seam, and which capabilities it is knowingly not
+meeting.
+
+```yaml
+apiVersion: harness-profile/v1
+subject:    { name: incident-summary, archetypes: [A1] }
+decisions:
+  AHC-0001/parse_failure: { value: fail-typed, source: chosen }
+  AHC-0004/choke_point:   { value: in-process, source: golden-path }
+thresholds: { token_budget_per_unit: 20000, request_deadline_seconds: 30 }
+bindings:
+  model:     { approach: in-house,    adapter: http-messages-client }
+  telemetry: { approach: open-source, adapter: otlp-http }
+accepted_gaps:
+  - { capability: AHC-0092, reason: single-region…, owner: platform-team, review: "2026-12-01" }
+```
+
+`source` is the field that earns its place — a default is permitted, a *silent*
+default is not. Thresholds are where the catalog's refusal to publish numbers
+ends and the adopter's ownership begins.
+
+`npm run lint` checks a profile against the catalog in about thirty lines: every
+port the declared shapes need is bound, a shape with a loop says who owns it,
+decisions and gaps reference capabilities those shapes actually owe. Fixtures
+under `examples/invalid/` must fail, and the build breaks if they stop failing.
+See [docs/PROFILE.md](docs/PROFILE.md).
+
 ## The boundary — and why there are two repositories
 
 > **AAC states what must be *true*. AHC states what must *exist*.**

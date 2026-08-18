@@ -1,0 +1,89 @@
+# An illustrative profile for the simplest shape.
+#
+# Adapter names here are deliberately generic. The catalog names no products,
+# and an example that named three would read as a recommendation — which is the
+# one thing this repository cannot afford to be. Substitute your own; the
+# linter checks the shape of the declaration, never the choice.
+#
+#   npm run lint     # validates this file against schema/profile.schema.json
+#                    # and against the catalog: ports bound, capabilities real,
+#                    # nothing bound that this shape has no capability for
+apiVersion: harness-profile/v1
+
+subject:
+  name: incident-summary
+  description: >-
+    Takes an incident timeline and returns a plain-language summary. One call
+    in, one answer out: no tools, no retrieval, nothing remembered between
+    calls.
+  archetypes: [A1]
+
+catalog:
+  ahc: "0.3.0"
+  aac: "0.11.4"
+
+# ---------------------------------------------------------------- decisions
+# Answers to the catalog's design decisions. `source` is the field that earns
+# its place: a reviewer can see at a glance how much of this architecture a
+# person actually decided, and how much arrived by default.
+decisions:
+  AHC-0001/parse_failure:
+    value: fail-typed
+    source: chosen
+    note: >-
+      Retrying hides a quality regression inside a cost increase. This system
+      fails into a declared shape and counts the failures.
+  AHC-0004/choke_point:
+    value: in-process
+    source: golden-path
+    note: No gateway exists in this deployment; recorded so the gap is visible.
+  AHC-0009/allow_list_scope:
+    value: global
+    source: golden-path
+  AHC-0019/redaction_point:
+    value: before-export
+    source: locked
+    note: Inherited from the platform baseline; teams may not reopen it.
+
+# --------------------------------------------------------------- thresholds
+# The catalog refuses to publish these. Every number here belongs to the
+# adopter, and a capability whose threshold is missing is incomplete rather
+# than defaulted.
+thresholds:
+  max_concurrency: 8
+  request_deadline_seconds: 30
+  token_budget_per_unit: 20000
+  policy_evaluation_ms: 250
+  max_input_characters: 40000
+
+# ----------------------------------------------------------------- bindings
+# The whole of the stack choice. Ten ports, because that is what A1 owes: no
+# tool runtime, no retrieval, no approval queue, no durable state, no trigger.
+bindings:
+  model:       { approach: in-house,    adapter: http-messages-client }
+  config:      { approach: in-house,    adapter: versioned-files }
+  telemetry:   { approach: open-source, adapter: otlp-http }
+  policy:      { approach: in-house,    adapter: inprocess-rules }
+  identity:    { approach: in-house,    adapter: request-principal }
+  secrets:     { approach: cloud-native, adapter: managed-secret-store }
+  cost_ledger: { approach: in-house,    adapter: memory-ledger }
+  admission:   { approach: in-house,    adapter: semaphore }
+  recorder:    { approach: in-house,    adapter: file-fixtures }
+  eval_task:   { approach: platform,    adapter: external-eval-runner }
+
+# ------------------------------------------------------------ accepted gaps
+# Owned, dated and identified. An undiscovered gap is a finding; this is a
+# position.
+accepted_gaps:
+  - capability: AHC-0092
+    reason: >-
+      Single-region deployment with one provider endpoint, so there is no
+      routing choice to pin or record.
+    owner: platform-team
+    review: "2026-12-01"
+  - capability: AHC-0098
+    reason: >-
+      All traffic is interactive and arrives through one entry point, so there
+      is no second class for a priority scheme to separate it from.
+    owner: platform-team
+    review: "2026-12-01"
