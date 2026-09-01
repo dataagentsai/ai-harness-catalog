@@ -7,7 +7,7 @@ level: MUST
 layers: [L10, L4]
 positions: [P3, P6]
 
-archetypes: [A5, A9]
+archetypes: [A5, A6, A9]
 core: false
 
 title: |-
@@ -36,11 +36,27 @@ design_decisions:
       Building a deduplication record on your side works and is a second store
       that must be consistent with theirs, and it cannot see effects applied
       through any other path.
+    resolution: >-
+      A ladder, taken in order, and the last rung is the one that matters. Key at
+      the boundary where the downstream recognises it. Failing that, a guarded
+      read-then-act against your own record, accepting the race and recording
+      that you accepted it. Failing that, a single attempt with no retry and an
+      escalation to a person — because a refund a human issues late is
+      recoverable and one a retry issues twice is not. The ladder is stated so
+      the third rung is a decision rather than the place you arrive by default.
   - question: Is a model call itself idempotent?
     tension: >-
       It has no external effect and is not idempotent in result — repeating it
       costs money and may return something different, which for a step whose
       output feeds a branch means the graph can take a different path on retry.
+    resolution: >-
+      No, and the answer is not to make it so. A model call is idempotent in
+      effect and not in result, so it needs reproducibility rather than
+      deduplication: record the exchange and replay it, rather than retrying it
+      and hoping. That is a different mechanism at a different position — a
+      recording at the invocation seam, not a key at the tool boundary — and
+      conflating the two produces a harness that retries the one call it should
+      have replayed.
 
 realization_policy: own
 
