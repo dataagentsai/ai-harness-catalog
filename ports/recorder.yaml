@@ -1,0 +1,63 @@
+# recorder — the seam to captured interactions and their replay.
+port: recorder
+status: active
+since: "0.4.0"
+
+tier: core
+direction: consumed
+layers: [L9]
+
+summary: >-
+  Capture of a real interaction and replay of it later without a network, plus
+  the metadata that makes a stale fixture recognisable as stale rather than
+  authoritative.
+
+serves: [AHC-0022, AHC-0023, AHC-0029]
+
+kernel_owns: >-
+  What is captured and under which key, the substitution point that makes replay
+  possible at all, and the rule that a replayed run takes the same code path as
+  a live one.
+
+supplied_outside: >-
+  Storage for fixtures, retrieval by key, and the capture metadata a re-cut
+  needs — when it was taken, against which model and configuration.
+
+operations:
+  - name: capture
+    intent: Persist one interaction under a stable key, with the date and configuration it was taken against.
+  - name: replay
+    intent: Return the captured interaction for a key without reaching the network.
+  - name: list
+    intent: Report available fixtures with their capture dates, so staleness is visible.
+
+invariants:
+  - must: Replay requires no network access of any kind.
+    because: >-
+      A replay that still calls out is not a replay; the test passes on a laptop
+      with credentials and fails in the pipeline that has none.
+    capability: AHC-0022
+    checkable: static
+  - must: Every fixture carries its capture date and the configuration it was taken against.
+    because: >-
+      An undated fixture becomes a permanent assertion about a model version
+      that no longer exists, and it will keep passing after the truth moved.
+    capability: AHC-0023
+    checkable: static
+  - must: A production record can be turned into a fixture without re-keying.
+    because: >-
+      If the two use different identities, real traffic can never become a test
+      case, and the evaluation set stays whatever someone imagined at the start.
+    capability: AHC-0029
+    checkable: declared
+
+substitution_test: >-
+  Replace the implementation with files in a directory. Replay behaviour must be
+  identical; only where fixtures live and how they are shared may differ.
+
+notes: >-
+  Core, though it is exercised offline. AHC-0022 is a MUST for every shape:
+  provider interaction has to be substitutable, and a seam that only exists in
+  the test tree is a seam that will not exist when it is needed.
+
+see_also: [model, eval_task]

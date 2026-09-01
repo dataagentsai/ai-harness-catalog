@@ -1,0 +1,68 @@
+# approval — the seam to a person who can say no.
+port: approval
+status: active
+since: "0.4.0"
+
+tier: extension
+# A4 is here because of AHC-0070: an assistant that can escalate to a person
+# needs this seam, even though it takes no autonomous action itself.
+requires_archetypes: [A4, A6, A7, A8, A9]
+direction: consumed
+layers: [L14]
+
+summary: >-
+  The queue, console or channel where an irreversible action waits for a
+  decision the run cannot make for itself — and the path by which an operator
+  stops a run from outside it.
+
+serves: [AHC-0039, AHC-0054, AHC-0057, AHC-0058, AHC-0070, AHC-0080]
+
+kernel_owns: >-
+  Which action classes require approval, what the run does while it waits,
+  classification by reversibility, and the treatment of a rejection as a
+  supported outcome rather than a discarded attempt.
+
+supplied_outside: >-
+  The human surface itself: how a request is presented, how a reviewer responds,
+  and how a stop signal reaches a running unit of work.
+
+operations:
+  - name: request
+    intent: Submit an action for a decision, with the context a reviewer needs to make it.
+  - name: await
+    intent: Wait for a decision within a declared timeout, and report what happens when it expires.
+  - name: stop_signal
+    intent: Deliver an external instruction to halt a run that is already in progress.
+
+invariants:
+  - must: A run cannot grant its own approval.
+    because: >-
+      An approval reachable from the code being approved is not a control; the
+      loop will find it, and the record will show an authorised action.
+    capability: AHC-0057
+    checkable: static
+  - must: A stop signal reaches a run that is already in progress.
+    because: >-
+      An unattended run that can only be stopped by killing a process loses its
+      in-flight state, so the operator's choice is damage or more damage.
+    capability: AHC-0054
+    checkable: dynamic
+  - must: A rejection is returned as an outcome carrying its reason.
+    because: >-
+      Discarded, the rejection teaches nobody anything and the same action is
+      resubmitted tomorrow, which is how reviewers stop reviewing.
+    capability: AHC-0080
+    checkable: dynamic
+  - must: A request carries the context needed to decide it.
+    because: >-
+      A reviewer who has to reconstruct what happened either approves blindly or
+      becomes the bottleneck, and both outcomes remove the control.
+    capability: AHC-0070
+    checkable: declared
+
+substitution_test: >-
+  Replace the implementation with a command-line prompt. Which actions stop for
+  approval, and what the run does while waiting, must be identical; only the
+  reviewer's surface and the response time may differ.
+
+see_also: [tool_runtime, trigger, state]

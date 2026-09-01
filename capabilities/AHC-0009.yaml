@@ -26,12 +26,14 @@ failure_mode: |-
 discharges: [AAC-0094]
 
 design_decisions:
-  - question: Is the allow-list per caller, or global?
+  - key: allow_list_scope
+    question: Is the allow-list per caller, or global?
     tension: >-
       Global is one thing to maintain and forces the most restrictive
       requirement onto every caller. Per caller is accurate and becomes a
       permissions system somebody has to own.
-  - question: What happens to a caller requesting a withdrawn model?
+  - key: withdrawn_model
+    question: What happens to a caller requesting a withdrawn model?
     tension: >-
       A hard refusal is honest and takes a feature down at the moment of
       withdrawal. A silent substitution keeps the feature alive on a model whose

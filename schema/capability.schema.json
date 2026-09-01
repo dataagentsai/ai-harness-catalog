@@ -86,6 +86,11 @@
         "additionalProperties": false,
         "required": ["question", "tension"],
         "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "description": "Stable slug for this decision within its capability, forming the identifier AHC-####/key that a profile answers. Permanent and never reused, on the same argument as the capability identifier itself: a rename breaks every profile that recorded an answer. Optional while the catalog is being keyed; a decision without one cannot be answered in a machine-readable way."
+          },
           "question": { "type": "string", "minLength": 10 },
           "tension": {
             "type": "string",

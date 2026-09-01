@@ -1,0 +1,76 @@
+# telemetry — the seam to whatever receives spans, events and metrics.
+port: telemetry
+status: active
+since: "0.4.0"
+
+tier: core
+direction: consumed
+layers: [L11]
+
+summary: >-
+  Emission of the record: one span per call, the identifier that spans a whole
+  unit of work, attributes attached at the boundary, and the events that make a
+  policy decision or a silent run visible.
+
+serves: [AHC-0006, AHC-0018, AHC-0026, AHC-0050, AHC-0055, AHC-0090]
+
+kernel_owns: >-
+  What is recorded and when, redaction before anything leaves the process,
+  attachment of segment labels at the boundary rather than derived later, and
+  propagation of trace context across out-of-process hops.
+
+supplied_outside: >-
+  Transport, buffering and delivery of spans and events to a backend, and the
+  wire encoding that backend expects.
+
+operations:
+  - name: start_span
+    intent: Open a span within the current context and return a handle that can be closed.
+  - name: set_attributes
+    intent: Attach already-redacted attributes to an open span.
+  - name: add_event
+    intent: Record a discrete occurrence — a policy decision, a retry, a cutoff — on an open span.
+  - name: inject_context
+    intent: Serialise trace context so it survives a hop into another process.
+  - name: extract_context
+    intent: Recover trace context on the far side of a hop.
+
+invariants:
+  - must: An implementation never receives an unredacted payload.
+    because: >-
+      Redaction downstream of export means the unredacted copy already exists in
+      a system with different retention and different access control.
+    capability: AHC-0019
+    checkable: static
+  - must: Export failure never fails the unit of work.
+    because: >-
+      Observability that can take production down turns a dashboard outage into
+      an availability incident, and teams respond by switching it off.
+    capability: AHC-0006
+    checkable: dynamic
+  - must: Trace context survives an out-of-process hop.
+    because: >-
+      A trace that stops at the process boundary cannot show that fourteen calls
+      across three services were one unit of work, which is the only question
+      worth asking of it.
+    capability: AHC-0026
+    checkable: dynamic
+  - must: Policy and cost events are not subject to sampling that can drop them.
+    because: >-
+      A sampled-away denial is an enforcement action with no record, and its
+      absence is indistinguishable from the action never having happened.
+    capability: AHC-0018
+    checkable: declared
+
+substitution_test: >-
+  Replace the implementation with one that writes to a local file. The system
+  must be unchanged; only where the record lands, and how it is queried, may
+  differ.
+
+notes: >-
+  Attribute naming is not authored here. Telemetry schemas belong to the
+  semantic-convention body named in docs/SCOPE.md, which this catalog cites
+  rather than duplicates — including in a port, where the temptation to write
+  down field names is strongest.
+
+see_also: [policy, cost_ledger]

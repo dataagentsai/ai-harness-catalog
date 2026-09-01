@@ -1,0 +1,41 @@
+# MUST FAIL — an agent that never says who owns its control loop.
+#
+# The shape declares A6, so a loop exists and something enforces its budget,
+# its no-progress condition and its depth. Leaving `harness.loop` out means
+# nobody has said what that something is, which is the single most consequential
+# unanswered question a profile can carry.
+#
+# It is also missing the tool_runtime and approval seams A6 pulls in, so this
+# fixture covers the archetype-extension path as well as the loop rule.
+apiVersion: harness-profile/v1
+
+subject:
+  name: broken-loopless
+  archetypes: [A6]
+
+catalog:
+  ahc: "0.3.0"
+
+decisions:
+  AHC-9999/not_a_capability:
+    value: nonsense
+    source: chosen
+
+thresholds:
+  max_steps: 12
+
+bindings:
+  model:       { approach: in-house,    adapter: http-messages-client }
+  config:      { approach: in-house,    adapter: versioned-files }
+  telemetry:   { approach: open-source, adapter: otlp-http }
+  policy:      { approach: in-house,    adapter: inprocess-rules }
+  identity:    { approach: in-house,    adapter: request-principal }
+  secrets:     { approach: cloud-native, adapter: managed-secret-store }
+  cost_ledger: { approach: in-house,    adapter: memory-ledger }
+  admission:   { approach: in-house,    adapter: semaphore }
+  recorder:    { approach: in-house,    adapter: file-fixtures }
+  eval_task:   { approach: in-house,    adapter: local-runner }
+  state:       { approach: open-source, adapter: kv-store }
+  retrieval:   { approach: open-source, adapter: vector-index }
+
+accepted_gaps: []

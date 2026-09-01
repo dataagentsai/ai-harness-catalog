@@ -1,0 +1,83 @@
+# workflow — the seam to whatever actually runs the graph.
+port: workflow
+status: active
+since: "0.4.1"
+
+tier: extension
+requires_archetypes: [A5]
+direction: consumed
+layers: [L4]
+
+summary: >-
+  Where a declared topology is executed: what schedules a step, what happens
+  when one fails, and what makes a half-finished graph resumable after the
+  process running it has gone away.
+
+serves: [AHC-0072, AHC-0073, AHC-0074, AHC-0075, AHC-0096]
+
+kernel_owns: >-
+  The topology itself and its typed edges, what constitutes a step, whether
+  repeating one is safe, how the end-to-end budget is allocated across steps,
+  and the rule that the graph executed is the graph declared.
+
+supplied_outside: >-
+  Durable scheduling and resumption: dispatch of a step, retry after a crash,
+  persistence of run position, and a queryable view of where a run has reached.
+
+operations:
+  - name: submit
+    intent: Start a run of a declared topology and return a handle that outlives this process.
+  - name: record_step
+    intent: Persist the outcome of one step so a resumption does not repeat it.
+  - name: resume
+    intent: Continue a run from its recorded position after an interruption.
+  - name: run_state
+    intent: Report where a run has reached, so a stuck graph is visible without reading logs.
+  - name: cancel
+    intent: Stop a run, reporting which steps had already taken effect.
+
+invariants:
+  - must: The topology executed is the declared one, not a second copy held in the engine's own configuration.
+    because: >-
+      Two definitions drift, and the drift is invisible until a run takes a path
+      that the declared graph says does not exist.
+    capability: AHC-0072
+    checkable: static
+  - must: A step result is durable before the next step is dispatched.
+    because: >-
+      Recorded afterwards, a crash between the two makes resumption repeat a
+      step whose effects already happened, which is the failure the engine was
+      adopted to prevent.
+    capability: AHC-0073
+    checkable: dynamic
+  - must: A retry of a step declared unsafe to repeat is refused, not attempted.
+    because: >-
+      An engine that retries everything by default will re-run the one step that
+      moves money, and it will do so during an incident.
+    capability: AHC-0074
+    checkable: dynamic
+  - must: The remaining deadline travels into each step rather than restarting at it.
+    because: >-
+      A per-step timeout with no shared remainder means a graph can exceed its
+      end-to-end deadline while every individual step reports healthy.
+    capability: AHC-0096
+    checkable: dynamic
+  - must: Budget consumed by earlier steps is visible to later ones.
+    because: >-
+      Summed only at the end, an end-to-end ceiling cannot stop anything — the
+      overspend is a report rather than a control.
+    capability: AHC-0075
+    checkable: dynamic
+
+substitution_test: >-
+  Replace the implementation with a sequential in-process runner. Graph
+  semantics, step order and idempotency behaviour must be identical; only
+  survival of a crash, parallelism and the operational view of a run may differ.
+
+notes: >-
+  This seam exists because control flow in a deterministic workflow belongs to
+  the adopter's code while resumption belongs to infrastructure. It is not the
+  agent loop: for a tool-using agent the loop is the harness itself, which is
+  why every control-loop capability in this catalog crosses no seam at all.
+
+see_also: [state, admission, cost_ledger]

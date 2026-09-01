@@ -1,0 +1,58 @@
+# artifact_verifier — the seam to the artifact's own toolchain.
+port: artifact_verifier
+status: active
+since: "0.4.0"
+
+tier: extension
+requires_archetypes: [A8]
+direction: consumed
+layers: [L12]
+
+summary: >-
+  Where generated code, SQL, configuration or documents are put through the
+  toolchain they will face in production — compiler, parser, planner, test
+  runner — inside a sandbox, before anything ships.
+
+serves: [AHC-0076, AHC-0079, AHC-0091]
+
+kernel_owns: >-
+  When verification runs and what its verdict gates, the provenance attached to
+  the artifact, and the rule that the artifact assessed is the artifact shipped.
+
+supplied_outside: >-
+  The toolchain itself and the sandbox it runs in, plus the ability to run a
+  supplied functional suite against the artifact.
+
+operations:
+  - name: verify
+    intent: Run the artifact's own toolchain against it and return the verdict with its diagnostics.
+  - name: run_suite
+    intent: Execute a supplied functional suite against the artifact and return the results.
+    optional: true
+
+invariants:
+  - must: Verification uses the artifact's real toolchain, not a proxy for it.
+    because: >-
+      A model asked whether code compiles is not a compiler, and the difference
+      shows up as an artifact that was approved and does not run.
+    capability: AHC-0076
+    checkable: static
+  - must: Verification runs inside a bound, since running an artifact is executing untrusted code.
+    because: >-
+      Generated code under verification has the same reach as generated code in
+      production, and the sandbox is the only thing that makes the check safe.
+    capability: AHC-0077
+    checkable: static
+  - must: The verdict travels with the artifact as provenance.
+    because: >-
+      Separated, a shipped artifact cannot be traced to the check that passed
+      it, and nobody can tell whether it was ever checked at all.
+    capability: AHC-0079
+    checkable: dynamic
+
+substitution_test: >-
+  Replace the implementation with a local toolchain invocation. The verdict and
+  its diagnostics must be identical; only isolation strength and where it runs
+  may differ.
+
+see_also: [tool_runtime, eval_task]

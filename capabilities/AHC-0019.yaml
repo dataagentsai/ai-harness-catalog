@@ -22,7 +22,8 @@ failure_mode: |-
 discharges: [AAC-0095, AAC-0006]
 
 design_decisions:
-  - question: Redact, or never capture?
+  - key: redaction_point
+    question: Redact, or never capture?
     tension: >-
       Redacting keeps the shape of the payload for debugging and depends on a
       detector that will miss things. Not capturing is absolute and removes the
@@ -31,12 +32,14 @@ design_decisions:
       Decide per field class, not globally. Structured identifiers can be
       dropped outright; free text needs the detector and the acceptance that it
       is imperfect.
-  - question: Is the redaction reversible?
+  - key: reversibility
+    question: Is the redaction reversible?
     tension: >-
       A reversible token lets an authorised investigator recover the original
       and means the mapping is now a secret of the same sensitivity as the data.
       Irreversible masking has no such secret and no path back.
-  - question: Does the same redaction apply to the eval path?
+  - key: eval_path
+    question: Does the same redaction apply to the eval path?
     tension: >-
       Datasets built from production traces inherit whatever was captured. If
       redaction runs only on the telemetry path, the dataset becomes the

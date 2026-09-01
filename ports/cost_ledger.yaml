@@ -1,0 +1,66 @@
+# cost_ledger — the seam to wherever spend is accumulated and read back.
+port: cost_ledger
+status: active
+since: "0.4.0"
+
+tier: core
+direction: consumed
+layers: [L13]
+
+summary: >-
+  Accumulation of tokens and spend against a unit of work rather than a call,
+  and the readable running total that lets a ceiling stop work that is already
+  in flight.
+
+serves: [AHC-0007, AHC-0012, AHC-0024, AHC-0030, AHC-0031, AHC-0050, AHC-0075, AHC-0097]
+
+kernel_owns: >-
+  What counts as a unit of work, the attribution tags applied at the boundary,
+  the decision to stop when a ceiling is reached, and the rule that a retry is
+  another attempt on the same unit rather than a new one.
+
+supplied_outside: >-
+  Durable accumulation, aggregation across processes, and a running total that
+  can be read back quickly enough to be acted on mid-flight.
+
+operations:
+  - name: record
+    intent: Add a usage observation to a unit of work with the tags it was given at the boundary.
+  - name: spent
+    intent: Return the running total for a unit of work, fresh enough to enforce a ceiling against.
+  - name: reserve
+    intent: Claim headroom before an expensive step so parallel work cannot collectively overshoot.
+    optional: true
+
+invariants:
+  - must: Usage is attributed to a unit of work, never only to a call.
+    because: >-
+      Per-call accounting cannot answer what a task cost, so a runaway
+      trajectory looks like ordinary traffic and no ceiling can be set at all.
+    capability: AHC-0007
+    checkable: static
+  - must: A retry is recorded as another attempt on the same unit, not as new work.
+    because: >-
+      Counted as separate healthy traffic, retries inflate volume, hide a
+      failure rate, and make the cost of unreliability invisible.
+    capability: AHC-0024
+    checkable: dynamic
+  - must: The running total is readable while the unit of work is still running.
+    because: >-
+      A total available only at the end can inform a report but cannot stop
+      anything, which is the entire purpose of a ceiling.
+    capability: AHC-0030
+    checkable: dynamic
+  - must: Tags are those applied at the boundary, never re-derived downstream.
+    because: >-
+      Re-derived attribution drifts from the boundary's view, and two systems
+      then disagree about who pays with no way to reconcile them.
+    capability: AHC-0090
+    checkable: static
+
+substitution_test: >-
+  Replace the implementation with an in-process counter. Every enforcement point
+  must behave identically for single-process work; only accumulation across
+  processes and survival of a restart may differ.
+
+see_also: [model, telemetry, admission]

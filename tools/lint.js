@@ -24,6 +24,8 @@ const Ajv = require("ajv/dist/2020");
 const ROOT = path.join(__dirname, "..");
 const load = (p) => yaml.load(fs.readFileSync(path.join(ROOT, p), "utf8"));
 
+const pkgVersion = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).version;
+
 const errors = [];
 const warnings = [];
 const err = (f, m) => errors.push(`${f}: ${m}`);
@@ -33,7 +35,13 @@ const schema = JSON.parse(
   fs.readFileSync(path.join(ROOT, "schema/capability.schema.json"), "utf8")
 );
 const ajv = new Ajv({ allErrors: true, strict: false });
+require("ajv-formats")(ajv);   // date, so a review date has to be one
 const validate = ajv.compile(schema);
+
+const portSchemaPath = path.join(ROOT, "schema/port.schema.json");
+const validatePort = fs.existsSync(portSchemaPath)
+  ? ajv.compile(JSON.parse(fs.readFileSync(portSchemaPath, "utf8")))
+  : null;
 
 const arch = load("taxonomy/archetypes.yaml");
 const layersDoc = load("taxonomy/layers.yaml");
@@ -171,6 +179,210 @@ if (ids.length) {
   }
 }
 
+// -------------------------------------------------------------------- ports
+/*
+ * A port is a seam, not a partition of the catalog. Most capabilities are
+ * structural and have no port at all, so an unserved capability is reported as
+ * information, never as a fault.
+ *
+ * The two rules worth enforcing are the ones that keep a port a specification:
+ * it names no product, and it says what stays on the harness side. A port whose
+ * kernel_owns is empty is a client library with a YAML file attached.
+ */
+const portDir = path.join(ROOT, "ports");
+const portFiles = fs.existsSync(portDir)
+  ? fs.readdirSync(portDir).filter((f) => f.endsWith(".yaml")).sort()
+  : [];
+const ports = new Map();
+const servedCaps = new Set();
+
+for (const pf of portFiles) {
+  let doc;
+  try {
+    doc = yaml.load(fs.readFileSync(path.join(portDir, pf), "utf8"));
+  } catch (e) {
+    err(pf, `unparseable: ${e.message}`);
+    continue;
+  }
+  if (validatePort && !validatePort(doc)) {
+    for (const e of validatePort.errors) err(pf, `schema ${e.instancePath || "/"} ${e.message}`);
+    continue;
+  }
+  if (`${doc.port}.yaml` !== pf) err(pf, `filename does not match port name ${doc.port}`);
+  if (ports.has(doc.port)) err(pf, `duplicate port ${doc.port}`);
+  ports.set(doc.port, doc);
+
+  for (const l of doc.layers) if (!LAYER_IDS.has(l)) err(pf, `unknown layer ${l}`);
+  for (const a of doc.requires_archetypes || []) {
+    if (!ARCH_IDS.has(a)) err(pf, `unknown archetype ${a}`);
+  }
+  for (const c of doc.serves) {
+    if (!byId.has(c)) err(pf, `serves unknown capability ${c}`);
+    servedCaps.add(c);
+  }
+  for (const inv of doc.invariants) {
+    if (inv.capability && !byId.has(inv.capability)) {
+      err(pf, `invariant cites unknown capability ${inv.capability}`);
+    }
+  }
+
+  // A port is normative text: the no-products rule applies here too.
+  const portText = [
+    doc.summary, doc.kernel_owns, doc.supplied_outside, doc.substitution_test, doc.notes || "",
+    ...doc.operations.map((o) => o.intent),
+    ...doc.invariants.flatMap((i) => [i.must, i.because]),
+  ].join(" ").toLowerCase();
+  for (const p of PRODUCTS) {
+    if (new RegExp(`\\b${p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(portText)) {
+      err(pf, `product name "${p}" in a port — a port names a class of thing, never a product`);
+    }
+  }
+
+  // The seam must have a harness side. Without one it is a wrapper.
+  if (!doc.kernel_owns || doc.kernel_owns.trim().length < 30) {
+    err(pf, `kernel_owns is empty — a seam with nothing on the harness side is a client library`);
+  }
+
+  /*
+   * Tier has to be earned. A core port is one every shape binds, so it must
+   * serve at least one core capability — otherwise the simplest archetype is
+   * being asked to wire up machinery with no capability behind it. This caught
+   * `state`, which serves nothing but archetype deltas.
+   */
+  const servedDocs = doc.serves.map((c) => byId.get(c)).filter(Boolean);
+  if (doc.tier === "core" && servedDocs.length && !servedDocs.some((c) => c.core)) {
+    err(pf, `tier: core but every capability it serves is an archetype delta — this is an extension port`);
+  }
+
+  /*
+   * And the other direction: a delta served by a port that no shape the port
+   * claims would ever need. Overlap is not enough to complain about — a
+   * capability tagged [A5, A7, A9] is legitimately served by a seam that only
+   * claims A7, because the other two shapes reach it through a different one.
+   * Zero overlap is the real signal: the port is serving something for nobody.
+   */
+  if (doc.tier === "extension") {
+    const required = new Set(doc.requires_archetypes || []);
+    for (const c of servedDocs.filter((c) => !c.core)) {
+      if (!c.archetypes.some((a) => required.has(a))) {
+        warn(pf, `serves ${c.id}, which belongs to ${c.archetypes.join("/")} — no shape this port claims needs it`);
+      }
+    }
+  }
+  for (const s of doc.see_also || []) {
+    if (!ports.has(s) && !portFiles.includes(`${s}.yaml`)) {
+      err(pf, `see_also references unknown port ${s}`);
+    }
+  }
+}
+
+// ----------------------------------------------------------------- profiles
+/*
+ * A profile is an adopter's artifact and normally lives in their repository.
+ * The examples here exist so the format is exercised by the same build that
+ * publishes it — a schema nobody has ever validated a document against is a
+ * hopeful document.
+ *
+ * These checks are deliberately unremarkable. They are what a `plan` command
+ * would do, in thirty lines and with no dependency beyond a YAML parser, which
+ * is the point: the format has to be usable by tooling nobody here wrote.
+ */
+const profileSchemaPath = path.join(ROOT, "schema/profile.schema.json");
+const validateProfile = fs.existsSync(profileSchemaPath)
+  ? ajv.compile(JSON.parse(fs.readFileSync(profileSchemaPath, "utf8")))
+  : null;
+
+function profileIssues(doc, prf) {
+  const E = [], W = [];
+  const e = (m) => E.push(`${prf}: ${m}`);
+  const w = (m) => W.push(`${prf}: ${m}`);
+
+  if (validateProfile && !validateProfile(doc)) {
+    for (const x of validateProfile.errors) e(`schema ${x.instancePath || "/"} ${x.message}`);
+    return { E, W };
+  }
+
+  const shapes = new Set(doc.subject.archetypes);
+  for (const a of shapes) if (!ARCH_IDS.has(a)) e(`unknown archetype ${a}`);
+  if (doc.catalog.ahc !== pkgVersion) {
+    w(`pins catalog ${doc.catalog.ahc} but this checkout is ${pkgVersion}`);
+  }
+
+  // Which capabilities this system owes, and which seams that implies.
+  const owed = [...byId.values()].filter((c) => c.archetypes.some((a) => shapes.has(a)));
+  const needed = [...ports.values()].filter(
+    (p) => p.tier === "core" || (p.requires_archetypes || []).some((a) => shapes.has(a))
+  );
+
+  for (const p of needed) {
+    if (!doc.bindings[p.port]) e(`port "${p.port}" is needed by ${[...shapes].join("/")} and is not bound`);
+  }
+  for (const name of Object.keys(doc.bindings)) {
+    if (name.startsWith("x_")) continue;
+    if (!ports.has(name)) { e(`binds unknown port "${name}"`); continue; }
+    if (!needed.includes(ports.get(name))) {
+      w(`binds "${name}", which no declared shape needs — machinery with no capability behind it`);
+    }
+  }
+
+  // A shape with a control loop has to say who owns it. That is catalog
+  // knowledge rather than schema knowledge, so it is checked here.
+  const looped = ["A6", "A7", "A9"].filter((a) => shapes.has(a));
+  if (looped.length && !(doc.harness && doc.harness.loop)) {
+    e(`declares ${looped.join("/")} but does not say who owns the control loop`);
+  }
+
+  for (const key of Object.keys(doc.decisions)) {
+    if (key.startsWith("x_")) continue;
+    const cid = key.split("/")[0];
+    if (!byId.has(cid)) { e(`decision "${key}" references unknown ${cid}`); continue; }
+    if (!owed.includes(byId.get(cid))) w(`answers "${key}", which no declared shape owes`);
+    // Only checkable once the capability's decisions carry keys. Until then the
+    // slug half of the identifier is unverifiable, which the report says out loud.
+    const keyed = (byId.get(cid).design_decisions || []).filter((d) => d.key);
+    if (keyed.length && !keyed.some((d) => d.key === key.split("/")[1])) {
+      e(`decision "${key}" is not one ${cid} raises — it asks: ${keyed.map((d) => d.key).join(", ")}`);
+    }
+  }
+  for (const g of doc.accepted_gaps) {
+    if (!byId.has(g.capability)) e(`accepted gap references unknown ${g.capability}`);
+    else if (!owed.includes(byId.get(g.capability))) {
+      w(`accepts a gap on ${g.capability}, which no declared shape owes`);
+    }
+  }
+  return { E, W };
+}
+
+const exDir = path.join(ROOT, "examples");
+const profileFiles = fs.existsSync(exDir)
+  ? fs.readdirSync(exDir).filter((f) => f.endsWith(".profile.yaml")).sort()
+  : [];
+let profilesChecked = 0;
+
+for (const prf of profileFiles) {
+  const { E, W } = profileIssues(yaml.load(fs.readFileSync(path.join(exDir, prf), "utf8")), prf);
+  E.forEach((m) => errors.push(m));
+  W.forEach((m) => warnings.push(m));
+  if (!E.length) profilesChecked++;
+}
+
+/*
+ * Fixtures that must FAIL. A check nobody has watched fail is not a check, and
+ * these are cheap enough that there is no excuse for not having them: each file
+ * under examples/invalid/ is a profile broken in one specific way, and the build
+ * fails if the linter has stopped noticing.
+ */
+const badDir = path.join(exDir, "invalid");
+const badFiles = fs.existsSync(badDir)
+  ? fs.readdirSync(badDir).filter((f) => f.endsWith(".profile.yaml")).sort()
+  : [];
+for (const bf of badFiles) {
+  const { E } = profileIssues(yaml.load(fs.readFileSync(path.join(badDir, bf), "utf8")), `invalid/${bf}`);
+  if (!E.length) {
+    err(`invalid/${bf}`, `is meant to be rejected and passed — a check has gone quiet`);
+  }
+}
+
 // ------------------------------------------------------- realization discipline
 /*
  * Realizations are informative and may name products — the only layer that may.
@@ -255,6 +467,15 @@ console.log(`  capabilities   ${byId.size}`);
 console.log(`  core           ${[...byId.values()].filter((d) => d.core).length}`);
 console.log(`  layers covered ${Object.keys(layerHist).length} of ${LAYER_IDS.size}`);
 console.log(`  discharges     ${dischargeCount} references to ${dischargedAac.size} distinct obligations`);
+if (ports.size) {
+  const core = [...ports.values()].filter((p) => p.tier === "core").length;
+  console.log(`  ports          ${ports.size} (${core} core, ${ports.size - core} by archetype)`);
+  console.log(`  seam coverage  ${servedCaps.size} capabilities cross a port; ${byId.size - servedCaps.size} are structural`);
+}
+const ddTotal = [...byId.values()].reduce((n, c) => n + (c.design_decisions || []).length, 0);
+const ddKeyed = [...byId.values()].reduce((n, c) => n + (c.design_decisions || []).filter((d) => d.key).length, 0);
+console.log(`  decisions      ${ddKeyed} of ${ddTotal} carry a key and can be answered in a profile`);
+if (profileFiles.length) console.log(`  profiles       ${profilesChecked} of ${profileFiles.length} example profile(s) valid against the catalog`);
 if (aacIds) console.log(`  assurance catalog reachable — ${aacIds.size} obligations, references checked`);
 
 if (warnings.length) {

@@ -1,0 +1,59 @@
+# identity — the seam to whoever the system is acting as.
+port: identity
+status: active
+since: "0.4.0"
+
+tier: core
+direction: consumed
+layers: [L16]
+
+summary: >-
+  The principal a unit of work carries, its propagation to tools, retrieval and
+  downstream systems, and the authorization decision made where an action
+  actually happens.
+
+serves: [AHC-0034, AHC-0040, AHC-0059, AHC-0062, AHC-0068]
+
+kernel_owns: >-
+  Requiring a principal before work begins, carrying it through every hop
+  without re-derivation, and refusing to substitute a service identity when a
+  user identity is absent.
+
+supplied_outside: >-
+  Resolution of the caller into a principal, exchange of that principal for a
+  credential a downstream system accepts, and the authorization verdict itself.
+
+operations:
+  - name: principal
+    intent: Return the identity this unit of work is acting as, or report its absence as an error.
+  - name: exchange
+    intent: Produce a credential for a named downstream audience without widening authority.
+  - name: authorize
+    intent: Decide whether this principal may take this action on this resource.
+
+invariants:
+  - must: The absence of a principal is an error, never a fallback to the harness's own identity.
+    because: >-
+      A service identity substituted for a missing user identity turns every
+      downstream authorization into a check of the wrong subject, and it passes.
+    capability: AHC-0034
+    checkable: static
+  - must: The principal reaches the point where an action executes, not only the point where it was requested.
+    because: >-
+      Authority checked only at dispatch is advisory: the tool runs under
+      whatever credential its own process holds, which is usually broader.
+    capability: AHC-0040
+    checkable: static
+  - must: An exchanged credential never carries authority the original principal lacked.
+    because: >-
+      Widening on exchange makes the harness a privilege-escalation path, and
+      the escalation is invisible because both calls look authorized.
+    capability: AHC-0034
+    checkable: dynamic
+
+substitution_test: >-
+  Replace the implementation with a static test principal. Every authorization
+  decision point must still be reached and still be recorded; only the source of
+  the identity and the verdicts may differ.
+
+see_also: [secrets, tool_runtime, retrieval]

@@ -7,6 +7,13 @@ Status: **working draft 0.3.0** — the normative catalog is complete.
 the assurance catalog's 108 obligations discharged. Identifiers are stable from
 the first tagged release. Nothing here is externally binding.
 
+**Read it as a page → <https://raw.githack.com/dataagentsai/ai-harness-catalog/main/site/index.html>**
+— the catalog rendered and filterable by shape and layer, with an orientation
+section on what AHC and AAC each are and where the line between them falls.
+The same page is deployed to
+<https://dataagentsai.github.io/ai-harness-catalog/>; the link above serves
+`site/index.html` straight from this branch and needs nothing enabled.
+
 ---
 
 ## The gap this fills
@@ -83,6 +90,72 @@ traded away is not a decision. **`discharges`** is the join to the assurance
 catalog, and it runs both ways: an obligation no capability discharges is a hole
 in this catalog.
 
+## The seams
+
+Seventeen **ports** — ten every harness has, seven pulled in by archetype. A
+capability says what must exist; a port says where the harness meets something
+it does not own, and what must hold across that meeting whoever implements it.
+
+There is no `loop` port and no `orchestrator` port. Every control-loop
+capability crosses no seam, because ordering properties cannot be enforced by
+something selectable — whatever owns the loop owns all of them. Only durable
+execution is a seam, which is what `workflow` names.
+
+```yaml
+port: model
+tier: core
+kernel_owns: >-             # what an implementation may NOT decide
+  The choke point itself, retry policy, the typed parse boundary, sampling
+  parameter resolution, the budget check made before the call, span emission,
+  and which model is reached for.
+invariants:
+  - must: The implementation never retries on its own.
+    because: >-
+      A retry inside the adapter is invisible to the attempt counter, so bounded
+      retries stop being bounded and one unit of work quietly costs three.
+    capability: AHC-0024
+    checkable: dynamic
+substitution_test: >-       # how you tell a port from a wrapper
+  Replace the implementation with one backed by recorded fixtures. The system
+  must behave identically with no network reachable.
+```
+
+Declared as **data**, with no signatures, types or language, so an interface can
+be generated in any stack without this repository shipping a package. A port is
+not a partition of the catalog — 26 of the 98 capabilities are structural and
+cross no seam at all. See [docs/PORTS.md](docs/PORTS.md).
+
+## The profile
+
+The one file an adopter writes: which shapes a system is, which of the
+catalog's design decisions it answered and how, its thresholds, which
+implementation fills each seam, and which capabilities it is knowingly not
+meeting.
+
+```yaml
+apiVersion: harness-profile/v1
+subject:    { name: incident-summary, archetypes: [A1] }
+decisions:
+  AHC-0001/parse_failure: { value: fail-typed, source: chosen }
+  AHC-0004/choke_point:   { value: in-process, source: golden-path }
+thresholds: { token_budget_per_unit: 20000, request_deadline_seconds: 30 }
+bindings:
+  model:     { approach: in-house,    adapter: http-messages-client }
+  telemetry: { approach: open-source, adapter: otlp-http }
+accepted_gaps:
+  - { capability: AHC-0092, reason: single-region…, owner: platform-team, review: "2026-12-01" }
+```
+
+`source` is the field that earns its place — a default is permitted, a *silent*
+default is not. Thresholds are where the catalog's refusal to publish numbers
+ends and the adopter's ownership begins.
+
+`npm run lint` checks a profile against the catalog in about thirty lines: every
+port the declared shapes need is bound, a shape with a loop says who owns it,
+decisions and gaps reference capabilities those shapes actually owe. Fixtures
+under `examples/invalid/` must fail, and the build breaks if they stop failing.
+See [docs/PROFILE.md](docs/PROFILE.md).
+
 ## The boundary — and why there are two repositories
 
 > **AAC states what must be *true*. AHC states what must *exist*.**
@@ -111,24 +184,43 @@ and construction guidance competes with every framework's documentation.
 **Tripwire:** if anything under `references/` is ever published as an importable
 dependency rather than a skeleton to copy, the boundary has been crossed.
 
+## Openness
+
+The interchange formats — port specs, and the profile and receipt schemas as
+they land — live in this repository rather than in any implementation, under CC
+BY, so that nothing needs a particular tool to produce or read them. Eleven
+rules keep that real, each forbidding something specific: no privileged
+implementation, no format declared stable on one implementation, `x_` extension
+keys instead of forks, permanent identifiers, no runtime dependency, no check
+that only works on generated code, and no tooling that reports anything to
+anyone. See [docs/OPENNESS.md](docs/OPENNESS.md).
+
 ## Layout
 
 ```
 capabilities/   AHC-####.yaml — the normative master, one per file
+ports/          the seams: where the harness meets what it does not own
 taxonomy/       layers, positions, approaches, levels; archetypes pinned from AAC
-schema/         JSON Schema for a capability
+schema/         JSON Schema for a capability and for a port
 blueprints/     per-archetype assembled views — the ten pages         (Phase 3)
 realizations/   how each capability gets built; only place products appear (Phase 4)
 references/     runnable skeletons, copied not imported               (Phase 5)
 crosswalks/     -> assurance catalog, telemetry conventions
-tools/          linter
-docs/           the AAC boundary, identifier policy, scope
+tools/          linter, page renderer
+docs/           the AAC boundary, identifier policy, scope, ports, openness
+site/           the rendered page — generated, committed, never hand-edited
 ```
 
 ```bash
 npm install
 npm run lint     # schema + identifier + both boundary disciplines
+npm run build    # lint, then render site/index.html and smoke-test it
 ```
+
+`site/index.html` is generated from `capabilities/` and committed, so the
+catalog is readable straight from the repository. Nothing in it is ever edited
+by hand: CI re-renders on every push and fails the build if the result differs
+from what is checked in.
 
 The linter checks `discharges` against a real checkout of the assurance catalog
 when one is reachable at `../ai-assurance-catalog` or `$AAC_CATALOG_PATH`, and

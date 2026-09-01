@@ -1,0 +1,72 @@
+# config — the seam to whatever holds the running configuration.
+port: config
+status: active
+since: "0.4.0"
+
+tier: core
+direction: consumed
+layers: [L15]
+
+summary: >-
+  Resolution of everything that decides how a unit of work behaves — model pins,
+  prompt versions, flags, allow-lists, corpus versions, region pins — into one
+  immutable snapshot with a digest, taken once and recorded.
+
+serves: [AHC-0003, AHC-0009, AHC-0014, AHC-0032, AHC-0033, AHC-0059, AHC-0064, AHC-0092]
+
+kernel_owns: >-
+  Taking the snapshot at the start of a unit of work, refusing to read again
+  within it, attaching the digest to the record, and treating prompt, model and
+  policy as one versioned set rather than three independent lookups.
+
+supplied_outside: >-
+  Storage and versioning for configuration values and prompt content, able to
+  serve a specific past version by identifier.
+
+operations:
+  - name: resolve
+    intent: Return the configuration for this unit of work as one immutable snapshot with a digest.
+  - name: fetch_version
+    intent: Return a specific past version of a value or a prompt by identifier.
+  - name: list_versions
+    intent: Report the versions available for a key, so a rollback target can be named.
+    optional: true
+
+invariants:
+  - must: A snapshot is immutable, and no further lookup happens within the unit of work.
+    because: >-
+      A value that changes mid-run makes the record a lie: the digest says one
+      thing ran, and half of it ran under something else.
+    capability: AHC-0003
+    checkable: static
+  - must: Prompt, model pin and policy version move together as one snapshot.
+    because: >-
+      Rolled back separately, the system lands on a prompt that was never
+      assessed against the model now serving it — a combination nobody tested.
+    capability: AHC-0032
+    checkable: dynamic
+  - must: The digest of the resolved snapshot appears in the record of the unit of work.
+    because: >-
+      Without it no past run can be tied to the configuration that produced it,
+      and every incident investigation begins by guessing.
+    capability: AHC-0033
+    checkable: dynamic
+  - must: Prompt content is served by version and never edited in place.
+    because: >-
+      In-place edits make two runs recorded under the same version genuinely
+      different, which destroys the only stable key an evaluation has.
+    capability: AHC-0033
+    checkable: declared
+
+substitution_test: >-
+  Replace the implementation with a file on disk. Behaviour must be identical
+  for a given snapshot; only how the snapshot was obtained, and how quickly a
+  change propagates, may differ.
+
+notes: >-
+  There is deliberately no separate prompt-registry port. A prompt registry is
+  versioned storage serving content by identifier — this seam with larger
+  values. A port that exists because a product category exists is how a small
+  set of seams becomes thirty.
+
+see_also: [model, policy]

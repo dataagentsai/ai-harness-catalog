@@ -1,0 +1,73 @@
+# tool_runtime — the seam to wherever a tool actually executes.
+port: tool_runtime
+status: active
+since: "0.4.0"
+
+tier: extension
+requires_archetypes: [A6, A7, A8, A9]
+direction: consumed
+layers: [L3]
+
+summary: >-
+  The boundary between the decision to call a tool and the tool running: where
+  the call is executed, under which authority, inside which sandbox, and how a
+  failure comes back.
+
+serves: [AHC-0036, AHC-0037, AHC-0038, AHC-0040, AHC-0043, AHC-0077, AHC-0078]
+
+kernel_owns: >-
+  The declared argument contract, validation before dispatch, bounding of a
+  result before it re-enters context, re-fencing of that result, and the rule
+  that a tool failure is a loop state rather than an exception thrown through
+  the control loop.
+
+supplied_outside: >-
+  Execution: the process, container or remote service the tool runs in, its
+  isolation, and enforcement of authority at the point the effect happens.
+
+operations:
+  - name: describe
+    intent: Report the tools available and the argument contract each declares.
+  - name: execute
+    intent: Run one validated call under a principal, a deadline and a budget, returning a typed result.
+  - name: cancel
+    intent: Stop a running call, and report whether the effect had already happened.
+
+invariants:
+  - must: There is no path to execution that bypasses argument validation.
+    because: >-
+      One unvalidated path is the path the model finds, and the tool receives
+      arguments no human ever considered possible.
+    capability: AHC-0037
+    checkable: static
+  - must: Authority is enforced where the tool executes, not only where it was dispatched.
+    because: >-
+      Checked only at dispatch, the tool runs under its own process credential,
+      which is almost always broader than the caller's.
+    capability: AHC-0040
+    checkable: static
+  - must: A failure returns as a typed result, never as an exception through the loop.
+    because: >-
+      An exception unwinds the trajectory, so the agent loses the one piece of
+      information it needed — that this tool cannot help — and retries forever.
+    capability: AHC-0043
+    checkable: dynamic
+  - must: Results are bounded before they are returned.
+    because: >-
+      An unbounded result evicts the standing instruction from the context
+      window, and the agent's behaviour changes for reasons no one can see.
+    capability: AHC-0038
+    checkable: dynamic
+  - must: Generated artifacts execute only inside a declared sandbox with a declared edit scope.
+    because: >-
+      Without a bound, a generated script's blast radius is whatever the runtime
+      can reach, which is discovered the first time it is wrong.
+    capability: AHC-0077
+    checkable: static
+
+substitution_test: >-
+  Replace the implementation with an in-process stub registry. Dispatch,
+  validation, bounding and failure shape must be identical; only isolation
+  strength and what the tool can actually reach may differ.
+
+see_also: [identity, approval, artifact_verifier]

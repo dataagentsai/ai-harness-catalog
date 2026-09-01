@@ -1,0 +1,30 @@
+# MUST FAIL — a shape that owes a seam and does not bind it.
+#
+# Two things broken on purpose: `secrets` and `eval_task` are core ports that
+# every shape needs, and neither is bound. A profile that passes this is a
+# profile that lets a system claim a harness it does not have.
+apiVersion: harness-profile/v1
+
+subject:
+  name: broken-unbound
+  archetypes: [A1]
+
+catalog:
+  ahc: "0.3.0"
+
+decisions: {}
+
+thresholds:
+  max_concurrency: 4
+
+bindings:
+  model:       { approach: in-house,    adapter: http-messages-client }
+  config:      { approach: in-house,    adapter: versioned-files }
+  telemetry:   { approach: open-source, adapter: otlp-http }
+  policy:      { approach: in-house,    adapter: inprocess-rules }
+  identity:    { approach: in-house,    adapter: request-principal }
+  cost_ledger: { approach: in-house,    adapter: memory-ledger }
+  admission:   { approach: in-house,    adapter: semaphore }
+  recorder:    { approach: in-house,    adapter: file-fixtures }
+
+accepted_gaps: []
