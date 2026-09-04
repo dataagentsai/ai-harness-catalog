@@ -1,0 +1,31 @@
+id: AHC-0055
+
+plain: |
+  Something outside the agent has to notice when the agent did not run at all.
+
+example: |
+  A nightly cost job is scheduled for 02:00. On Tuesday the scheduler does not
+  fire it. No error is raised, no alert is sent, and no record is written —
+  because nothing ran to write one.
+
+  The dashboards are green, because they are built from the records runs emit
+  and there is no record to contradict. Nobody finds out until Friday, when
+  somebody asks why last month's spend looks wrong. The three intervening days
+  have no data in them at all.
+
+detect: |
+  Suppress the trigger and assert that something complains. That is the whole
+  test, and it is the one people skip because it feels like testing the
+  scheduler rather than the agent.
+
+  The check has to be driven by a clock the monitoring side holds. Anything
+  driven by the agent's own output inherits the exact blindness it is meant to
+  cover: no output, no check, no alarm.
+
+not_this:
+  - id: AHC-0006
+    why: |
+      One span per call. Tracing gives you a complete record of the runs that
+      happened, and it is built from what a run emits — so it is blind by
+      construction to a run that emitted nothing. The better your tracing, the
+      more convincingly it reports silence as health.

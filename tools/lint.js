@@ -482,6 +482,30 @@ if (warnings.length) {
   console.log(`\n${warnings.length} warning(s):`);
   for (const w of warnings) console.log(`  ! ${w}`);
 }
+// ---- guidance: commentary must point at something, and only at fields it owns.
+// A file named for an id that does not exist renders nowhere and reports
+// nothing — a check that can never fire.
+const GUIDE_FIELDS = new Set(["id", "plain", "why", "example", "detect", "not_this"]);
+const guideDirL = path.join(ROOT, "guidance");
+let guided = 0;
+if (fs.existsSync(guideDirL)) {
+  for (const f of fs.readdirSync(guideDirL).filter((x) => x.endsWith(".yaml")).sort()) {
+    const g = yaml.load(fs.readFileSync(path.join(guideDirL, f), "utf8"));
+    if (!g || !g.id) { errors.push(`guidance/${f} has no id`); continue; }
+    if (g.id !== f.replace(/\.yaml$/, "")) errors.push(`guidance/${f} declares ${g.id}`);
+    if (!byId.has(g.id)) { errors.push(`guidance/${f} explains ${g.id}, which is not in the catalog`); continue; }
+    for (const k of Object.keys(g)) if (!GUIDE_FIELDS.has(k)) errors.push(`guidance/${f}: unknown field ${k}`);
+    for (const n of g.not_this || []) {
+      if (!byId.has(n.id)) errors.push(`guidance/${f}: not_this cites ${n.id}, which does not exist`);
+    }
+    // Commentary must not carry normative text — a second authority that can
+    // disagree with the catalog is exactly what guidance/ is arranged to prevent.
+    if ("requirement" in g) errors.push(`guidance/${f} carries a requirement — the catalog owns that`);
+    guided += 1;
+  }
+}
+if (guided) console.log(`guidance: ${guided} explained, ${byId.size - guided} not yet`);
+
 if (errors.length) {
   console.log(`\n${errors.length} error(s):`);
   for (const e of errors) console.log(`  ✗ ${e}`);

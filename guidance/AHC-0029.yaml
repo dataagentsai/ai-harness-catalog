@@ -1,0 +1,34 @@
+id: AHC-0029
+
+plain: |
+  A real interaction that went wrong should become a test case by copying it and
+  adding the right answer — not by a person retyping it into a different shape.
+
+example: |
+  A customer hits a bug on Tuesday. The trace is right there. But the eval
+  harness wants its cases as {input, expected}, and the captured run is a
+  transcript with tool calls, timings and identifiers in it.
+
+  So somebody spends twenty minutes translating one run by hand. It works, and it
+  never happens again, because twenty minutes per case does not survive contact
+  with a normal week.
+
+  Six months later the curated set still contains the inputs somebody imagined in
+  the first month. It passes every time. The real inputs have moved a long way
+  from it, and the set passing is exactly what stops anyone looking.
+
+detect: |
+  Take a captured run and promote it with no hand editing beyond supplying the
+  expected value. If that requires a transformation step, the shapes differ and
+  the capability is absent however good the intention was.
+
+  Then check the promoted row still names the run it came from. Without that
+  reference you cannot go back and ask what the rest of the trace looked like,
+  which is most of why you wanted the real interaction rather than an invented one.
+
+not_this:
+  - id: AHC-0010
+    why: |
+      A task entrypoint an evaluation can drive. That is the harness being able
+      to run a case at all. This is about where cases come from, and a system can
+      have a perfectly drivable entrypoint fed only by imagined inputs.

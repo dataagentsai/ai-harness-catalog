@@ -45,7 +45,24 @@ const caps = fs
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const trim = (s) => String(s || "").trim();
 
+// Non-normative commentary, keyed by id. The catalog stays the authority; this
+// only answers questions *about* a requirement, never restates one. `why` is
+// usually absent here because a capability already carries `failure_mode`.
+const guideDir = path.join(ROOT, "guidance");
+const guidance = {};
+if (fs.existsSync(guideDir)) {
+  for (const f of fs.readdirSync(guideDir).filter((x) => x.endsWith(".yaml")).sort()) {
+    const g = yaml.load(fs.readFileSync(path.join(guideDir, f), "utf8"));
+    guidance[g.id] = {
+      plain: trim(g.plain || ""), why: trim(g.why || ""), example: trim(g.example || ""),
+      detect: trim(g.detect || ""),
+      not_this: (g.not_this || []).map((n) => ({ id: n.id, why: trim(n.why) })),
+    };
+  }
+}
+
 const data = {
+  guidance,
   version: pkg.version,
   archetypes: arch.archetypes,
   layers: layersDoc.layers,
@@ -232,6 +249,30 @@ td strong{color:var(--ink)}
 .lvl.MAY{color:var(--may);background:var(--may-bg)}
 .cap h5{margin:0 0 5px;font-family:var(--serif);font-size:17px;font-weight:600;line-height:1.4;color:var(--ink)}
 .cap p.req{margin:0;font-size:15px;line-height:1.55;color:var(--ink-2);max-width:58ch}
+/* Guidance. Quieter than the requirement on purpose — commentary must never
+   compete with the normative text for the eye. */
+.guide{margin-top:12px;border-top:1px dashed var(--rule);padding-top:10px}
+.guide>summary{cursor:pointer;font:600 12px/1.4 var(--sans);letter-spacing:.03em;
+  text-transform:uppercase;color:var(--accent);list-style:none;display:inline-flex;
+  align-items:center;gap:6px;padding:2px 0}
+.guide>summary::-webkit-details-marker{display:none}
+.guide>summary::before{content:"\u203A";display:inline-block;transition:transform .15s ease;font-size:15px}
+.guide[open]>summary::before{transform:rotate(90deg)}
+.guide>summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+.gbody{margin-top:10px;padding:12px 14px;background:var(--sunk);border-radius:6px}
+.gpart{margin-bottom:14px}
+.gpart:last-of-type{margin-bottom:8px}
+.glabel{display:block;font:600 11px/1.4 var(--sans);letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ink-3);margin-bottom:4px}
+.gpart p{margin:0 0 7px;font:15px/1.62 var(--serif);color:var(--ink-2);max-width:64ch}
+.gpart p:last-child{margin-bottom:0}
+.gnot{display:flex;gap:10px;margin-bottom:8px}
+.gnot a{font:600 12px/1.9 var(--mono);color:var(--accent);text-decoration:none;flex:0 0 auto}
+.gnot a:hover{text-decoration:underline}
+.gnot p{font-size:14px}
+.gfoot{margin:0;padding-top:8px;border-top:1px solid var(--rule);
+  font:11px/1.5 var(--sans);color:var(--ink-3)}
+.chip.guidechip{background:transparent;border-color:var(--ink-3);color:var(--ink-3);cursor:default}
 .fail{margin-top:10px;font-size:14px;line-height:1.55;color:var(--ink-3);max-width:58ch;border-left:2px solid var(--rule-2);padding-left:12px}
 .fail b{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--must);display:block;margin-bottom:3px}
 .rhs{border-left:1px solid var(--rule);padding-left:22px;display:flex;flex-direction:column;gap:9px}
@@ -413,6 +454,28 @@ function ddHTML(c){
   return \`<details class="dd"><summary>\${label}</summary>\${bits.join("")}</details>\`;
 }
 
+// Collapsed by default, and below the requirement rather than above it:
+// commentary that pushed the normative text down the page would teach people to
+// skip it.
+function guideHTML(id){
+  const g = (D.guidance||{})[id];
+  if (!g) return "";
+  const para = (s) => s.split(/\\n\\s*\\n/).map(p => \`<p>\${esc(p.trim())}</p>\`).join("");
+  const part = (label, body) => body ? \`<div class="gpart"><span class="glabel">\${label}</span><div>\${para(body)}</div></div>\` : "";
+  const others = (g.not_this||[]).map(n =>
+    \`<div class="gnot"><a href="#\${n.id}">\${n.id}</a><div>\${para(n.why)}</div></div>\`).join("");
+  return \`<details class="guide">
+    <summary>Explain this one</summary>
+    <div class="gbody">
+      \${part("In plain words", g.plain)}
+      \${part("Why it exists", g.why)}
+      \${part("What going wrong looks like", g.example)}
+      \${part("How you would know", g.detect)}
+      \${others ? \`<div class="gpart"><span class="glabel">What this is <em>not</em></span><div class="gnots">\${others}</div></div>\` : ""}
+      <p class="gfoot">Commentary, not the requirement. The text above is the authority.</p>
+    </div></details>\`;
+}
+
 function capHTML(c){
   return \`<article class="cap" id="\${c.id}">
     <div class="lhs"><div class="capline">
@@ -421,11 +484,12 @@ function capHTML(c){
       <span class="lvl \${c.level}">\${c.level}</span>
       \${c.layers.map(l => chip("n", l, LAYER_NAME[l])).join("")}
       \${c.dd.length ? chip("prim", c.dd.length + " decisions", "Design tensions surfaced by this capability") : ""}
+      \${(D.guidance||{})[c.id] ? \`<span class="chip guidechip" title="A plain-language explanation is available below">explained</span>\` : ""}
     </div>
     <h5>\${esc(c.title)}</h5>
     <p class="req">\${esc(c.req)}</p>
     <div class="fail"><b>What breaks without it</b>\${esc(c.fail)}</div>
-    \${ddHTML(c)}</div>
+    \${guideHTML(c.id)}\${ddHTML(c)}</div>
     <div class="rhs">
       <div class="slot"><span class="sk">Where</span><span class="chips">\${
         c.pos.map((p,i) => chip(i === 0 ? "prim" : "n", p, POS_NAME[p] + (i === 0 ? " — primary position" : " — backstop or alternative"))).join("")
@@ -492,6 +556,29 @@ tabs.addEventListener("click", e => {
   el.addEventListener("change", render);
 });
 render();
+
+// A link to #AHC-0055 should behave like a page about AHC-0055: find it even if
+// the current filter hides it, open its explanation, and put it on screen.
+// Without this a shared link lands on whatever filter was last used.
+function reveal(){
+  const id = decodeURIComponent(location.hash.slice(1));
+  if (!/^AHC-\\d{4}$/.test(id)) return;
+  const target = document.getElementById(id);
+  if (!target){
+    const clean = sel === "ALL" && !q.value && !mustonly.checked && !ddonly.checked
+                  && layerSel.value === "ALL";
+    if (clean) return;                       // genuinely absent, not filtered away
+    sel = "ALL"; q.value = ""; mustonly.checked = ddonly.checked = false;
+    layerSel.value = "ALL";
+    render();
+    return reveal();
+  }
+  const guide = target.querySelector("details.guide");
+  if (guide) guide.open = true;
+  target.scrollIntoView({block: "start"});
+}
+window.addEventListener("hashchange", reveal);
+reveal();
 
 // ---- Section 7: coverage matrix, archetype x layer ----
 const rows = D.archetypes.map(a => [a.id + " " + a.name, D.caps.filter(c => !c.core && c.arch.includes(a.id))]);

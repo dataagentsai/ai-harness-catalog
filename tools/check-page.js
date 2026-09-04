@@ -20,10 +20,22 @@ const mk = (id) => {
   return els[id] || (els[id] = {
     id, innerHTML: "", textContent: "", value: "", checked: false, dataset: {},
     addEventListener(t, f) { (this._h = this._h || {})[t] = f; },
-    querySelectorAll: () => [], closest: () => null, setAttribute() {},
+    querySelector: () => null, querySelectorAll: () => [], closest: () => null,
+    setAttribute() {}, scrollIntoView() {},
   });
 };
-global.window = { __AHC__: payload };
+/*
+ * Two kinds of change to this stub, and only one is allowed. Giving it a
+ * capability a real browser has — window.addEventListener, location,
+ * element.querySelector — is accuracy. Making it return an element for an id
+ * with no markup is forgiveness, and mk() below stays strict about that.
+ */
+global.window = {
+  __AHC__: payload,
+  addEventListener(t, f) { (this._h = this._h || {})[t] = f; },
+  location: { hash: "" },
+};
+global.location = global.window.location;
 global.document = { getElementById: mk, querySelectorAll: () => [] };
 new Function("window", "document", js)(global.window, global.document);
 
