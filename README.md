@@ -171,6 +171,29 @@ The dependency is one-directional: AHC cites AAC identifiers, AAC does not know
 this repository exists. That protects AAC's position — it competes with nobody,
 and construction guidance competes with every framework's documentation.
 
+## Where this sits
+
+This catalog is one part of a family. The others are the
+[AI Assurance Catalog](https://github.com/dataagentsai/ai-assurance-catalog) —
+what must be **TRUE** — and **AgentTwin**, which describes what a system must be
+**FACED** with.
+
+Two family-level documents govern form, and neither asks you to agree with
+anything:
+
+- **[The Spec Charter](https://github.com/dataagentsai/clean-ai-engineering/blob/main/SPEC-CHARTER.md)**
+  — the routing rule that decides which artifact a statement belongs in, and the
+  dependency invariant that keeps this catalog free of any one domain's rules.
+- **[The Baseline](https://github.com/dataagentsai/clean-ai-engineering/blob/main/BASELINE.md)**
+  — why this catalog says nothing about code review, branching or coverage. An
+  agent is a software system; established practice is cited, never restated, and
+  only the delta that non-determinism creates appears here.
+
+The umbrella repository,
+[clean-ai-engineering](https://github.com/dataagentsai/clean-ai-engineering),
+states a point of view. **This catalog does not, and must remain usable by
+someone who rejects all of it.**
+
 ## What it is not
 
 - **A framework.** It describes what a component must do and what breaks without
