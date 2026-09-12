@@ -1,0 +1,56 @@
+# AHC-0105 — A recorded interaction replays only against the request that produced it, and a miss fails the run
+id: AHC-0105
+status: active
+since: "0.3.0"
+
+level: SHOULD
+layers: [L2, L10]
+positions: [P3, P7]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  A recorded interaction replays only against the request that produced it, and a miss fails the run
+
+requirement: |-
+  Where provider interactions are recorded for replay, a recording is served only against a request equivalent to the one recorded — under a declared notion of equivalence, which states what may differ without invalidating it. A request with no match is a failure of the run, reported as a miss and distinguishable from the provider being unavailable. The recording declares the format version it was written in, and one written in a version the reader does not know is refused rather than interpreted. Which world served a call — live or recorded — is on the record.
+
+failure_mode: |-
+  Where a miss falls back to the live provider, a suite that was supposed to prove a behaviour offline quietly starts paying for it, and the recordings rot without anyone learning. Where a miss is served by the nearest recording instead, the regression case that was meant to catch a changed prompt passes against the answer to a question nobody asked any more — which is the exact failure the recording existed to prevent. Both read as green.
+
+discharges: [AAC-0059, AAC-0058]
+
+design_decisions:
+  - question: What may change about a request without invalidating the recording?
+    tension: >-
+      Exact matching is unambiguous and invalidates every recording on a
+      whitespace edit, so recordings are re-made constantly and stop being a
+      baseline. Loose matching survives edits and eventually serves a recording
+      made for a different question.
+    resolution: >-
+      Declare the equivalence, and derive it from what changes the model's
+      answer — the instructions, the messages and the action surface by name.
+      Prose that describes a tool to a reader is not part of the question; a
+      tool that appears or disappears is.
+  - question: Is a missing recording an error or a fallback?
+    tension: >-
+      Failing makes the offline guarantee real and stops a run for a recording
+      somebody forgot to make. Falling back to the provider keeps the run and
+      silently removes the guarantee, usually from a suite that claims it.
+    resolution: >-
+      An error, and one no code path can turn into a provider call — a replaying
+      client that holds no provider cannot regress into one.
+  - question: Does the recording carry the configuration it was made under?
+    tension: >-
+      Carrying it makes a replay verifiable against the setup it describes, and
+      pins recordings to configuration that changes for unrelated reasons.
+      Carrying only the exchanges keeps them reusable and makes a mismatch
+      between recording and configuration invisible.
+    resolution: >-
+      Carry it, and version the format. A recording is evidence, and evidence
+      whose provenance is unstated cannot be re-examined later.
+
+realization_policy: own
+
+see_also: [AHC-0022, AHC-0027, AHC-0010]
