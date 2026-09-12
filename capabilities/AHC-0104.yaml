@@ -1,0 +1,46 @@
+# AHC-0104 — What may run concurrently is declared by class, not decided by convenience
+id: AHC-0104
+status: active
+since: "0.3.0"
+
+level: SHOULD
+layers: [L4, L3]
+positions: [P4, P5]
+
+archetypes: [A5, A6, A7, A9]
+core: false
+
+title: |-
+  What may run concurrently is declared by class, not decided by convenience
+
+requirement: |-
+  Whether several requested actions may run at once is decided from their declared class under AHC-0039, not from how many the model asked for. The harness states which classes it will overlap, runs the rest in the order they were requested, and returns every result matched to the call that produced it whatever order they completed in.
+
+failure_mode: |-
+  Dispatching whatever the model asked for in parallel is faster until two writes overlap. One fails halfway through a batch, and what has to be reconciled depends on which finished first — a state no test produced and no record explains, because the interleaving was the scheduler's. Results matched to calls by position rather than by identity fail more quietly still: every answer is plausible and attached to the wrong request.
+
+discharges: [AAC-0053, AAC-0047]
+
+design_decisions:
+  - question: Which classes may overlap?
+    tension: >-
+      Overlapping reads is where nearly all the latency is won and is safe only
+      while a read really is one. Overlapping writes wins less and makes
+      recovery depend on scheduling, which nothing records.
+    resolution: >-
+      Whichever the harness declares, and it must declare something. The
+      defensible default is to overlap the class with no effects and serialise
+      the rest; what is not defensible is the answer being whatever the loop
+      happened to do.
+  - question: How are results matched back to calls?
+    tension: >-
+      Matching by position is trivial and correct until something completes out
+      of order or fails. Carrying an identifier through is correct and requires
+      every path — including the error paths — to preserve it.
+    resolution: >-
+      By identifier, and the error paths included. A result attached to the
+      wrong call is worse than a failure, because it is answered to the customer.
+
+realization_policy: own
+
+see_also: [AHC-0097, AHC-0039, AHC-0074]

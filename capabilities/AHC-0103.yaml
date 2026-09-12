@@ -1,0 +1,46 @@
+# AHC-0103 — Reduction never separates a call from its result
+id: AHC-0103
+status: active
+since: "0.3.0"
+
+level: MUST
+layers: [L1]
+positions: [P3]
+
+archetypes: [A5, A6, A7, A9]
+core: false
+
+title: |-
+  Reduction never separates a call from its result
+
+requirement: |-
+  Whatever reduces a history — trimming, summarising, windowing — treats a tool call and the result answering it as one indivisible unit, and removes both or neither. A history that already violates this is refused rather than stored or sent, and the refusal names the call that has no answer.
+
+failure_mode: |-
+  A window that keeps the last N messages cuts between an assistant turn that called a tool and the result that answered it. What is sent then says the assistant called something and shows no answer, and providers reject the request outright — so the conversation fails at the point where it had grown interesting, and it fails for every subsequent turn, because the stored history is already broken. The error names a malformed request, so the investigation starts at the wire format rather than at the trimmer that produced it.
+
+discharges: [AAC-0059, AAC-0043]
+
+design_decisions:
+  - question: What is the unit that cannot be split?
+    tension: >-
+      The call and its result alone is the smallest correct unit and can still
+      leave a plan referring to work that is no longer in view. Taking the whole
+      step — reasoning, call, result — keeps the reasoning intelligible and
+      costs far more of the budget per step retained.
+    resolution: >-
+      The call and its results, always, as the floor. Anything larger is a
+      strategy choice under AHC-0067; anything smaller produces a transcript no
+      provider will accept.
+  - question: What happens when a history is already broken?
+    tension: >-
+      Repairing it — dropping the orphan — keeps the conversation alive and
+      hides the defect that produced it, usually until it recurs under load.
+      Refusing stops a live conversation over a fault the customer did not cause.
+    resolution: >-
+      Refuse, and say which call has no answer. A repair makes the trimmer's bug
+      invisible, and the trimmer is the only thing that can have caused it.
+
+realization_policy: own
+
+see_also: [AHC-0067, AHC-0012, AHC-0044]
