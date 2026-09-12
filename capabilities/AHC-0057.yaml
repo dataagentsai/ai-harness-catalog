@@ -14,7 +14,7 @@ title: |-
   Irreversible actions require an approval the run cannot grant
 
 requirement: |-
-  Actions in the irreversible class from AHC-0039 are held pending an approval issued by a principal outside the run, naming the specific action and resource. The run has no tool, argument or instruction path by which it can approve itself, and a pending action that is never approved expires rather than proceeding.
+  Actions in the irreversible class from AHC-0039 are held pending an approval issued by a principal outside the run, naming the specific action and resource, unless the specification states the conditions under which the agent holds that authority itself — conditions over declared state, checked where the action executes, never a judgement the model makes. The run has no tool, argument or instruction path by which it can approve itself or widen those conditions, and a pending action that is never approved expires rather than proceeding.
 
 failure_mode: |-
   Where approval is a step the agent performs — a self-check, a confidence threshold, a reflection prompt — it is subject to the same reasoning that proposed the action, and to any instruction that reached the model through retrieved content or tool output. An approval the run can grant is not a control; it is a delay that produces an audit trail suggesting there was one.
@@ -35,6 +35,23 @@ design_decisions:
       Holding the run open preserves context and holds resources for an
       unbounded human interval. Suspending and resuming from a checkpoint is
       efficient and needs the state machinery of AHC-0044 to be sound.
+  - question: Does every irreversible action need a person?
+    tension: >-
+      Requiring one for each is the defensible reading and puts a human in front
+      of routine work, so the desk becomes the bottleneck for the commonest
+      request and people route around the control. Exempting a class by
+      judgement at the time of acting is exactly the self-approval this
+      capability exists to remove.
+    resolution: >-
+      Irreversibility is a property of the system; recoverability is a property
+      of the person. An effect the requester can bring about again through the
+      system's ordinary operations — an order cancelled and placed afresh — is
+      irreversible to the system and recoverable to them. An effect that moves
+      value, or that they cannot re-create, is neither. Where the two differ the
+      specification states the authority as conditions over declared state, and
+      the harness checks them where the action executes. What is never
+      acceptable is the agent deciding at the time which of the two it is
+      looking at.
   - question: Is there a standing pre-approval for routine cases?
     tension: >-
       Pre-approving common actions keeps throughput and recreates the standing
