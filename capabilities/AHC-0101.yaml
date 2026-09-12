@@ -1,0 +1,56 @@
+# AHC-0101 — Spend is computed from a declared price table, and an unpriced call is an error
+id: AHC-0101
+status: active
+since: "0.3.0"
+
+level: MUST
+layers: [L13]
+positions: [P3]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Spend is computed from a declared price table, and an unpriced call is an error
+
+requirement: |-
+  The cost of a call is derived from a table of rates that is part of the configuration, carries the date it was taken from the provider, and distinguishes the rates the provider charges separately. A model with no entry is a failure, raised where the run is configured rather than where the call is made, and never a call costed at nothing. Accumulated amounts are held in an exact decimal representation, not in binary floating point.
+
+failure_mode: |-
+  A model absent from the table costs zero, so every ceiling above it holds, every budget alert stays quiet, and the spend report is correct about the calls it knows and silent about the rest. Nothing fails; the numbers simply describe a cheaper system than the one running. The same absence at the end of a run is a bill nobody forecast, and the first evidence is an invoice rather than a trace. Undated rates decay the same way more slowly: the arithmetic stays right and the inputs stop being true.
+
+discharges: [AAC-0104, AAC-0103]
+
+design_decisions:
+  - question: What happens when a model has no price?
+    tension: >-
+      Failing closed stops a run over bookkeeping, and it stops it for a model
+      that works. Costing it at zero keeps the run and makes every budget
+      control above it decorative for exactly the calls nobody has accounted for.
+    resolution: >-
+      Fail, and fail where the run is configured rather than mid-conversation. A
+      missing price is a configuration fault, and it is cheapest to find before
+      any work has been done.
+  - question: Are rates the provider charges separately tracked separately?
+    tension: >-
+      One blended rate per model is simpler and is wrong in the direction that
+      flatters: the cheaper rates are the ones volume lands on, so a blend
+      overstates savings and understates the worst case. Tracking each rate the
+      provider bills means the table changes shape whenever a provider adds one.
+    resolution: >-
+      Separately, and fall back to the more expensive rate when a cheaper one is
+      not declared. An estimate that errs upward is a budget; one that errs
+      downward is a surprise.
+  - question: Where does the table come from, and how is it known to be current?
+    tension: >-
+      Fetching rates from the provider keeps them true and puts a network call
+      and an outside dependency inside cost accounting. Pinning them in
+      configuration is reproducible and silently ages.
+    resolution: >-
+      Pin them, date them, and say in the artifact itself that they are an input
+      to a budget rather than a quotation. A dated table that is out of date is
+      visibly so; an undated one is indistinguishable from a current one.
+
+realization_policy: own
+
+see_also: [AHC-0007, AHC-0030, AHC-0075]
