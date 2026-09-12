@@ -1,0 +1,60 @@
+# AHC-0100 — A request the specification can answer without the model is answered without it
+id: AHC-0100
+status: active
+since: "0.3.0"
+
+level: MUST
+layers: [L4, L3]
+positions: [P3, P4]
+
+archetypes: [A5, A6, A7, A9]
+core: false
+
+title: |-
+  A request the specification can answer without the model is answered without it
+
+requirement: |-
+  Where the specification states which requests are answerable deterministically, those requests reach a path that answers them from declared data and declared templates, and that path is selected before any model is called. The classification is made from the request and the conversation's own state — never from model output — and the deterministic answer contains nothing the model produced. Which path served the request is recorded, and the classification rules are versioned configuration rather than code edited in passing.
+
+failure_mode: |-
+  Where every request enters the loop, the commonest question in the system — an order's status, a booking's dates, a balance — is answered by a component that can phrase it differently on each attempt, costs a model call each time, and can be talked out of the answer by the request. The failure is not an outage: the agent works, and the cost, latency and variance of its most frequent path are several times what the specification required. It is invisible without a record of which path served the call, because every trace shows a plausible answer.
+
+discharges: [AAC-0100, AAC-0059, AAC-0089]
+
+design_decisions:
+  - question: Who decides whether a request is deterministic — a classifier, or rules?
+    tension: >-
+      Rules are inspectable, versionable and cheap, and they miss phrasings
+      nobody anticipated. A model classifier generalises and puts a model call,
+      and a model's judgement, in front of the path whose whole point is having
+      neither.
+    resolution: >-
+      Rules, and ambiguity goes to the loop. The deterministic path exists to be
+      certain; a classifier that is usually right makes it a cheaper loop rather
+      than a different kind of thing.
+  - question: What happens when the deterministic path cannot complete?
+    tension: >-
+      Falling through to the loop keeps the request answered and makes the two
+      paths' behaviour differ on exactly the inputs nobody tested. Failing
+      outright is honest and turns a missing field into a refusal where an
+      answer was possible.
+    resolution: >-
+      Fall through only on a classification that was never certain, never on a
+      failure inside the path. A tool that refused is an answer; retrying it
+      through a model invites the model to narrate around the refusal.
+  - question: May the deterministic path perform writes?
+    tension: >-
+      Allowing them makes the cheapest path also the fastest way to act, which
+      is what a specification with unambiguous commands would want. Forbidding
+      them means every effect goes through the path that has the loop's
+      controls — approval gates, trajectory bounds, the reply guardrails — even
+      when the request was unambiguous.
+    resolution: >-
+      Whichever the specification states, and it must state one. The answer
+      turns on how the classification is made: where it is a pattern over the
+      request's text, an effect is one rewording away from being triggered by a
+      sentence that merely mentions it.
+
+realization_policy: own
+
+see_also: [AHC-0027, AHC-0010, AHC-0017]
