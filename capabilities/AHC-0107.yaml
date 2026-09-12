@@ -1,0 +1,68 @@
+# AHC-0107 — A fact an irreversible action relies on is read inside its declared freshness window
+id: AHC-0107
+status: active
+since: "0.3.0"
+
+level: MUST
+layers: [L1, L3]
+positions: [P3, P5]
+
+concern: functional-suitability
+facet: functional correctness
+
+archetypes: [A4, A6, A7, A9]
+core: false
+
+title: |-
+  A fact an irreversible action relies on is read inside its declared freshness window
+
+requirement: |-
+  Every fact the harness places in context carries when it was read. The specification declares, per field, how long a read of it stays usable. Before dispatching an action the specification classifies as irreversible, the harness establishes that each fact the action's own preconditions depend on was read inside that field's window, and re-reads it where it was not — the re-read happening before the action, not as a check afterwards. Where a re-read changes the value, the action is planned again against what is now true rather than proceeding on what was believed.
+
+failure_mode: |-
+  A system with concurrent writers answers a question about the past and acts as though it were the present. The read says the order is unshipped, the conversation takes a minute, the warehouse ships it, and the cancellation is attempted against a state that no longer exists. Where the far system enforces its own preconditions the write is refused and the damage is bounded — the caller is left explaining a refusal it did not expect, which is recoverable. Where it does not, the effect lands on a row the caller has never actually seen. The quieter half is worse than either: the reply is composed from the stale read, so the customer is told the item has not shipped by an agent that is simultaneously being refused permission to cancel it, and both sentences are traceable to the same lookup.
+
+discharges: [AAC-0113, AAC-0038]
+
+design_decisions:
+  - key: freshness_scope
+    question: Which facts need a window — all of them, or the ones an action depends on?
+    tension: >-
+      Declaring one for every field is uniform and makes most of them noise:
+      a customer's name does not go stale in the sense that matters, and a
+      window on it invites re-reads that buy nothing. Declaring them only where
+      an action depends on the field is precise and means a field that gains a
+      dependency later needs somebody to notice.
+    resolution: >-
+      The window belongs to the field and the requirement belongs to the action.
+      A field declares how long a read of it stays usable, once, near the field;
+      the harness applies that only where an irreversible action's preconditions
+      reach it. A field nothing irreversible depends on may carry a window and
+      will never cause a re-read, which is the correct amount of work.
+  - question: Re-read before the action, or verify after it?
+    tension: >-
+      Verifying afterwards is cheaper — most reads are still fresh, and a check
+      that runs only on failure costs nothing in the common case. Re-reading
+      first costs a call on every irreversible action, and is the only ordering
+      that can stop the wrong action rather than explain it.
+    resolution: >-
+      Before. An irreversible action is exactly the case where explaining
+      afterwards has no value, and the cost is one read against an effect that
+      cannot be taken back. Where the far system enforces its own preconditions
+      this is belt and braces; where it does not, it is the only thing there is.
+  - question: What happens when the re-read disagrees with what was believed?
+    tension: >-
+      Proceeding is never right. Failing the run is safe and discards work the
+      agent could still finish. Feeding the new value back and letting the model
+      decide is the most capable and hands a decision about an irreversible
+      action to the component the gate exists to constrain.
+    resolution: >-
+      The action is not dispatched, and the new value enters context as what it
+      is: a result the run must now account for. The model may plan again
+      against what is true, and everything else — the authority conditions, the
+      approval gate, the preconditions at the far end — applies to that plan
+      exactly as it applied to the first one.
+
+realization_policy: own
+
+see_also: [AHC-0044, AHC-0039, AHC-0057, AHC-0074]
