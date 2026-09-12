@@ -38,7 +38,8 @@ design_decisions:
       Holding the run open preserves context and holds resources for an
       unbounded human interval. Suspending and resuming from a checkpoint is
       efficient and needs the state machinery of AHC-0044 to be sound.
-  - question: Does every irreversible action need a person?
+  - key: irreversible_scope
+    question: Does every irreversible action need a person?
     tension: >-
       Requiring one for each is the defensible reading and puts a human in front
       of routine work, so the desk becomes the bottleneck for the commonest
