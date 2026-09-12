@@ -1,0 +1,55 @@
+# AHC-0102 — Persisted state is written whole, and every substrate declares whether it survives the process
+id: AHC-0102
+status: active
+since: "0.3.0"
+
+level: MUST
+layers: [L5]
+positions: [P6]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Persisted state is written whole, and every substrate declares whether it survives the process
+
+requirement: |-
+  A write of run or conversation state either lands complete or does not land: a reader never sees half of one. A record that cannot be read back as what was written is refused rather than interpreted, and refusing it is distinguishable from finding nothing. Each substrate behind a state port states whether it outlives the process, so a deployment can be checked against what it assumed rather than against what it hoped.
+
+failure_mode: |-
+  A half-written checkpoint resumes as a conversation whose history stops mid-exchange, and the run continues from a position that never existed — worst where the missing half is the record of an effect that did happen. The undeclared substrate is the quieter failure: an in-memory store behind a durable port passes every test, and loses approvals, escalations and idempotency records at the first restart, which is exactly when someone is waiting on one.
+
+discharges: [AAC-0078, AAC-0059]
+
+design_decisions:
+  - question: What does a reader do with a record it cannot parse?
+    tension: >-
+      Refusing it stops a conversation over a record that may be recoverable by
+      hand. Salvaging what parses continues the conversation from a state the
+      writer never wrote, and nothing downstream can tell the difference.
+    resolution: >-
+      Refuse, and distinguish refusal from absence. "This run is damaged" and
+      "there is no such run" call for different actions by whoever is paged.
+  - question: Is durability a property of the port or of the substrate?
+    tension: >-
+      Declaring it on the port lets callers depend on it and makes every
+      in-memory realisation a lie. Declaring it on the substrate is honest and
+      means a caller must ask, which is a question most call sites will not ask.
+    resolution: >-
+      The substrate declares; the composition root is where the answer is
+      checked. A test double that claims durability it does not have is how a
+      suite goes green against a deployment that cannot survive a restart.
+  - question: How is wholeness achieved where the substrate has no transaction?
+    tension: >-
+      Writing to a temporary name and moving it into place is available almost
+      everywhere and costs an extra write and a directory operation. Writing in
+      place is faster and leaves a window in which the file is neither the old
+      state nor the new one.
+    resolution: >-
+      Whichever the substrate makes atomic — a transaction, or a write and a
+      rename. The requirement is that no reader observes a partial record, not
+      the mechanism that prevents it.
+
+realization_policy: own
+
+see_also: [AHC-0044, AHC-0073, AHC-0066]
