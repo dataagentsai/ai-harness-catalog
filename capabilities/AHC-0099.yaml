@@ -1,0 +1,57 @@
+# AHC-0099 — The identity a run acts as is established from a credential the caller cannot author
+id: AHC-0099
+status: active
+since: "0.3.0"
+
+level: MUST
+layers: [L16]
+positions: [P1, P3]
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  The identity a run acts as is established from a credential the caller cannot author
+
+requirement: |-
+  There is one place where a request becomes an identity, and it derives that identity from a credential the caller cannot mint or alter — verified against the issuer, checked for expiry, and rejected whole when either fails. Nothing the caller supplies as data may name the identity: not a field beside the credential, not a name in the message, not a claim carried back by the model. A credential that does not verify yields no identity, and the run does not proceed with a lesser one.
+
+failure_mode: |-
+  Where the identity is taken from the request body because it was convenient at the edge, every downstream control is intact and enforcing against a name the caller chose. AHC-0034 carries that identity faithfully to retrieval, tools and state; AHC-0040 enforces authority where the tool executes; and both are answering a question whose answer was supplied by the party they are protecting against. The failure is invisible in a trace, because the call looks exactly like a legitimate one made by the user being impersonated.
+
+discharges: [AAC-0111, AAC-0040, AAC-0032]
+
+design_decisions:
+  - question: Where is the credential verified — at the edge, or in the harness?
+    tension: >-
+      At the edge it is verified once for every entry point that shares it, and
+      an entry point added later inherits nothing. In the harness it is verified
+      on every path that reaches a model or a tool, and it is verified in a
+      component that is also doing several other things.
+    resolution: >-
+      Verify at the edge and let the harness take an identity it cannot
+      construct — a signature it cannot forge, not a string it is handed. A
+      harness that accepts a bare identifier has no way to tell a verified caller
+      from a convenient one.
+  - question: What does an unverifiable credential produce?
+    tension: >-
+      Failing the request outright is unambiguous and loses the anonymous
+      surfaces — health, documentation, a public demo — that never needed one.
+      Falling back to an anonymous identity keeps them and creates a state in
+      which authorisation decisions are made about a caller nobody identified.
+    resolution: >-
+      No identity, and no run. Where an anonymous surface is wanted, it is a
+      separate entry point that reaches no tool and no state, not a weaker
+      identity flowing through the same path.
+  - question: How much of the credential reaches a record or a trace?
+    tension: >-
+      Recording enough to answer "who did this" is what makes an incident
+      answerable afterwards, and a credential in telemetry is a credential in
+      every system that telemetry is shipped to.
+    resolution: >-
+      The identifier, never the credential. A token in a log is a token that has
+      been disclosed, and it is still valid.
+
+realization_policy: own
+
+see_also: [AHC-0034, AHC-0040, AHC-0035]
