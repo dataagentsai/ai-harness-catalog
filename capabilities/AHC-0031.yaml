@@ -7,6 +7,8 @@ level: SHOULD
 layers: [L13, L1]
 positions: [P3, P7]
 
+concern: cost
+
 archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
 core: true
 

@@ -7,6 +7,9 @@ level: MUST
 layers: [L5, L16]
 positions: [P6, P3]
 
+concern: security
+facet: confidentiality
+
 archetypes: [A4]
 core: false
 

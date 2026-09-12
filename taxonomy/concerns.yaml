@@ -1,0 +1,109 @@
+# The concern axis: which kind of quality a capability exists to serve.
+#
+# Cited, not invented — the nine quality characteristics of ISO/IEC 25010:2023,
+# plus `cost`, which 25010 has no characteristic for and which is the property
+# an agent is most likely to fail silently. Shared with the rest of the spec
+# family (Spec Charter, §3), which is why the ten slugs are spelled the same
+# here as in the assurance catalog: the Concern View joins on this string.
+#
+# ## Authored here, derived there
+#
+# The assurance catalog already carries a `dimension` and derives its concern
+# through a crosswalk. This catalog has no such axis — layers and positions say
+# *where* a capability sits, never what quality it serves — so `concern` is
+# authored on every capability, and the linter requires it.
+#
+# ## Why a capability has exactly one
+#
+# Most capabilities serve two or three qualities; nearly every one of them
+# helps somebody investigate an incident. A tag that listed all of them would
+# make the Concern View a list of everything, filed under everything. So the
+# rule is one concern, chosen by the question the capability's own
+# `failure_mode` answers: **what goes wrong, first, when this does not exist.**
+#
+# The rule is doing work. A typed model-response boundary (AHC-0001) makes the
+# system easier to reason about, but what happens without it is a KeyError three
+# layers from the call — so it is reliability, not maintainability. A token
+# budget applied by the assembler (AHC-0012) saves money, but what happens
+# without it is an answer built from a silently truncated evidence set — so it is
+# functional suitability, not cost. Both readings were available; the failure
+# mode settled it.
+#
+# ## What the tag is not
+#
+# Not severity, not priority, not a layer. A capability's concern does not
+# change when its level does.
+
+version: "0.1.0"
+
+# `facets` are the 25010:2023 sub-characteristics of each characteristic, and a
+# capability MAY narrow to one. They are optional because for a good many
+# capabilities the characteristic is already the honest grain, and a narrower
+# name would be false precision.
+concerns:
+  - id: functional-suitability
+    iso: Functional suitability
+    facets: [functional completeness, functional correctness, functional appropriateness]
+    summary: >-
+      Does it do the right thing. The default, and the one an NFR is defined
+      against — a statement whose concern is anything else is an NFR.
+  - id: performance-efficiency
+    iso: Performance efficiency
+    facets: [time behaviour, resource utilization, capacity]
+    summary: Time, resource use and capacity under a stated load.
+  - id: compatibility
+    iso: Compatibility
+    facets: [co-existence, interoperability]
+    summary: Working with the systems around it, including the next version of itself.
+  - id: interaction-capability
+    iso: Interaction capability
+    facets:
+      - appropriateness recognizability
+      - learnability
+      - operability
+      - user error protection
+      - user engagement
+      - inclusivity
+      - user assistance
+      - self-descriptiveness
+    summary: >-
+      What the interface makes easy, recognisable and hard to get wrong. Thin
+      here, and honestly so: this catalog is written about a system, not about
+      the person using it. One capability reaches it.
+  - id: reliability
+    iso: Reliability
+    facets: [faultlessness, availability, fault tolerance, recoverability]
+    summary: Whether it keeps working, and comes back when it does not.
+  - id: security
+    iso: Security
+    facets: [confidentiality, integrity, non-repudiation, accountability, authenticity, resistance]
+    summary: Confidentiality, integrity, accountability, authenticity and resistance to attack.
+  - id: maintainability
+    iso: Maintainability
+    facets: [modularity, reusability, analysability, modifiability, testability]
+    summary: >-
+      What makes the next change safe rather than this one correct — including
+      whether anything can be measured at all. Most of the observability and
+      evaluation capabilities land here.
+  - id: flexibility
+    iso: Flexibility
+    facets: [adaptability, scalability, installability, replaceability]
+    summary: Changing what it runs on, or against, without changing it.
+  - id: safety
+    iso: Safety
+    facets:
+      - operational constraint
+      - risk identification
+      - fail safe
+      - hazard warning
+      - safe integration
+    summary: >-
+      Freedom from unacceptable harm to people, property or a production
+      system — the interlock, the bounded blast radius, the undo.
+  - id: cost
+    iso: null
+    facets: []
+    summary: >-
+      What a run spends. The one addition to 25010; see the header. Not folded
+      into resource utilization, because for an agent it is a per-request
+      property that moves with the model, the prompt and the iteration count.

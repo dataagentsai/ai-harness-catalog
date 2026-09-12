@@ -7,7 +7,7 @@
   "additionalProperties": false,
   "required": [
     "id", "status", "since", "level", "layers", "positions",
-    "archetypes", "core", "title", "requirement", "failure_mode",
+    "concern", "archetypes", "core", "title", "requirement", "failure_mode",
     "realization_policy"
   ],
   "properties": {
@@ -49,6 +49,14 @@
       "uniqueItems": true,
       "items": { "type": "string", "pattern": "^P[1-8]$" },
       "description": "Where this can physically live. Order is meaningful: the first is the primary position, the rest are backstops or alternatives."
+    },
+    "concern": {
+      "type": "string",
+      "description": "Which kind of quality this capability exists to serve — one of the ten in taxonomy/concerns.yaml (ISO/IEC 25010:2023, plus cost). Exactly one, chosen by what the capability's own failure_mode says goes wrong FIRST when it does not exist. Drives the Concern View, which joins on this string across all six specs in the family."
+    },
+    "facet": {
+      "type": "string",
+      "description": "Optional. A 25010:2023 sub-characteristic of the concern, where the characteristic alone is too coarse to be useful. The linter checks it belongs to the concern named."
     },
     "archetypes": {
       "type": "array",

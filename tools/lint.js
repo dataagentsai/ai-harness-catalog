@@ -50,6 +50,19 @@ const constrDoc = load("taxonomy/construction.yaml");
 const ARCH_IDS = new Set(arch.archetypes.map((a) => a.id));
 const LAYER_IDS = new Set(layersDoc.layers.map((l) => l.id));
 const POS_IDS = new Set(constrDoc.positions.map((p) => p.id));
+const conc = load("taxonomy/concerns.yaml");
+/*
+ * concern -> its 25010 sub-characteristics. The concern axis is family-wide
+ * (Spec Charter, §3): the same ten slugs appear in the assurance catalog, in an
+ * AOAS and on a world's scenarios, and the Concern View joins all of them on
+ * this string — so a typo here becomes a silently missing row on a page
+ * generated in another repository.
+ */
+const CONCERNS = new Map(conc.concerns.map((c) => [c.id, c.facets || []]));
+const REACHED = new Set();
+for (const c of conc.concerns) {
+  if (!/^[a-z]+(-[a-z]+)*$/.test(c.id)) err("taxonomy/concerns.yaml", `concern "${c.id}" is not a slug`);
+}
 const APPROACHES = new Set(constrDoc.approaches.map((a) => a.id));
 
 /*
@@ -109,6 +122,18 @@ for (const f of files) {
   byId.set(doc.id, doc);
 
   // -- taxonomy references resolve
+  if (!CONCERNS.has(doc.concern)) err(f, `unknown concern "${doc.concern}"`);
+  else {
+    REACHED.add(doc.concern);
+    // A facet that does not belong to the concern named is the failure this
+    // check exists for: both words are plausible ISO vocabulary, and the pair
+    // is wrong. "security / analysability" would read fine and file the
+    // capability under a characteristic it has nothing to do with.
+    const facets = CONCERNS.get(doc.concern);
+    if (doc.facet && !facets.includes(doc.facet)) {
+      err(f, `facet "${doc.facet}" is not a sub-characteristic of ${doc.concern}`);
+    }
+  }
   for (const a of doc.archetypes) if (!ARCH_IDS.has(a)) err(f, `unknown archetype ${a}`);
   for (const l of doc.layers) if (!LAYER_IDS.has(l)) err(f, `unknown layer ${l}`);
   for (const p of doc.positions) if (!POS_IDS.has(p)) err(f, `unknown position ${p}`);
@@ -497,6 +522,18 @@ console.log(`\nAI Harness Catalog — lint`);
 console.log(`  capabilities   ${byId.size}`);
 console.log(`  core           ${[...byId.values()].filter((d) => d.core).length}`);
 console.log(`  layers covered ${Object.keys(layerHist).length} of ${LAYER_IDS.size}`);
+console.log(`  concerns       ${REACHED.size} of ${CONCERNS.size} reached`);
+/*
+ * Unlike the assurance catalog, this one reaches all ten — including the three
+ * that catalog cannot: compatibility (a versioned output schema its consumers
+ * are pinned to), interaction capability (an escalation that carries the
+ * conversation, so the person does not start again) and flexibility (a
+ * reachable model set that is data). Recorded as a check so the claim cannot
+ * quietly stop being true.
+ */
+for (const c of CONCERNS.keys()) {
+  if (!REACHED.has(c)) err("taxonomy/concerns.yaml", `no capability reaches concern "${c}"`);
+}
 console.log(`  discharges     ${dischargeCount} references to ${dischargedAac.size} distinct obligations`);
 if (ports.size) {
   const core = [...ports.values()].filter((p) => p.tier === "core").length;

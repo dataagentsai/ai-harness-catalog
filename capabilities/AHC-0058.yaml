@@ -7,6 +7,9 @@ level: SHOULD
 layers: [L10, L14]
 positions: [P5, P8]
 
+concern: safety
+facet: fail safe
+
 archetypes: [A9, A7, A5]
 core: false
 

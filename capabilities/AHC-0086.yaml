@@ -7,6 +7,9 @@ level: MUST
 layers: [L6]
 positions: [P3]
 
+concern: functional-suitability
+facet: functional correctness
+
 archetypes: [A2]
 core: false
 

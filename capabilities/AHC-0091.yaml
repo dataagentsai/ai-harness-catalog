@@ -7,6 +7,9 @@ level: SHOULD
 layers: [L12, L3]
 positions: [P7, P5]
 
+concern: functional-suitability
+facet: functional correctness
+
 archetypes: [A8]
 core: false
 

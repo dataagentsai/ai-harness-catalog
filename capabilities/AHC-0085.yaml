@@ -7,6 +7,9 @@ level: MUST
 layers: [L6, L15]
 positions: [P3]
 
+concern: compatibility
+facet: interoperability
+
 archetypes: [A2]
 core: false
 

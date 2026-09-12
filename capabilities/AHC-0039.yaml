@@ -7,6 +7,9 @@ level: MUST
 layers: [L3, L14]
 positions: [P5, P8]
 
+concern: safety
+facet: operational constraint
+
 archetypes: [A6, A7, A9]
 core: false
 

@@ -7,6 +7,9 @@ level: MUST
 layers: [L11, L13]
 positions: [P4, P3]
 
+concern: maintainability
+facet: analysability
+
 archetypes: [A7]
 core: false
 

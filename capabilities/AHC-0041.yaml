@@ -7,6 +7,8 @@ level: MUST
 layers: [L4]
 positions: [P4, P2]
 
+concern: cost
+
 archetypes: [A6, A7, A9]
 core: false
 

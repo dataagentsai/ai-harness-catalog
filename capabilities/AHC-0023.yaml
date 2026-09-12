@@ -7,6 +7,9 @@ level: SHOULD
 layers: [L9]
 positions: [P7]
 
+concern: maintainability
+facet: testability
+
 archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
 core: true
 

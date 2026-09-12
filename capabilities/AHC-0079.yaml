@@ -7,6 +7,9 @@ level: SHOULD
 layers: [L11, L15]
 positions: [P3, P6]
 
+concern: maintainability
+facet: analysability
+
 archetypes: [A8]
 core: false
 

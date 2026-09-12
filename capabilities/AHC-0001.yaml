@@ -8,6 +8,9 @@ level: MUST
 layers: [L6]
 positions: [P3, P2]
 
+concern: reliability
+facet: faultlessness
+
 # Core capabilities enumerate every archetype explicitly so a consumer never
 # has to resolve inheritance.
 archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]

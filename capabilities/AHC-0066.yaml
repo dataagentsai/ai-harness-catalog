@@ -7,6 +7,9 @@ level: MUST
 layers: [L5]
 positions: [P6, P3]
 
+concern: reliability
+facet: faultlessness
+
 archetypes: [A4]
 core: false
 

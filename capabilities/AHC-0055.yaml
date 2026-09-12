@@ -7,6 +7,9 @@ level: MUST
 layers: [L11, L14]
 positions: [P7, P8]
 
+concern: reliability
+facet: availability
+
 archetypes: [A9]
 core: false
 

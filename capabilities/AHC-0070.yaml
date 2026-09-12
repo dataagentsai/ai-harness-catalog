@@ -7,6 +7,9 @@ level: SHOULD
 layers: [L14]
 positions: [P8, P3]
 
+concern: interaction-capability
+facet: user assistance
+
 archetypes: [A4]
 core: false
 

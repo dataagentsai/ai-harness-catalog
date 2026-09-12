@@ -11,6 +11,9 @@ level: SHOULD
 layers: [L15, L2]
 positions: [P2, P3]
 
+concern: flexibility
+facet: adaptability
+
 archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
 core: true
 
