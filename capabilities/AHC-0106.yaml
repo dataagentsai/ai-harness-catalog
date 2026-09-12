@@ -1,0 +1,75 @@
+# AHC-0106 — A turn that commits to future work does not end as a completed answer
+id: AHC-0106
+status: active
+since: "0.3.0"
+
+level: MUST
+layers: [L6, L4]
+positions: [P3]
+
+concern: functional-suitability
+facet: functional completeness
+
+# Archetypes whose output is prose a person waits on, and which have somewhere
+# for work to continue. A1, A2, A8 and A10 produce an artifact consumed by code
+# or read once; a commitment in their output is a content defect rather than a
+# run that never finishes.
+archetypes: [A3, A4, A6, A7, A9]
+core: false
+
+title: |-
+  A turn that commits to future work does not end as a completed answer
+
+requirement: |-
+  A turn ends as a completed answer only where the answer is in it. Where the run instead commits the system to work that has not happened — checking, looking into, coming back, getting someone — the harness returns an outcome that names what will produce the answer: a pending decision with its identifier, a handoff with its reference, or a continuation the caller can drive. There is no terminal state whose content is a commitment and whose record is empty, and the harness does not rely on the model to select the right outcome: it decides from what the run actually did, and treats a commitment with nothing behind it as a failure to complete rather than a completion.
+
+failure_mode: |-
+  A model that says it will look into something and stops produces a run that every instrument reports as healthy: one step, no repetition, no budget exhausted, and a fluent reply. The step ceiling was never approached, so a no-progress condition has nothing to detect, and a truthfulness check comparing claims against tool results finds no claim about the past to be wrong about. The caller is told an answer is coming, the system believes it is finished, and nothing exists — no pending record, no queue entry, no scheduled continuation — that could ever produce it. Because the failure is a well-formed reply rather than an error, it is discovered from the other side: a person who waited, or a follow-up asking what happened.
+
+discharges: [AAC-0112, AAC-0079]
+
+design_decisions:
+  - question: What decides that a turn committed to future work — the reply's wording, or what the run did?
+    tension: >-
+      Reading the wording catches the case directly and makes the control a text
+      classifier over open-ended output: it will miss phrasings nobody
+      enumerated, fire on a reply that merely mentions checking something, and
+      need maintaining in every language the system answers in. Reading what the
+      run did is exact and blunt — a turn that took no action and holds nothing
+      pending is suspicious whether or not it promised anything, and plenty of
+      legitimate answers are pure text.
+    resolution: >-
+      Decide from what the run did, and use the wording only to separate the two
+      kinds of pure-text turn. A turn that produced no effect, holds no pending
+      decision and opened no handoff has nothing that can produce a later
+      answer; if its reply also commits to producing one, the harness has caught
+      a state the system cannot honour. Neither signal is sufficient alone: the
+      first over-fires on ordinary answers, the second is a classifier.
+  - question: What outcome replaces the false completion?
+    tension: >-
+      Returning a failure is honest and gives the caller nothing to act on.
+      Retrying inside the same turn may produce the answer that was promised,
+      and may equally produce a second promise and a third, paying for each.
+      Converting it to a handoff involves a person in every case the model
+      phrased badly.
+    resolution: >-
+      The outcome the system already has for work that continues, chosen by what
+      the run can actually do next, and never a completion. Where nothing can
+      continue it, the turn is a failure and is recorded as one — an unkeepable
+      promise is a defect in the run, not a style of answer.
+  - question: Is this the same control as abstention?
+    tension: >-
+      Both are about a model's prose standing in for a typed outcome, and one
+      component could plausibly own both. But they point in opposite directions:
+      abstention says the answer will not come and must not be read as content,
+      while a commitment says the answer will come and must not be read as
+      finished. Fusing them produces a component whose job is "the reply is not
+      what it appears to be", which is not a job.
+    resolution: >-
+      Separate. AHC-0063 types the refusal to answer; this types the promise to
+      answer later. They share the discriminated-outcome contract of AHC-0017
+      and nothing else.
+
+realization_policy: own
+
+see_also: [AHC-0063, AHC-0017, AHC-0042, AHC-0070, AHC-0057]
