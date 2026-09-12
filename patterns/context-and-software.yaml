@@ -1,0 +1,73 @@
+# Context — what the model is shown. Software — where two systems differ.
+patterns:
+  - id: PAT-exchange-safe-reduction
+    family: context
+    discharges: [AHC-0103, AHC-0067, AHC-0012]
+    reach_for_it_when: >-
+      A conversation outgrows the budget and something must be dropped, and the
+      history contains tool calls — which is every agent that acts.
+    cannot_run_safely_without:
+      - AHC-0103   # the call and its result move together, or providers reject the transcript
+      - AHC-0067   # the strategy is named and recorded, or nobody can say what was dropped
+    costs: >-
+      The unit that cannot be split is larger than a message, so the budget is
+      spent in coarser steps and a single enormous exchange can dominate it.
+    seen_in: the reference's trimmer, which refuses a history that is already broken rather than storing it
+
+  - id: PAT-fenced-provenance
+    family: context
+    discharges: [AHC-0011, AHC-0035]
+    reach_for_it_when: >-
+      Anything the system did not author reaches the model — a retrieved
+      passage, a tool result, a field somebody else wrote.
+    cannot_run_safely_without:
+      - AHC-0040   # authority is enforced where the tool executes, because the fence is not a control
+    costs: >-
+      A fence is a marker, and a marker the untrusted content can contain is one
+      it can close early; escaping it is the half everyone forgets. It raises the
+      cost of an injection and never removes it.
+    seen_in: the reference's assembly, where the planted instruction is fenced, labelled, and reaches no tool
+
+  - id: PAT-port-with-a-null-object
+    family: software
+    discharges: [AHC-0022, AHC-0017]
+    reach_for_it_when: >-
+      A capability can be absent in a real deployment — no approval store, no
+      desk, no delivery log — and the code above it should not know.
+    cannot_run_safely_without:
+      - AHC-0017   # the null object returns the same discriminated outcome, or absence leaks as a different shape
+    costs: >-
+      A null object must be *honest*: the one that quietly did nothing while the
+      agent promised a colleague was the reference's F-024. Absence has to be
+      visible in what the customer is told, not only in the types.
+    seen_in: the reference's NoDesk and NoApprovals, each behind the protocol the real one implements
+
+  - id: PAT-versioned-rule-set
+    family: software
+    discharges: [AHC-0093, AHC-0027]
+    reach_for_it_when: >-
+      A decision is a list that changes more often than the code that runs it —
+      what to refuse, when to fetch a person, which requests skip the model.
+    cannot_run_safely_without:
+      - AHC-0093   # the order is declared, because first match wins is part of the specification
+      - AHC-0027   # the record names the rule that fired, or tuning the set is guesswork
+    costs: >-
+      The engine looks universal and behaves differently per deployment, so a
+      bug in the values reads as a bug in the mechanism. The version is what
+      makes the two tellable apart.
+    seen_in: the reference's routing rules, escalation rules and policy positions — three instances of one shape
+
+  - id: PAT-registry-of-declared-handlers
+    family: software
+    discharges: [AHC-0100, AHC-0036]
+    reach_for_it_when: >-
+      A dispatcher chooses among implementations named by the specification —
+      one handler per intent, one tool per operation.
+    cannot_run_safely_without:
+      - AHC-0036   # each entry declares its contract, or the dispatcher is a dictionary of surprises
+    costs: >-
+      A registry is only as good as the check that it is complete: without a
+      test that every declared name is registered, the missing entry is found by
+      the customer who asked for it.
+    seen_in: the reference's direct handlers, with a test that every intent the router names is registered
+

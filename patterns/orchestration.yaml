@@ -1,0 +1,81 @@
+# Orchestration — how the turn is shaped.
+patterns:
+  - id: PAT-router-ahead-of-loop
+    family: orchestration
+    discharges: [AHC-0100, AHC-0027, AHC-0017]
+    reach_for_it_when: >-
+      The specification names requests that are answerable from declared data —
+      a status, a balance, a date. Those are usually the commonest requests in
+      the system, and the loop answers them at the price of a model call, with a
+      different phrasing each time and an argument available to anyone who asks
+      for one.
+    cannot_run_safely_without:
+      - AHC-0027   # the record says which route served the call, or the two paths are indistinguishable in a trace
+      - AHC-0017   # both routes return the same discriminated outcome, or callers branch on the route
+    costs: >-
+      Two paths to keep in step. The deterministic one is edited by people who
+      reasonably believe it is safe, so every guardrail that runs on the model's
+      reply must run on this one too — the reference learned that as a defect.
+    seen_in: the customer-support reference agent, where three of four routes never reach the model
+
+  - id: PAT-approval-that-returns
+    family: orchestration
+    discharges: [AHC-0057, AHC-0044, AHC-0017]
+    reach_for_it_when: >-
+      An operation's authority says a person decides, and that person may take an
+      hour, may be someone who was not present when the request was made, and may
+      never come at all.
+    cannot_run_safely_without:
+      - AHC-0044   # the run is checkpointed, or resuming means replaying the tools
+      - AHC-0074   # the executed call carries the original key, or a double resume is a double effect
+      - AHC-0102   # the decision outlives the process, or it is lost exactly when someone is waiting on it
+    costs: >-
+      The turn ends without an answer, so every caller must handle a third
+      outcome that is neither success nor failure. Holding the run open instead
+      is simpler and consumes a process for a human interval.
+    seen_in: the reference's refund gate — requested, waited, granted an hour later, resumed, one effect
+
+  - id: PAT-escalation-with-lapse
+    family: orchestration
+    discharges: [AHC-0070, AHC-0017]
+    reach_for_it_when: >-
+      A conversation can be handed to a person, and the queue it lands in is one
+      nobody is contractually obliged to empty.
+    cannot_run_safely_without:
+      - AHC-0102   # the record survives, or the conversation is held open by a queue nothing can see
+      - AHC-0056   # the record is written before the customer is told, or a reference is quoted for nothing
+    costs: >-
+      A lapse is a bad outcome that must be said out loud, and saying it well is
+      harder than the handover. Without the lapse the conversation is held for
+      ever by a colleague who never came.
+    seen_in: the reference's desk, where the clock drives the expiry and the customer is told nobody came
+
+  - id: PAT-compensation-for-the-irreversible
+    family: orchestration
+    discharges: [AHC-0039, AHC-0005]
+    reach_for_it_when: >-
+      An operation cannot be undone by repeating something — money moved, a
+      message was sent — and the step after it can still fail.
+    cannot_run_safely_without:
+      - AHC-0074   # repetition is declared safe or not, per step
+      - AHC-0056   # the record is written before the effect, or the compensation has nothing to read
+    costs: >-
+      A compensation is a second effect, not an undo: it is visible to the
+      customer and to the ledger, and writing one is an admission that the first
+      effect should not have happened.
+    seen_in: the reference's registry of undo actions, one per irreversible tool
+
+  - id: PAT-delivery-id-at-the-edge
+    family: orchestration
+    discharges: [AHC-0053, AHC-0074]
+    reach_for_it_when: >-
+      The same request can arrive twice — a retried webhook, a double-clicked
+      button, a queue with at-least-once delivery — and the second arrival must
+      not act again.
+    cannot_run_safely_without:
+      - AHC-0102   # the log of what has been seen survives the process
+    costs: >-
+      The caller must supply an identifier, and a caller that does not gets no
+      protection — which has to be *stated* rather than defaulted, because
+      inventing one here guarantees it differs on the retry.
+    seen_in: the reference's delivery log, where a turn without an id runs unguarded and says so

@@ -411,6 +411,37 @@ for (const rf of realFiles) {
   }
 }
 
+// ------------------------------------------------------------ pattern discipline
+/*
+ * Patterns are informative, like realizations. Two rules: every pattern names a
+ * capability it discharges — one that discharges nothing is craft, and craft is
+ * cited rather than catalogued — and it points at capabilities that exist.
+ */
+const patDir = path.join(ROOT, "patterns");
+const patFiles = fs.existsSync(patDir)
+  ? fs.readdirSync(patDir).filter((f) => f.endsWith(".yaml"))
+  : [];
+const FAMILIES = new Set(["orchestration", "reasoning", "context", "software"]);
+const patternIds = new Set();
+for (const pf of patFiles) {
+  const doc = yaml.load(fs.readFileSync(path.join(patDir, pf), "utf8"));
+  for (const p of doc.patterns || []) {
+    if (!p.id || !/^PAT-[a-z0-9-]+$/.test(p.id || "")) err(pf, `bad pattern id "${p.id}"`);
+    if (patternIds.has(p.id)) err(pf, `${p.id} appears twice`);
+    patternIds.add(p.id);
+    if (!FAMILIES.has(p.family)) err(pf, `${p.id}: unknown family "${p.family}"`);
+    if (!(p.discharges || []).length) {
+      err(pf, `${p.id} discharges nothing — a pattern that makes no capability exist is craft, and craft is cited`);
+    }
+    for (const cid of p.discharges || []) {
+      if (!byId.get(cid)) err(pf, `${p.id}: discharges unknown capability ${cid}`);
+    }
+    for (const field of ["reach_for_it_when", "cannot_run_safely_without", "costs"]) {
+      if (!p[field]) err(pf, `${p.id} has no ${field}`);
+    }
+  }
+}
+
 // ------------------------------------------------- cross-catalog reference check
 /*
  * discharges must point at obligations that actually exist. This runs only when
