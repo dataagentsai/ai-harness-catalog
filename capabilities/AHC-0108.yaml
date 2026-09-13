@@ -1,0 +1,66 @@
+# AHC-0108 — A structured record of the work runs beside the transcript
+id: AHC-0108
+status: active
+since: "0.3.0"
+
+level: MUST
+layers: [L5, L1]
+positions: [P3]
+
+concern: functional-suitability
+facet: functional completeness
+
+archetypes: [A4, A6, A7, A9]
+core: false
+
+title: |-
+  A structured record of the work runs beside the transcript
+
+requirement: |-
+  The harness maintains, separately from the message history, a typed record of what this unit of work is about: what was asked, which records are in play, which actions have landed, and what is outstanding. It is written as those things happen rather than derived from the transcript afterwards, it is bounded by construction, and it is what a handoff, a resumption or a summary is built from. Where a transcript is reduced, this record is not reduced with it.
+
+failure_mode: |-
+  Everything the system knows about a piece of work lives in the message history, so every question about it becomes a reading comprehension problem over prose the model wrote. Reduction is where it surfaces: whatever compaction discards was the only copy, and what it discards is the early part — the constraint the user set in their first message, the identifier everything since has been about. A handoff assembled by summarising the transcript inherits that loss and the summariser's errors on top of it, and the person receiving it cannot tell which parts are quotations and which are paraphrase. The variant with no compaction at all is the same failure in slow motion: the record is intact, unbounded, and still only readable by a model.
+
+discharges: [AAC-0062, AAC-0038, AAC-0043]
+
+design_decisions:
+  - key: facts_source
+    question: Written as work happens, or derived from the transcript on demand?
+    tension: >-
+      Deriving it needs no new write path and cannot disagree with the
+      transcript, because it is the transcript — which is also why it inherits
+      every reduction and every phrasing the model chose. Writing it as things
+      happen costs a write at each effect and makes a second thing that can be
+      wrong.
+    resolution: >-
+      Written as work happens, from what the harness did rather than from what
+      the model said about it. An identifier that reached a tool is a fact; the
+      same identifier in a sentence is a claim. The two can disagree and the
+      disagreement is worth having, because it is exactly the signal a
+      truthfulness check reads.
+  - question: What bounds it?
+    tension: >-
+      A record that grows with the work eventually has the problem the
+      transcript has. Capping the entries loses the oldest, which for a
+      long-running task is the goal itself.
+    resolution: >-
+      Bounded by kind rather than by age. What was asked is one value, not a
+      list; records in play and actions landed are sets, so repetition costs
+      nothing; and what is outstanding is whatever is genuinely outstanding,
+      which is small or the system has a different problem.
+  - question: Does the model see it?
+    tension: >-
+      Rendering it into context gives the model a compact, reliable statement of
+      where it is, and spends tokens on every call restating what the transcript
+      mostly already says. Keeping it out of context makes it purely the
+      harness's, which is where handoffs and resumptions are assembled anyway.
+    resolution: >-
+      A decision for the binding rather than the capability. What the capability
+      requires is that the record exists, is written from what happened, and is
+      complete enough to hand over; whether it is also shown to the model is a
+      context-assembly choice with a cost the specification cannot price.
+
+realization_policy: own
+
+see_also: [AHC-0047, AHC-0067, AHC-0070, AHC-0044]
