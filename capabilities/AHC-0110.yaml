@@ -1,0 +1,65 @@
+# AHC-0110 — Every failure declares what kind of failure it is, from one vocabulary
+id: AHC-0110
+status: active
+since: "0.3.0"
+
+level: MUST
+layers: [L6, L10]
+positions: [P3]
+
+concern: maintainability
+facet: analysability
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Every failure declares what kind of failure it is, from one vocabulary
+
+requirement: |-
+  The harness declares one closed vocabulary of failure kinds, and every failure it raises or returns carries exactly one of them. The vocabulary is drawn on what a caller can do about the failure — wait and try again, stop and tell somebody, fix the deployment — and not on which component produced it, because the component is already in the record and does not need saying twice. A new failure without a kind does not build.
+
+failure_mode: |-
+  Every component names its failures well and no two components name them the same way, so nothing above them can act on the names. The caller's handler is a chain of `isinstance` checks against a list somebody assembled by reading the code, and it is wrong the moment a component adds a failure — silently, because the new one falls through to whatever the last branch does, which is usually the most defensive thing available. Retry policy is the expensive version: with no shared way to ask *is this worth trying again*, the choice is retrying everything, which turns a refusal into a bill, or retrying nothing, which turns a blip into an outage. Downstream, the same absence makes an error rate a number nobody can slice: one series counts a provider being down, a request being refused and a deployment being misconfigured, and the three need three different people.
+
+discharges: [AAC-0079, AAC-0009, AAC-0011]
+
+design_decisions:
+  - key: failure_axis
+    question: What are failures classified by — where they came from, or what to do about them?
+    tension: >-
+      Classifying by origin is easy to assign and never contentious: a tool
+      failure is a tool failure. It also tells a caller nothing, because the same
+      origin covers a dependency being down and a dependency saying no, which
+      need opposite responses. Classifying by response is the useful axis and
+      requires a judgement per failure, which somebody can get wrong.
+    resolution: >-
+      By what a caller can do. The origin is already in the record — the
+      component, the span, the stack — so a taxonomy repeating it adds nothing,
+      and the one question a caller actually has is whether trying again is
+      sensible. Where the judgement is genuinely unclear, that is a sign the
+      failure is two failures.
+  - question: Is the vocabulary closed?
+    tension: >-
+      Open lets a component name a kind nobody anticipated, and guarantees that
+      within a year no consumer can enumerate them. Closed forces every new
+      failure into an existing kind and will occasionally force a bad fit.
+    resolution: >-
+      Closed, and a bad fit is information: a failure that fits no kind is
+      usually a failure whose handling nobody has decided. Widening the
+      vocabulary is a deliberate change with consumers to notify, which is the
+      correct weight for something every caller branches on.
+  - question: Where is it enforced?
+    tension: >-
+      Convention plus review is free and decays; the fifteenth failure type is
+      added by somebody who has not read the first fourteen. A build-time check
+      costs a test and makes the rule true rather than intended.
+    resolution: >-
+      At build time, by enumerating the failures the package declares and
+      failing on any that carries no kind. It is the same shape as every other
+      rule here that survived: the ones stated and not checked are the ones
+      quietly untrue a quarter later.
+
+realization_policy: own
+
+see_also: [AHC-0017, AHC-0043, AHC-0021, AHC-0005]
