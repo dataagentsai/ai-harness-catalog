@@ -1,0 +1,67 @@
+# AHC-0109 — A summary carries the least trusted provenance of what it summarised
+id: AHC-0109
+status: active
+since: "0.3.0"
+
+level: MUST
+layers: [L1, L5]
+positions: [P3]
+
+concern: security
+facet: resistance
+
+archetypes: [A3, A4, A6, A7, A9]
+core: false
+
+title: |-
+  A summary carries the least trusted provenance of what it summarised
+
+requirement: |-
+  Where the harness reduces context by producing a summary rather than by discarding whole units, the summary carries the provenance of its least trusted input, and is placed and fenced accordingly. A summary over any untrusted material is untrusted material. The labelling is applied by the component that produces the summary, from the labels its inputs already carry, and is never inferred afterwards from the summary's own text.
+
+failure_mode: |-
+  Fencing survives every hop except this one. Retrieved passages and tool output are labelled where they enter, carried faithfully through assembly, and then a compaction step reads a window containing three fenced passages and one instruction and emits a paragraph of the harness's own prose. The label does not survive, because nothing carried it across a step that produced new text rather than moving existing text — and the new text sits in the system's own voice, in the position the system's own instructions occupy. An instruction planted in a retrieved document has been laundered into an instruction the model has every reason to follow, and the laundering was performed by the safety machinery. It is invisible afterwards: the summary reads as the system's, because by then it is.
+
+discharges: [AAC-0036, AAC-0058, AAC-0004]
+
+design_decisions:
+  - key: summary_provenance
+    question: What produces the summary, and does that change what it may be trusted with?
+    tension: >-
+      A model call is the only thing that can summarise open-ended conversation,
+      and it is also a component that can be instructed by its own input — so
+      the summariser reading untrusted material is subject to the same attack as
+      the agent, one step earlier and with less scrutiny. A deterministic
+      reduction cannot be instructed and cannot summarise.
+    resolution: >-
+      Either, provided the output inherits the label. A model-written summary of
+      untrusted input is untrusted output, which is what the fence is for; and a
+      summariser that is itself the attack surface is a reason to fence its
+      output, not a reason to trust it because the harness invoked it.
+  - question: Does a mixed window produce one summary or several?
+    tension: >-
+      One summary is smaller and must take the lowest label in the window, so a
+      single untrusted passage renders the summary of an entire conversation
+      untrusted — which is correct and loses the standing instruction's
+      privileged position along with everything else. Summarising by provenance
+      band keeps the trusted material trusted and costs a call per band.
+    resolution: >-
+      By band where the bands are genuinely different, and the conservative
+      single summary otherwise. What is not acceptable is the arithmetic nobody
+      states: summarising a mixed window and labelling the result by what most
+      of it was.
+  - question: Is discarding whole units an acceptable alternative?
+    tension: >-
+      Discarding needs no provenance rule at all, because it produces no new
+      text — it is the reduction with no laundering surface. It also throws away
+      the constraint the user set in their first message, which is the failure
+      compaction exists to avoid.
+    resolution: >-
+      Yes, and it is the right default until measurement says otherwise. A
+      system that discards whole exchanges meets this capability vacuously and
+      should say so in its binding rather than leave a reader wondering which
+      way it went.
+
+realization_policy: own
+
+see_also: [AHC-0045, AHC-0067, AHC-0011, AHC-0083]
