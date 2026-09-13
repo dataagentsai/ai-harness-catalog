@@ -1,8 +1,11 @@
 # A6 · Tool-Using Agent — architecture
 
 **The hand-written half of this blueprint.** Requirements, design decisions and
-discharges are generated from capability tags; what follows is the part a
-generator cannot derive — where the seams fall for this shape, and which
+discharges are collated in
+[A6-owes.generated.md](A6-owes.generated.md) — generated from the capabilities
+themselves, grouped by layer, and checked in CI against what those files
+currently say, because a restatement that can drift is a restatement that will.
+What follows is the part a generator cannot derive — where the seams fall for this shape, and which
 position owns what. Extracted from a decomposed reference implementation on
 12 September 2026, not designed beside one: every seam named here exists in
 working code with tests against it.
