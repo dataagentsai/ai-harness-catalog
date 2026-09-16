@@ -1,0 +1,77 @@
+# channel — the seam to wherever a person talks to the system, and where another
+# person can take the conversation over.
+port: channel
+status: active
+since: "0.4.0"
+
+tier: extension
+# A conversation is what makes this seam necessary. A tool-using agent with no
+# person on the other end needs none; a support agent is both shapes, and binds
+# it for the A4 half. Found missing by reference-agent T-026: Chatwoot, adopted,
+# had no port to bind to and sat outside `bindings:` as `x_channel`.
+requires_archetypes: [A4]
+direction: consumed
+layers: [L6, L14, L16]
+
+summary: >-
+  The chat surface a customer writes in, the transcript it keeps, and the desk
+  where a person takes a conversation over, reached as messages arriving and
+  replies, notes and handoffs going out.
+
+serves: [AHC-0034, AHC-0053, AHC-0070, AHC-0099]
+
+kernel_owns: >-
+  Which arriving messages may cause a turn at all, whose authority a turn runs
+  under, what is said back, when the conversation is handed to a person, and the
+  context that goes with it. A channel names who wrote; the harness decides
+  whether that is enough to act on.
+
+supplied_outside: >-
+  The widget or client the customer uses, message delivery and its retries, the
+  transcript, contact records, the desk interface, assignment of conversations
+  to people, and the signing of what the channel sends.
+
+operations:
+  - name: receive
+    intent: Deliver an arriving message with who wrote it, whether the channel verified that, whose turn it is, and a delivery id stable across redelivery.
+  - name: reply
+    intent: Say something back in the conversation, as the system.
+  - name: note
+    intent: Leave context for the people at the desk that the customer does not see.
+  - name: hand_off
+    intent: Give the conversation to a person, after which arriving messages are theirs, not the system's.
+
+invariants:
+  - must: An arriving message causes nothing unless the channel's delivery is authenticated.
+    because: >-
+      A chat webhook is a public endpoint. One that acts on unsigned or replayed
+      deliveries lets anyone who can reach it speak as any customer.
+    capability: AHC-0099
+    checkable: dynamic
+  - must: A turn runs under a credential for the person who wrote, never under a channel identifier alone.
+    because: >-
+      A contact identifier says who the channel believes wrote. Acting on it
+      directly makes the channel's contact database the authorisation system,
+      and a customer who has logged out is still acted for.
+    capability: AHC-0034
+    checkable: dynamic
+  - must: A handoff carries the context a person needs, and after it the system does not answer.
+    because: >-
+      A person who has to re-ask what the customer already said is slower than
+      no handoff; a system that keeps answering after one talks over them.
+    capability: AHC-0070
+    checkable: dynamic
+  - must: A redelivered message produces one turn.
+    because: >-
+      Channels deliver at least once. Two turns for one message is two replies,
+      and if the turn acts, two actions.
+    capability: AHC-0053
+    checkable: dynamic
+
+substitution_test: >-
+  Replace the implementation with a terminal where one person types as the
+  customer and another as the desk. Which messages cause a turn, whose authority
+  it runs under, and when a conversation changes hands must be identical; only
+  the surface and the transcript's home may differ.
+
+see_also: [identity, approval, trigger, state]
