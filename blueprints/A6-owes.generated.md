@@ -7,7 +7,7 @@ collated from the capabilities themselves rather than restated beside them.
 The written half — where the seams fall, which position owns what — is in
 [A6-tool-using-agent.md](A6-tool-using-agent.md).
 
-**67 capabilities**, across 16 of 16 layers.
+**70 capabilities**, across 16 of 16 layers.
 
 | Layer | Owes |
 |---|---|
@@ -21,12 +21,12 @@ The written half — where the seams fall, which position owns what — is in
 | **L8** Concurrency and flow control | AHC-0020, AHC-0021, AHC-0095, AHC-0096, AHC-0097, AHC-0098 |
 | **L9** Determinism and replay | AHC-0014, AHC-0022, AHC-0023 |
 | **L10** Failure handling | AHC-0005, AHC-0017, AHC-0021, AHC-0024, AHC-0025, AHC-0074, AHC-0096, AHC-0105, AHC-0110 |
-| **L11** Observability | AHC-0006, AHC-0018, AHC-0019, AHC-0026, AHC-0027, AHC-0029, AHC-0090 |
-| **L12** Eval harness | AHC-0010, AHC-0022, AHC-0028, AHC-0029, AHC-0090 |
-| **L13** Cost accounting | AHC-0007, AHC-0012, AHC-0024, AHC-0030, AHC-0031, AHC-0097, AHC-0101 |
+| **L11** Observability | AHC-0006, AHC-0018, AHC-0019, AHC-0026, AHC-0027, AHC-0029, AHC-0090, AHC-0111, AHC-0112 |
+| **L12** Eval harness | AHC-0010, AHC-0022, AHC-0028, AHC-0029, AHC-0090, AHC-0112, AHC-0113 |
+| **L13** Cost accounting | AHC-0007, AHC-0012, AHC-0024, AHC-0030, AHC-0031, AHC-0097, AHC-0101, AHC-0111 |
 | **L14** Human-in-the-loop | AHC-0039, AHC-0057 |
 | **L15** Release and configuration | AHC-0003, AHC-0009, AHC-0032, AHC-0033, AHC-0092 |
-| **L16** Identity and authorization | AHC-0034, AHC-0035, AHC-0040, AHC-0099 |
+| **L16** Identity and authorization | AHC-0034, AHC-0035, AHC-0040, AHC-0099, AHC-0113 |
 
 ## L1 · Context assembly
 
@@ -751,6 +751,22 @@ Each unit of work carries the dimensions along which its behaviour will later be
 
 **Discharges** AAC-0017, AAC-0014, AAC-0104
 
+### AHC-0111 — The numbers the system is judged on are emitted as metrics, apart from traces
+
+*SHOULD · core · maintainability*
+
+The harness emits, as metrics rather than only as span attributes, the handful of numbers the system is judged on: how units of work end, the rules that refused or escalated them, failures by kind, spend per unit of work, and the latency of the unit and of each model and tool call. Every label is drawn from a closed set known before the run — an outcome, a rule identifier, a tool name — and never from a user, a record or free text. The metrics are exported on their own path to a store that evaluates alert rules, and a metric recorded with no exporter configured is a startup error in a deployed environment, not a silent no-op.
+
+**Discharges** AAC-0114, AAC-0007, AAC-0008, AAC-0104
+
+### AHC-0112 — An outcome that arrives later can be attached to the run it judges
+
+*SHOULD · maintainability*
+
+Every run hands the party it served an identifier that later events can cite, and the harness exposes one path through which an outcome — explicit feedback, the same user returning about the same matter, an action reversed or compensated, a person closing an escalation with a verdict — is recorded against that run, with its kind drawn from a declared set and the time it arrived. Outcomes are recorded where scores are, so a run's rubric scores and its outcomes are read together.
+
+**Discharges** AAC-0115, AAC-0014, AAC-0042, AAC-0008
+
 ## L12 · Eval harness
 
 ### AHC-0010 — A task entrypoint an evaluation can drive
@@ -792,6 +808,22 @@ What a captured run records and what the eval entrypoint accepts are the same sh
 Each unit of work carries the dimensions along which its behaviour will later be examined — input class, language, tenant tier, channel, document type — attached where the unit begins and stored on its record. The label set is declared, and a unit with no applicable label carries an explicit unknown rather than nothing.
 
 **Discharges** AAC-0017, AAC-0014, AAC-0104
+
+### AHC-0112 — An outcome that arrives later can be attached to the run it judges
+
+*SHOULD · maintainability*
+
+Every run hands the party it served an identifier that later events can cite, and the harness exposes one path through which an outcome — explicit feedback, the same user returning about the same matter, an action reversed or compensated, a person closing an escalation with a verdict — is recorded against that run, with its kind drawn from a declared set and the time it arrived. Outcomes are recorded where scores are, so a run's rubric scores and its outcomes are read together.
+
+**Discharges** AAC-0115, AAC-0014, AAC-0042, AAC-0008
+
+### AHC-0113 — A synthetic run exercises the serving path, as an identity that touches no real data
+
+*SHOULD · core · reliability*
+
+The eval entrypoint can drive the deployed system through its own serving path — the same edge, identity provider, gateway and tools real traffic uses — as a declared synthetic identity whose reads and effects are confined to data only it owns. Synthetic runs are marked in the record so every production rate can exclude them, and they run on a schedule held by the monitoring side, which alerts when a case fails or when a scheduled run does not report.
+
+**Discharges** AAC-0116, AAC-0016, AAC-0082, AAC-0079
 
 ## L13 · Cost accounting
 
@@ -850,6 +882,14 @@ Where a single request issues several model calls in parallel — one per docume
 The cost of a call is derived from a table of rates that is part of the configuration, carries the date it was taken from the provider, and distinguishes the rates the provider charges separately. A model with no entry is a failure, raised where the run is configured rather than where the call is made, and never a call costed at nothing. Accumulated amounts are held in an exact decimal representation, not in binary floating point.
 
 **Discharges** AAC-0104, AAC-0103
+
+### AHC-0111 — The numbers the system is judged on are emitted as metrics, apart from traces
+
+*SHOULD · core · maintainability*
+
+The harness emits, as metrics rather than only as span attributes, the handful of numbers the system is judged on: how units of work end, the rules that refused or escalated them, failures by kind, spend per unit of work, and the latency of the unit and of each model and tool call. Every label is drawn from a closed set known before the run — an outcome, a rule identifier, a tool name — and never from a user, a record or free text. The metrics are exported on their own path to a store that evaluates alert rules, and a metric recorded with no exporter configured is a startup error in a deployed environment, not a silent no-op.
+
+**Discharges** AAC-0114, AAC-0007, AAC-0008, AAC-0104
 
 ## L14 · Human-in-the-loop
 
@@ -953,3 +993,11 @@ The permissions a tool operates under are held by the executing side and scoped 
 There is one place where a request becomes an identity, and it derives that identity from a credential the caller cannot mint or alter — verified against the issuer, checked for expiry, and rejected whole when either fails. Nothing the caller supplies as data may name the identity: not a field beside the credential, not a name in the message, not a claim carried back by the model. A credential that does not verify yields no identity, and the run does not proceed with a lesser one.
 
 **Discharges** AAC-0111, AAC-0040, AAC-0032
+
+### AHC-0113 — A synthetic run exercises the serving path, as an identity that touches no real data
+
+*SHOULD · core · reliability*
+
+The eval entrypoint can drive the deployed system through its own serving path — the same edge, identity provider, gateway and tools real traffic uses — as a declared synthetic identity whose reads and effects are confined to data only it owns. Synthetic runs are marked in the record so every production rate can exclude them, and they run on a schedule held by the monitoring side, which alerts when a case fails or when a scheduled run does not report.
+
+**Discharges** AAC-0116, AAC-0016, AAC-0082, AAC-0079

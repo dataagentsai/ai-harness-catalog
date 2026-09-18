@@ -1,0 +1,49 @@
+# AHC-0113 — A synthetic run exercises the serving path, as an identity that touches no real data
+id: AHC-0113
+status: active
+since: "0.3.0"
+
+level: SHOULD
+layers: [L12, L16]
+positions: [P1, P7]
+
+concern: reliability
+facet: availability
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  A synthetic run exercises the serving path, as an identity that touches no real data
+
+requirement: |-
+  The eval entrypoint can drive the deployed system through its own serving path — the same edge, identity provider, gateway and tools real traffic uses — as a declared synthetic identity whose reads and effects are confined to data only it owns. Synthetic runs are marked in the record so every production rate can exclude them, and they run on a schedule held by the monitoring side, which alerts when a case fails or when a scheduled run does not report.
+
+failure_mode: |-
+  The system is tested thoroughly everywhere except where it runs. The suite passes against a simulation, the release passes its gates, and at night a rotated key or an expired client secret breaks the path between the edge and the model. Monitoring built on traffic sees fewer requests and reads it as a quiet night. The first user of the morning finds it. When teams do add a probe, it usually checks a health endpoint that answers while the parts behind it are broken, or runs as a real account whose test orders appear in the business's numbers until somebody asks them to stop.
+
+discharges: [AAC-0116, AAC-0016, AAC-0082, AAC-0079]
+
+design_decisions:
+  - question: A health check, or a whole unit of work?
+    tension: >-
+      A health endpoint is cheap and answers while the gateway, identity
+      provider or tool server behind it is failing. A whole unit of work
+      exercises every hop and costs a model call per run.
+    resolution: >-
+      A whole unit of work, with few cases and a period chosen against the
+      cost: the hops a health check skips are exactly the ones that break
+      without a deploy.
+  - question: How is the synthetic identity kept out of real data?
+    tension: >-
+      A separate environment is safe and is not the deployment. A real account
+      in the real system is the deployment and puts test effects beside real
+      ones.
+    resolution: >-
+      A real identity in the real system, whose data lives in a partition only
+      it can read or write, enforced where the tools execute rather than by the
+      cases being careful.
+
+realization_policy: own
+
+see_also: [AHC-0010, AHC-0055, AHC-0068, AHC-0040]

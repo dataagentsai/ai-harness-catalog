@@ -1,0 +1,60 @@
+# AHC-0111 — The numbers the system is judged on are emitted as metrics, apart from traces
+id: AHC-0111
+status: active
+since: "0.3.0"
+
+level: SHOULD
+layers: [L11, L13]
+positions: [P3]
+
+concern: maintainability
+facet: analysability
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  The numbers the system is judged on are emitted as metrics, apart from traces
+
+requirement: |-
+  The harness emits, as metrics rather than only as span attributes, the handful of numbers the system is judged on: how units of work end, the rules that refused or escalated them, failures by kind, spend per unit of work, and the latency of the unit and of each model and tool call. Every label is drawn from a closed set known before the run — an outcome, a rule identifier, a tool name — and never from a user, a record or free text. The metrics are exported on their own path to a store that evaluates alert rules, and a metric recorded with no exporter configured is a startup error in a deployed environment, not a silent no-op.
+
+failure_mode: |-
+  Everything is on the span, so every question about one run is answerable and every question about the system is not. An operator asking whether escalations doubled overnight has to query a trace store for a count it was never built to compute, over a sample it silently drew, and nobody schedules that query every minute, so nobody is told. The quieter version is worse: counters are written in the code, reviewed, tested for their labels, and recorded into the default no-op provider because no exporter was ever wired, so the dashboard that would have shown them was never possible and nobody knows. Cardinality is the other way it fails — a label taken from a customer id is a series per customer, discovered by the bill.
+
+discharges: [AAC-0114, AAC-0007, AAC-0008, AAC-0104]
+
+design_decisions:
+  - question: Why metrics at all, when every number is derivable from traces?
+    tension: >-
+      One source of truth is simpler, and a trace store can in principle count.
+      In practice traces are sampled, retained briefly and expensive to scan, and
+      trace backends evaluate alert rules poorly or not at all; a second signal
+      is a second thing to keep consistent.
+    resolution: >-
+      Both, from the same point in the code, for a short declared list. Spans
+      explain one run; metrics watch all of them. Record both where the unit of
+      work ends, so the two cannot count differently, and link them by exemplar
+      so a spike on a chart opens a trace.
+  - question: Which numbers?
+    tension: >-
+      Everything is cheap to emit and expensive to have: each series is stored,
+      charted and eventually alerted on, and each label multiplies the rest.
+      Too few, and the rate that moved is the one not collected.
+    resolution: >-
+      The numbers somebody would notice moving and act on — the ones that
+      appear in AAC-0114's rates and the cost and latency budgets. Everything
+      else stays a span attribute, available to whoever is investigating one
+      run and costing nothing when nobody is.
+  - question: Is a missing exporter an error?
+    tension: >-
+      Libraries default to a no-op provider so that instrumented code runs
+      anywhere, which is right for tests and wrong for a deployment, where it
+      turns every metric into dead code without a warning.
+    resolution: >-
+      A deployment declares where metrics go, and starting without it fails.
+      Tests keep the in-memory reader and assert on what was recorded.
+
+realization_policy: own
+
+see_also: [AHC-0006, AHC-0007, AHC-0110, AHC-0055]

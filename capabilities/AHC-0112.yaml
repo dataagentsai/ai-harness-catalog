@@ -1,0 +1,52 @@
+# AHC-0112 — An outcome that arrives later can be attached to the run it judges
+id: AHC-0112
+status: active
+since: "0.3.0"
+
+level: SHOULD
+layers: [L11, L12]
+positions: [P1, P6]
+
+concern: maintainability
+facet: analysability
+
+# Archetypes whose work is judged afterwards, by a conversation resuming or an
+# action being undone. A1–A3, A5, A8 and A10 hand their output to a caller, whose
+# later judgement is the caller's to record.
+archetypes: [A4, A6, A7, A9]
+core: false
+
+title: |-
+  An outcome that arrives later can be attached to the run it judges
+
+requirement: |-
+  Every run hands the party it served an identifier that later events can cite, and the harness exposes one path through which an outcome — explicit feedback, the same user returning about the same matter, an action reversed or compensated, a person closing an escalation with a verdict — is recorded against that run, with its kind drawn from a declared set and the time it arrived. Outcomes are recorded where scores are, so a run's rubric scores and its outcomes are read together.
+
+failure_mode: |-
+  The system's quality is measured entirely by reading its transcripts, because transcripts are what was kept. A fluent answer that was wrong scores well; the customer who comes back the next morning opens a new conversation that nothing connects to the first, and the first remains a resolved conversation in every report. Resolution rate becomes the rate at which users stop writing, which includes every user who gave up. The ground truth existed, arrived in another system a day later, and was lost for want of an identifier nobody thought to record.
+
+discharges: [AAC-0115, AAC-0014, AAC-0042, AAC-0008]
+
+design_decisions:
+  - question: Which identifier do outcomes cite — the run or the conversation?
+    tension: >-
+      The run is precise and is not what the user or the next system sees. The
+      conversation is what a reopened ticket carries, and spans many runs, so an
+      outcome attached to it cannot say which turn went wrong.
+    resolution: >-
+      Record both, and attach at the finest grain the outcome can name. A
+      feedback button knows the turn; a reopened conversation knows only the
+      conversation, and the join to its last run is a stated rule rather than a
+      guess made in the query.
+  - question: Who decides that a later event is an outcome?
+    tension: >-
+      Inferring outcomes (the same customer, the same order, within a day)
+      finds most of them and is sometimes wrong. Requiring an explicit signal is
+      never wrong and finds few.
+    resolution: >-
+      Both, labelled. The kind says whether the outcome was stated or inferred,
+      and the inference rule is versioned like a grader, because it is one.
+
+realization_policy: own
+
+see_also: [AHC-0026, AHC-0028, AHC-0029, AHC-0070]
