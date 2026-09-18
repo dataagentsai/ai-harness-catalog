@@ -7,7 +7,7 @@ collated from the capabilities themselves rather than restated beside them.
 The written half — where the seams fall, which position owns what — is in
 [A6-tool-using-agent.md](A6-tool-using-agent.md).
 
-**70 capabilities**, across 16 of 16 layers.
+**71 capabilities**, across 16 of 16 layers.
 
 | Layer | Owes |
 |---|---|
@@ -21,8 +21,8 @@ The written half — where the seams fall, which position owns what — is in
 | **L8** Concurrency and flow control | AHC-0020, AHC-0021, AHC-0095, AHC-0096, AHC-0097, AHC-0098 |
 | **L9** Determinism and replay | AHC-0014, AHC-0022, AHC-0023 |
 | **L10** Failure handling | AHC-0005, AHC-0017, AHC-0021, AHC-0024, AHC-0025, AHC-0074, AHC-0096, AHC-0105, AHC-0110 |
-| **L11** Observability | AHC-0006, AHC-0018, AHC-0019, AHC-0026, AHC-0027, AHC-0029, AHC-0090, AHC-0111, AHC-0112 |
-| **L12** Eval harness | AHC-0010, AHC-0022, AHC-0028, AHC-0029, AHC-0090, AHC-0112, AHC-0113 |
+| **L11** Observability | AHC-0006, AHC-0018, AHC-0019, AHC-0026, AHC-0027, AHC-0029, AHC-0090, AHC-0111, AHC-0112, AHC-0114 |
+| **L12** Eval harness | AHC-0010, AHC-0022, AHC-0028, AHC-0029, AHC-0090, AHC-0112, AHC-0113, AHC-0114 |
 | **L13** Cost accounting | AHC-0007, AHC-0012, AHC-0024, AHC-0030, AHC-0031, AHC-0097, AHC-0101, AHC-0111 |
 | **L14** Human-in-the-loop | AHC-0039, AHC-0057 |
 | **L15** Release and configuration | AHC-0003, AHC-0009, AHC-0032, AHC-0033, AHC-0092 |
@@ -767,6 +767,14 @@ Every run hands the party it served an identifier that later events can cite, an
 
 **Discharges** AAC-0115, AAC-0014, AAC-0042, AAC-0008
 
+### AHC-0114 — Each unit of work leaves one evaluation record, with a declared minimum
+
+*SHOULD · core · maintainability*
+
+Every unit of work leaves a record from which it can be judged after the fact without re-running it, and the harness declares that record's fields and checks, at build time, that each is emitted. The minimum, for every archetype: (1) join keys — the unit of work's identifier, the session, a pseudonymous user, the tenant, and the position within the session; (2) versions — the resolved configuration's fingerprint, the model requested and the model that answered, and the version of every rule set that decided anything; (3) the input, redacted; (4) what the system was shown beyond the input — each tool result and retrieved passage, redacted, with its source; (5) what it did — each model call, each tool call with its arguments, its side-effect class and its outcome, and each policy decision; (6) the output, redacted, and how the unit ended — completed, refused, escalated, waiting or failed — with the rule that decided it; (7) tokens, cost and duration, for the unit and for each call; (8) markers — whether the unit was synthetic, whether its payloads were captured, and which resolution mode served it; and (9) outcomes that arrive later, with their kind, source and time (AHC-0112). The content in (3), (4) and (6) is captured for a declared sample rather than for all traffic, and the rest is recorded for every unit.
+
+**Discharges** AAC-0014, AAC-0011, AAC-0060, AAC-0080, AAC-0115, AAC-0110
+
 ## L12 · Eval harness
 
 ### AHC-0010 — A task entrypoint an evaluation can drive
@@ -824,6 +832,14 @@ Every run hands the party it served an identifier that later events can cite, an
 The eval entrypoint can drive the deployed system through its own serving path — the same edge, identity provider, gateway and tools real traffic uses — as a declared synthetic identity whose reads and effects are confined to data only it owns. Synthetic runs are marked in the record so every production rate can exclude them, and they run on a schedule held by the monitoring side, which alerts when a case fails or when a scheduled run does not report.
 
 **Discharges** AAC-0116, AAC-0016, AAC-0082, AAC-0079
+
+### AHC-0114 — Each unit of work leaves one evaluation record, with a declared minimum
+
+*SHOULD · core · maintainability*
+
+Every unit of work leaves a record from which it can be judged after the fact without re-running it, and the harness declares that record's fields and checks, at build time, that each is emitted. The minimum, for every archetype: (1) join keys — the unit of work's identifier, the session, a pseudonymous user, the tenant, and the position within the session; (2) versions — the resolved configuration's fingerprint, the model requested and the model that answered, and the version of every rule set that decided anything; (3) the input, redacted; (4) what the system was shown beyond the input — each tool result and retrieved passage, redacted, with its source; (5) what it did — each model call, each tool call with its arguments, its side-effect class and its outcome, and each policy decision; (6) the output, redacted, and how the unit ended — completed, refused, escalated, waiting or failed — with the rule that decided it; (7) tokens, cost and duration, for the unit and for each call; (8) markers — whether the unit was synthetic, whether its payloads were captured, and which resolution mode served it; and (9) outcomes that arrive later, with their kind, source and time (AHC-0112). The content in (3), (4) and (6) is captured for a declared sample rather than for all traffic, and the rest is recorded for every unit.
+
+**Discharges** AAC-0014, AAC-0011, AAC-0060, AAC-0080, AAC-0115, AAC-0110
 
 ## L13 · Cost accounting
 

@@ -1,0 +1,61 @@
+# AHC-0114 — Each unit of work leaves one evaluation record, with a declared minimum
+id: AHC-0114
+status: active
+since: "0.3.0"
+
+level: SHOULD
+layers: [L11, L12]
+positions: [P3]
+
+concern: maintainability
+facet: testability
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Each unit of work leaves one evaluation record, with a declared minimum
+
+requirement: |-
+  Every unit of work leaves a record from which it can be judged after the fact without re-running it, and the harness declares that record's fields and checks, at build time, that each is emitted. The minimum, for every archetype: (1) join keys — the unit of work's identifier, the session, a pseudonymous user, the tenant, and the position within the session; (2) versions — the resolved configuration's fingerprint, the model requested and the model that answered, and the version of every rule set that decided anything; (3) the input, redacted; (4) what the system was shown beyond the input — each tool result and retrieved passage, redacted, with its source; (5) what it did — each model call, each tool call with its arguments, its side-effect class and its outcome, and each policy decision; (6) the output, redacted, and how the unit ended — completed, refused, escalated, waiting or failed — with the rule that decided it; (7) tokens, cost and duration, for the unit and for each call; (8) markers — whether the unit was synthetic, whether its payloads were captured, and which resolution mode served it; and (9) outcomes that arrive later, with their kind, source and time (AHC-0112). The content in (3), (4) and (6) is captured for a declared sample rather than for all traffic, and the rest is recorded for every unit.
+
+failure_mode: |-
+  Online evaluation is designed after the system ships, against whatever the system happened to record, and finds that what it needs was never kept. The trace has the tool's name and not what it returned, so a judge cannot tell whether the answer agreed with it. The reply is not captured because capture was switched off for privacy, or switched on and never wired, so there is nothing to score. The model is recorded and the prompt version is not, so a drop in scores cannot be attributed to a release. Each gap is fixed as found, one field at a time, and every fix is forward-only: the weeks before it cannot be evaluated at all.
+
+discharges: [AAC-0014, AAC-0011, AAC-0060, AAC-0080, AAC-0115, AAC-0110]
+
+design_decisions:
+  - question: Why a named minimum rather than "record everything"?
+    tension: >-
+      Everything is the safe instruction and is neither checkable nor
+      affordable: payloads are the largest privacy surface in the system and
+      the largest share of telemetry cost. A named list is checkable and will
+      eventually miss something a later rubric needs.
+    resolution: >-
+      A named minimum, checked like a contract, grouped by the question each
+      group answers — who, which version, what went in, what was seen, what
+      was done, what came out, what it cost, what kind of run, what happened
+      next. A new rubric that needs a field adds it to the declaration, which
+      is a visible change rather than a discovery.
+  - question: Content for every unit, or for a sample?
+    tension: >-
+      Scoring needs the words. Keeping every conversation's words multiplies
+      the privacy and retention obligations by the traffic, for rubrics that
+      only ever read a sample.
+    resolution: >-
+      Structure for every unit, content for a declared sample, redacted before
+      it leaves the process (AHC-0019) and retention-bounded (AAC-0095). The
+      sample is recorded as a marker, so a rate is never computed over the
+      sample by accident.
+  - question: Where does the record live — traces, a table, the eval platform?
+    tension: >-
+      Traces already carry most of it and are sampled and short-lived. A
+      separate store is durable and is a second emission to keep consistent.
+    resolution: >-
+      The trace is the record, and the declaration is of what the trace must
+      carry. It is the shape AHC-0029 promotes into a dataset row, so an
+      evaluation record and a regression case are the same thing at two ages.
+
+realization_policy: own
+
+see_also: [AHC-0006, AHC-0019, AHC-0026, AHC-0029, AHC-0111, AHC-0112]
