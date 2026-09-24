@@ -17,7 +17,7 @@ title: |-
   Every step declares whether repeating it is safe
 
 requirement: |-
-  Each step states whether it can be re-executed with the same input without additional effect. Steps that cannot are given an idempotency key derived from the run and the step, carried to the downstream system, so a repeat is recognised there rather than being prevented only by the harness remembering not to retry.
+  Each step states whether it can be re-executed with the same input without additional effect. Steps that cannot are given an idempotency key derived from the run and the step, carried to the downstream system, so a repeat is recognised there rather than being prevented only by the harness remembering not to retry. The step's identity is one a resumed run reproduces: a run restarted from its checkpoint after its process died derives the same key for the step it was taking, so the effect that landed before the crash is recognised rather than applied again.
 
 failure_mode: |-
   Retry logic added generically at the harness level treats all steps alike, and the first step with an external effect turns a transient timeout into a duplicate. Timeouts are the specific trap: the call succeeded and the response was lost, so the harness believes it failed and the downstream system has already applied it. Without a key at the destination, nothing can tell the two apart.
@@ -25,7 +25,8 @@ failure_mode: |-
 discharges: [AAC-0047, AAC-0046, AAC-0076]
 
 design_decisions:
-  - question: Where does the idempotency key come from?
+  - key: key_source
+    question: Where does the idempotency key come from?
     tension: >-
       Deriving it from run and step identity is stable across retries and
       collides if the same step legitimately runs twice in one run — inside a
@@ -33,7 +34,11 @@ design_decisions:
       defeats deduplication entirely.
     resolution: >-
       Run, step and iteration index. A retry keeps all three; a legitimate
-      second execution changes the third.
+      second execution changes the third. The step is named by what it does —
+      the operation and the inputs that make two requests the same one — or by
+      a position recorded in the checkpoint, never by a counter the process
+      holds in memory: a resume that renumbers its steps derives new keys for
+      old effects, and the one crash the key exists for is the one it misses.
   - question: What if the downstream system has no idempotency support?
     tension: >-
       Building a deduplication record on your side works and is a second store

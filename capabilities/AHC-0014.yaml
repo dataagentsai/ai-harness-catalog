@@ -17,7 +17,7 @@ title: |-
   Sampling parameters are explicit, never inherited
 
 requirement: |-
-  Temperature, top-p, maximum output length, stop sequences and any seed are set explicitly at the choke point and appear in the resolved configuration record. A parameter the system relies on is never left to a client library default or a provider default.
+  Temperature, top-p, maximum output length, stop sequences and any seed are set explicitly at the choke point and appear in the resolved configuration record. A parameter the system relies on is never left to a client library default or a provider default. Where a model does not accept a parameter at all, the record says the model fixes it, rather than leaving it absent, so a reader can tell a parameter nobody set from one nobody can.
 
 failure_mode: |-
   Defaults differ between client libraries, between providers and between versions of the same library, and they change in minor releases. A system that relies on an inherited default has its output variance decided by a dependency upgrade nobody reviewed, and the change surfaces as unexplained inconsistency weeks later.
@@ -38,6 +38,19 @@ design_decisions:
       It reduces run-to-run variance substantially, and it is best-effort on
       every provider that offers it — a seed makes variance smaller, never zero,
       and a system designed as though it were zero breaks on the exception.
+  - key: unsettable_parameter
+    question: What if the model rejects a parameter the system wants to set?
+    tension: >-
+      Some models refuse temperature or top-p outright, or accept only one
+      value. Dropping the parameter silently makes the record indistinguishable
+      from a system that forgot it. Choosing another model to keep the knob
+      trades the capability the model was chosen for against one setting.
+    resolution: >-
+      Record it as fixed by the model, beside the model pin, and treat the
+      model's behaviour under that fixed value as part of what the pin means:
+      a change of model re-runs the variance measurement, because the setting
+      that bounded variance changed with it. Where the model offers a different
+      control over the same behaviour, set that one explicitly instead.
   - question: Who owns maximum output length?
     tension: >-
       Set low it truncates legitimate long answers mid-sentence; set high it is

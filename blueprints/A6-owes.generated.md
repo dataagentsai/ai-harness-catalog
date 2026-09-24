@@ -171,7 +171,11 @@ Which models a given caller may reach is configuration resolved at runtime, not 
 
 *SHOULD · core · maintainability*
 
-Temperature, top-p, maximum output length, stop sequences and any seed are set explicitly at the choke point and appear in the resolved configuration record. A parameter the system relies on is never left to a client library default or a provider default.
+Temperature, top-p, maximum output length, stop sequences and any seed are set explicitly at the choke point and appear in the resolved configuration record. A parameter the system relies on is never left to a client library default or a provider default. Where a model does not accept a parameter at all, the record says the model fixes it, rather than leaving it absent, so a reader can tell a parameter nobody set from one nobody can.
+
+**Answer in the profile:**
+
+- `AHC-0014/unsettable_parameter` — What if the model rejects a parameter the system wants to set?
 
 **Discharges** AAC-0010, AAC-0012, AAC-0018
 
@@ -323,7 +327,11 @@ After each step, the loop's state — the steps taken, their results, the accumu
 
 *MUST · reliability*
 
-Each step states whether it can be re-executed with the same input without additional effect. Steps that cannot are given an idempotency key derived from the run and the step, carried to the downstream system, so a repeat is recognised there rather than being prevented only by the harness remembering not to retry.
+Each step states whether it can be re-executed with the same input without additional effect. Steps that cannot are given an idempotency key derived from the run and the step, carried to the downstream system, so a repeat is recognised there rather than being prevented only by the harness remembering not to retry. The step's identity is one a resumed run reproduces: a run restarted from its checkpoint after its process died derives the same key for the step it was taking, so the effect that landed before the crash is recognised rather than applied again.
+
+**Answer in the profile:**
+
+- `AHC-0074/key_source` — Where does the idempotency key come from?
 
 **Discharges** AAC-0047, AAC-0046, AAC-0076
 
@@ -601,7 +609,11 @@ Work entering the harness carries a declared class — interactive, background, 
 
 *SHOULD · core · maintainability*
 
-Temperature, top-p, maximum output length, stop sequences and any seed are set explicitly at the choke point and appear in the resolved configuration record. A parameter the system relies on is never left to a client library default or a provider default.
+Temperature, top-p, maximum output length, stop sequences and any seed are set explicitly at the choke point and appear in the resolved configuration record. A parameter the system relies on is never left to a client library default or a provider default. Where a model does not accept a parameter at all, the record says the model fixes it, rather than leaving it absent, so a reader can tell a parameter nobody set from one nobody can.
+
+**Answer in the profile:**
+
+- `AHC-0014/unsettable_parameter` — What if the model rejects a parameter the system wants to set?
 
 **Discharges** AAC-0010, AAC-0012, AAC-0018
 
@@ -651,7 +663,7 @@ A rate-limit response is classified separately from an error, and drives a diffe
 
 *MUST · core · cost*
 
-A retry count exists per unit of work, not per call site, and it is bounded. Every attempt is counted against the unit's token and spend accumulation, and the number of attempts appears on the unit's record. Nested layers do not each apply their own retry budget on top of one another.
+A retry count exists per unit of work, not per call site, and it is bounded. Every attempt is counted against the unit's token and spend accumulation, and the number of attempts appears on the unit's record. Nested layers do not each apply their own retry budget on top of one another. A retry is a call repeated because the previous one failed; the calls a unit makes by design — one per loop step — are bounded separately (AHC-0041), and the two bounds are different numbers.
 
 **Discharges** AAC-0008, AAC-0009, AAC-0102
 
@@ -667,7 +679,11 @@ Where the harness stops before completing — output length reached, budget exha
 
 *MUST · reliability*
 
-Each step states whether it can be re-executed with the same input without additional effect. Steps that cannot are given an idempotency key derived from the run and the step, carried to the downstream system, so a repeat is recognised there rather than being prevented only by the harness remembering not to retry.
+Each step states whether it can be re-executed with the same input without additional effect. Steps that cannot are given an idempotency key derived from the run and the step, carried to the downstream system, so a repeat is recognised there rather than being prevented only by the harness remembering not to retry. The step's identity is one a resumed run reproduces: a run restarted from its checkpoint after its process died derives the same key for the step it was taking, so the effect that landed before the crash is recognised rather than applied again.
+
+**Answer in the profile:**
+
+- `AHC-0074/key_source` — Where does the idempotency key come from?
 
 **Discharges** AAC-0047, AAC-0046, AAC-0076
 
@@ -875,7 +891,7 @@ Context is bounded before the call, by the component that assembles it, using a 
 
 *MUST · core · cost*
 
-A retry count exists per unit of work, not per call site, and it is bounded. Every attempt is counted against the unit's token and spend accumulation, and the number of attempts appears on the unit's record. Nested layers do not each apply their own retry budget on top of one another.
+A retry count exists per unit of work, not per call site, and it is bounded. Every attempt is counted against the unit's token and spend accumulation, and the number of attempts appears on the unit's record. Nested layers do not each apply their own retry budget on top of one another. A retry is a call repeated because the previous one failed; the calls a unit makes by design — one per loop step — are bounded separately (AHC-0041), and the two bounds are different numbers.
 
 **Discharges** AAC-0008, AAC-0009, AAC-0102
 
@@ -933,12 +949,13 @@ Every tool declares whether it reads, writes reversibly, or writes irreversibly,
 
 *MUST · safety*
 
-Actions in the irreversible class from AHC-0039 are held pending an approval issued by a principal outside the run, naming the specific action and resource, unless the specification states the conditions under which the agent holds that authority itself — conditions over declared state, checked where the action executes, never a judgement the model makes. The run has no tool, argument or instruction path by which it can approve itself or widen those conditions, and a pending action that is never approved expires rather than proceeding. The approval also records the state its assessment judged, and that state is re-established immediately before the action executes; where it has changed the action does not proceed and the decision is sought again against what is now true.
+Actions in the irreversible class from AHC-0039 are held pending an approval issued by a principal outside the run, naming the specific action and resource, unless the specification states the conditions under which the agent holds that authority itself — conditions over declared state, checked by the system on which the effect lands, never a judgement the model makes; a check made only on the harness side of the call does not meet this. An action taken under a person's approval carries the identity of that approval to the executing system, which loads it and confirms it names this action, these arguments and this resource before acting. The run has no tool, argument or instruction path by which it can approve itself or widen those conditions, and a pending action that is never approved expires rather than proceeding. The approval also records the state its assessment judged, and that state is re-established immediately before the action executes; where it has changed the action does not proceed and the decision is sought again against what is now true.
 
 **Answer in the profile:**
 
 - `AHC-0057/irreversible_scope` — Does every irreversible action need a person?
 - `AHC-0057/approval_staleness` — Which state has to still hold when a grant is executed?
+- `AHC-0057/grant_carriage` — How does the system that executes an action know it was approved?
 
 **Discharges** AAC-0078, AAC-0056, AAC-0081
 

@@ -17,7 +17,7 @@ title: |-
   Irreversible actions require an approval the run cannot grant
 
 requirement: |-
-  Actions in the irreversible class from AHC-0039 are held pending an approval issued by a principal outside the run, naming the specific action and resource, unless the specification states the conditions under which the agent holds that authority itself — conditions over declared state, checked where the action executes, never a judgement the model makes. The run has no tool, argument or instruction path by which it can approve itself or widen those conditions, and a pending action that is never approved expires rather than proceeding. The approval also records the state its assessment judged, and that state is re-established immediately before the action executes; where it has changed the action does not proceed and the decision is sought again against what is now true.
+  Actions in the irreversible class from AHC-0039 are held pending an approval issued by a principal outside the run, naming the specific action and resource, unless the specification states the conditions under which the agent holds that authority itself — conditions over declared state, checked by the system on which the effect lands, never a judgement the model makes; a check made only on the harness side of the call does not meet this. An action taken under a person's approval carries the identity of that approval to the executing system, which loads it and confirms it names this action, these arguments and this resource before acting. The run has no tool, argument or instruction path by which it can approve itself or widen those conditions, and a pending action that is never approved expires rather than proceeding. The approval also records the state its assessment judged, and that state is re-established immediately before the action executes; where it has changed the action does not proceed and the decision is sought again against what is now true.
 
 failure_mode: |-
   Where approval is a step the agent performs — a self-check, a confidence threshold, a reflection prompt — it is subject to the same reasoning that proposed the action, and to any instruction that reached the model through retrieved content or tool output. An approval the run can grant is not a control; it is a delay that produces an audit trail suggesting there was one.
@@ -83,6 +83,24 @@ design_decisions:
       reconcile, and the outcome is reported as its own kind rather than as a
       failure — a failure asks an operator to find what broke, and here nothing
       did.
+  - key: grant_carriage
+    question: How does the system that executes an action know it was approved?
+    tension: >-
+      Adding a scope to the caller's identity when a grant is issued is simple
+      and turns one approval of one action into a credential that can perform
+      any action of that kind, for as long as it lives — and the scope is one
+      the agent's own side added. Carrying the approval with the call makes the
+      executing system read the approval record, which it must be able to reach.
+    resolution: >-
+      The call names the approval that elevated it, and the executing system
+      loads that approval and confirms it matches the operation, the arguments
+      and the resource before acting, rejecting the call otherwise. Where the
+      party executing a grant has no customer of its own — a workflow acting an
+      hour after the person asked — the approval says whose the call is, which
+      is a different check and not a weaker one: the record it reads is the one
+      that must already match in every other respect. The agent's own authority
+      conditions are checked in the same place, against the live resource, so a
+      harness that skipped them still cannot cause the effect.
   - question: Is there a standing pre-approval for routine cases?
     tension: >-
       Pre-approving common actions keeps throughput and recreates the standing
