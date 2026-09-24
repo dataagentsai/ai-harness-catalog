@@ -29,7 +29,9 @@ operations:
   - name: subscribe
     intent: Receive triggers as they arrive, with a de-duplication key for each.
   - name: acknowledge
-    intent: Confirm a trigger was handled, so it is not delivered again.
+    intent: >-
+      Confirm a trigger was handled, so it is not delivered again — carrying
+      what the run answered, so a redelivery can be told rather than refused.
   - name: heartbeat
     intent: Report that a run is alive, so its absence becomes an alertable condition.
 
@@ -40,6 +42,14 @@ invariants:
       the unattended job does its irreversible work twice.
     capability: AHC-0053
     checkable: static
+  - must: A refused redelivery is answered with what the first run produced, where the caller can receive one.
+    because: >-
+      A caller whose reply was lost cannot tell a run that never happened from
+      one that did, so a refusal saying only that something happened leaves it
+      no way to learn what — while the answer exists in a record it has no
+      handle for.
+    capability: AHC-0053
+    checkable: dynamic
   - must: Absence of a run is observable, not merely the failure of one.
     because: >-
       A scheduler that stops firing produces no errors at all, so a job that

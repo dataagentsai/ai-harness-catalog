@@ -17,10 +17,10 @@ title: |-
   A trigger produces exactly one run
 
 requirement: |-
-  Every trigger carries an identifier derived from the occasion that caused it, and the harness records that identifier durably before work begins, refusing a second run for the same occasion. Overlap is handled explicitly: a run still in flight when the next trigger arrives either blocks it, queues it or cancels itself, by declared policy.
+  Every trigger carries an identifier derived from the occasion that caused it, and the harness records that identifier durably before work begins, refusing a second run for the same occasion. **Where the caller can receive one, the refusal carries what the first run answered** rather than only the fact that it happened. Overlap is handled explicitly: a run still in flight when the next trigger arrives either blocks it, queues it or cancels itself, by declared policy.
 
 failure_mode: |-
-  Schedulers deliver at least once, retry on ambiguous outcomes, and fire twice across a deployment or a clock adjustment. An unattended agent that takes actions will take them twice — two remediations, two messages, two refunds — and because nobody is watching in real time, the duplicate is discovered from its effects. Overlapping runs are the same failure with concurrency added: two instances acting on the same state, each unaware of the other.
+  Schedulers deliver at least once, retry on ambiguous outcomes, and fire twice across a deployment or a clock adjustment. An unattended agent that takes actions will take them twice — two remediations, two messages, two refunds — and because nobody is watching in real time, the duplicate is discovered from its effects. A refusal that says only *already handled* has a quieter failure of its own: a caller whose reply was lost cannot tell a run that never happened from one that did, and the answer it needs already exists somewhere it has no handle for. Overlapping runs are the same failure with concurrency added: two instances acting on the same state, each unaware of the other.
 
 discharges: [AAC-0076, AAC-0047, AAC-0080]
 
