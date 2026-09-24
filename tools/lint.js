@@ -312,6 +312,8 @@ for (const pf of portFiles) {
  * would do, in thirty lines and with no dependency beyond a YAML parser, which
  * is the point: the format has to be usable by tooling nobody here wrote.
  */
+const { resolve: resolveProfile } = require("./resolve.js");
+
 const profileSchemaPath = path.join(ROOT, "schema/profile.schema.json");
 const validateProfile = fs.existsSync(profileSchemaPath)
   ? ajv.compile(JSON.parse(fs.readFileSync(profileSchemaPath, "utf8")))
@@ -385,10 +387,22 @@ const profileFiles = fs.existsSync(exDir)
 let profilesChecked = 0;
 
 for (const prf of profileFiles) {
-  const { E, W } = profileIssues(yaml.load(fs.readFileSync(path.join(exDir, prf), "utf8")), prf);
+  // Resolved first, then validated. A profile that inherits is incomplete on
+  // its own — checking it before resolution would report every port its
+  // baseline binds as unbound, which is the opposite of the truth.
+  let resolved;
+  try {
+    resolved = resolveProfile(path.join(exDir, prf));
+  } catch (err) {
+    errors.push(`${prf}: ${err.message}`);
+    continue;
+  }
+  resolved.errors.forEach((m) => errors.push(m));
+  resolved.warnings.forEach((m) => warnings.push(m));
+  const { E, W } = profileIssues(resolved.doc, prf);
   E.forEach((m) => errors.push(m));
   W.forEach((m) => warnings.push(m));
-  if (!E.length) profilesChecked++;
+  if (!E.length && !resolved.errors.length) profilesChecked++;
 }
 
 /*
@@ -402,7 +416,17 @@ const badFiles = fs.existsSync(badDir)
   ? fs.readdirSync(badDir).filter((f) => f.endsWith(".profile.yaml")).sort()
   : [];
 for (const bf of badFiles) {
-  const { E } = profileIssues(yaml.load(fs.readFileSync(path.join(badDir, bf), "utf8")), `invalid/${bf}`);
+  // Resolved the same way a real profile is, because two of these fixtures are
+  // broken *in the resolution* — a baseline that is not there, and an override
+  // that does not say why. Validating them unresolved would pass the first and
+  // never even look at the second.
+  let E;
+  try {
+    const resolved = resolveProfile(path.join(badDir, bf));
+    E = [...resolved.errors, ...profileIssues(resolved.doc, `invalid/${bf}`).E];
+  } catch (err) {
+    E = [err.message];
+  }
   if (!E.length) {
     err(`invalid/${bf}`, `is meant to be rejected and passed — a check has gone quiet`);
   }

@@ -1,0 +1,54 @@
+# A baseline an organisation publishes once, for systems to extend.
+#
+# This is the half of `extends` that is easy to forget exists: the schema's
+# description says "an organisation publishes what it will not reopen per team;
+# a system extends it", and this is that publication. It binds the ports every
+# shape owes and leaves everything shape-specific alone.
+#
+# It declares `A1` because the schema requires at least one archetype and a
+# baseline has to be a valid profile in its own right — a baseline nobody can
+# lint is a baseline nobody can trust. A system that extends it replaces
+# `subject` wholesale, archetypes included.
+#
+#   node tools/resolve.js examples/extends-baseline.profile.yaml
+#
+apiVersion: harness-profile/v1
+
+subject:
+  name: platform-baseline
+  description: >-
+    What every system on this platform gets without asking, and what none of
+    them may quietly change. A system extends this and adds only what is its
+    own: its shape, its thresholds, its gaps.
+  archetypes: [A1]
+
+catalog:
+  ahc: "0.3.0"
+
+# Locked by the platform. A system may re-answer one, and the diff is then the
+# thing a reviewer reads.
+decisions:
+  AHC-0019/redaction_point:
+    value: before-export
+    source: locked
+    note: >-
+      One place, chosen once, for the whole platform. A team that redacts
+      somewhere else redacts differently, and differently is how a field
+      escapes.
+
+thresholds:
+  request_deadline_seconds: 30
+
+bindings:
+  model:       { approach: gateway,      adapter: platform-model-gateway }
+  config:      { approach: in-house,     adapter: versioned-files }
+  telemetry:   { approach: open-source,  adapter: otlp-http }
+  policy:      { approach: in-house,     adapter: inprocess-rules }
+  identity:    { approach: in-house,     adapter: request-principal }
+  secrets:     { approach: cloud-native, adapter: managed-secret-store }
+  cost_ledger: { approach: in-house,     adapter: memory-ledger }
+  admission:   { approach: in-house,     adapter: semaphore }
+  recorder:    { approach: in-house,     adapter: file-fixtures }
+  eval_task:   { approach: platform,     adapter: external-eval-runner }
+
+accepted_gaps: []

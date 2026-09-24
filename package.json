@@ -8,6 +8,7 @@
   "scripts": {
     "lint": "node tools/lint.js",
     "render": "node tools/render.js",
+    "resolve": "node tools/resolve.js",
     "check-page": "node tools/check-page.js site/index.html",
     "build": "npm run lint && npm run render && npm run check-page",
     "test": "npm run lint && node tools/blueprint.js A6 --check",

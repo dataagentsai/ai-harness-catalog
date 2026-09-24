@@ -1,0 +1,73 @@
+# A system on the baseline, and the whole point of `extends`.
+#
+# Read what is NOT here. Nine of the ten ports this system runs on are not
+# mentioned: it gets them from the baseline, and when the platform moves one it
+# moves here too. The file is short because everything in it is a decision this
+# system actually made.
+#
+# Compare it with `a1-incident-summary.profile.yaml`, which restates its whole
+# stack. That file is not wrong — a system with no baseline has to say
+# everything — but every line of it is a line that goes stale silently.
+#
+#   node tools/resolve.js examples/extends-baseline.profile.yaml
+#
+apiVersion: harness-profile/v1
+extends: ./baseline-platform.profile.yaml
+
+# The system's own, whole. A system is not a variant of its baseline's subject.
+subject:
+  name: incident-summary-on-platform
+  description: >-
+    Takes an incident timeline and returns a plain-language summary, on the
+    platform baseline. One call in, one answer out.
+  archetypes: [A1]
+
+catalog:
+  ahc: "0.3.0"
+
+# Answers the baseline left open. The locked one above is inherited and not
+# repeated — repeating it would claim this system decided something it did not.
+decisions:
+  AHC-0001/parse_failure:
+    value: fail-typed
+    source: chosen
+    note: >-
+      Retrying hides a quality regression inside a cost increase. This system
+      fails into a declared shape and counts the failures.
+
+# The baseline's deadline is inherited; these two are this system's own.
+thresholds:
+  token_budget_per_unit: 20000
+  max_input_characters: 40000
+
+bindings:
+  # One override, and it carries its reason — which is the rule. A change with
+  # no `x_why` is an error, because a fleet that leaves its baseline silently
+  # is a fleet on six stacks that all still claim to be one.
+  model:
+    approach: in-house
+    adapter: http-messages-client
+    x_why: >-
+      This system runs in the region the platform gateway does not serve yet,
+      so it holds its own client until the gateway is there. Reviewed with the
+      platform team 2026-09-25.
+
+  # Not an override: the port is inherited from the baseline, and this adds
+  # only a fact about how this system uses it. Nothing about `approach` or
+  # `adapter` is restated, so the baseline still owns them.
+  telemetry:
+    x_sample_rate: 0.1
+
+accepted_gaps:
+  - capability: AHC-0092
+    reason: >-
+      Single-region deployment with one provider endpoint, so there is no
+      routing choice to pin or record.
+    owner: incident-team
+    review: "2026-12-01"
+  - capability: AHC-0098
+    reason: >-
+      All traffic is interactive and arrives through one entry point, so there
+      is no second class for a priority scheme to separate it from.
+    owner: incident-team
+    review: "2026-12-01"

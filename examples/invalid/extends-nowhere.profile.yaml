@@ -1,0 +1,21 @@
+# MUST FAIL — inherits from a file that is not there.
+#
+# The failure worth having, rather than the obvious one: without this check a
+# missing baseline resolves to an empty object, every inherited port vanishes,
+# and the profile fails with ten "port is not bound" errors that point at the
+# wrong thing entirely. One error naming the missing file is the difference
+# between a minute and an afternoon.
+apiVersion: harness-profile/v1
+extends: ./no-such-baseline.profile.yaml
+
+subject:
+  name: broken-extends-nowhere
+  archetypes: [A1]
+
+catalog:
+  ahc: "0.3.0"
+
+decisions: {}
+thresholds: {}
+bindings: {}
+accepted_gaps: []

@@ -1,0 +1,27 @@
+# MUST FAIL — a system that leaves its baseline without saying why.
+#
+# `model` is bound by the baseline to the platform gateway. This changes it to
+# an in-house client and says nothing. The merge itself is fine; what is broken
+# is that the diff has stopped being reviewable, which is the only thing
+# `extends` exists to make possible.
+#
+# Compare with examples/extends-baseline.profile.yaml, which makes the same
+# override and carries `x_why`.
+apiVersion: harness-profile/v1
+extends: ../baseline-platform.profile.yaml
+
+subject:
+  name: broken-silent-override
+  archetypes: [A1]
+
+catalog:
+  ahc: "0.3.0"
+
+decisions: {}
+thresholds:
+  token_budget_per_unit: 20000
+
+bindings:
+  model: { approach: in-house, adapter: http-messages-client }
+
+accepted_gaps: []
