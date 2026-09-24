@@ -1,0 +1,64 @@
+# AHC-0115 — Every store the harness writes to can be asked about one person, and emptied of them
+id: AHC-0115
+status: active
+since: "0.3.0"
+
+level: MUST
+layers: [L5, L16]
+positions: [P6]
+
+concern: security
+facet: confidentiality
+
+archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
+core: true
+
+title: |-
+  Every store the harness writes to can be asked about one person, and emptied of them
+
+requirement: |-
+  Each store the harness writes carries, as a queryable field rather than only inside a serialized payload, the identifier of the person whose data it holds, and offers one operation that removes that person's records and reports how many went. A single entry point calls those operations in a declared order, and where one store's records are keyed by identifiers that exist only in another — a run id on a conversation row, keying a ledger — the order is the one that reads those identifiers before destroying the rows that carry them. An unidentified request removes nothing. Where removing a record would restore a capability the record exists to refuse, what the record says is removed and that it exists is kept, so the refusal still holds afterwards.
+
+failure_mode: |-
+  The system is asked to forget somebody and cannot find them. Everything identifying is inside a serialized blob the store cannot search, so the answer is a migration, a scan of every row ever written, or a promise. The variants are quieter: the erasure runs, reports success, and misses the ledger because nothing could name that person's runs once their conversations were gone; or it reaches every store and takes the deduplication entries with it, so a queued retry arriving weeks later executes an action again, for somebody who asked to be forgotten, with no record left that says it already happened. A blank identifier matches every unattributed row and empties the table.
+
+discharges: [AAC-0117, AAC-0095]
+
+design_decisions:
+  - key: erasure_key
+    question: What identifies the person — the login, or the domain identifier?
+    tension: >-
+      A login is what the session store holds and is not what conversations are
+      about; a customer or account id is what the work is recorded against and
+      is not what a credential is filed under. Picking one leaves the other
+      store unreachable, and treating them as the same identifier is only true
+      until one person has two logins.
+    resolution: >-
+      Both, passed separately, and a caller holding one of them erases what that
+      one reaches and reports zero for the rest. A number that silently means
+      "we did not look" is worse than a zero that means "there was nothing".
+  - question: Delete the deduplication record, or empty it?
+    tension: >-
+      Deleting it is the complete reading of erasure and restores the ability to
+      execute the action it was refusing, months later, when a queue drains.
+      Keeping it whole keeps a far end's reply about a person who asked to be
+      forgotten.
+    resolution: >-
+      Neither wholly. The name and the fact that it was answered stay; what it
+      answered goes. The guard was never the stored body — it is the name being
+      taken — so the refusal is unchanged and the callers that would have been
+      told what the first attempt said are told that it happened and that the
+      answer is no longer held.
+  - question: Is this the same obligation as retention?
+    tension: >-
+      A retention schedule removes the same rows eventually and is far less work
+      than making every store searchable by person.
+    resolution: >-
+      Different obligations with different mechanisms, and only one of them is
+      a delete on request. A ninety-day schedule answers a storage bill and
+      cannot answer somebody asking today about last week. A system that has
+      only the schedule discovers the difference on the day it is asked.
+
+realization_policy: own
+
+see_also: [AHC-0102, AHC-0074, AHC-0044]
