@@ -17,10 +17,12 @@ title: |-
   Irreversible actions require an approval the run cannot grant
 
 requirement: |-
-  Actions in the irreversible class from AHC-0039 are held pending an approval issued by a principal outside the run, naming the specific action and resource, unless the specification states the conditions under which the agent holds that authority itself — conditions over declared state, checked where the action executes, never a judgement the model makes. The run has no tool, argument or instruction path by which it can approve itself or widen those conditions, and a pending action that is never approved expires rather than proceeding.
+  Actions in the irreversible class from AHC-0039 are held pending an approval issued by a principal outside the run, naming the specific action and resource, unless the specification states the conditions under which the agent holds that authority itself — conditions over declared state, checked where the action executes, never a judgement the model makes. The run has no tool, argument or instruction path by which it can approve itself or widen those conditions, and a pending action that is never approved expires rather than proceeding. The approval also records the state its assessment judged, and that state is re-established immediately before the action executes; where it has changed the action does not proceed and the decision is sought again against what is now true.
 
 failure_mode: |-
   Where approval is a step the agent performs — a self-check, a confidence threshold, a reflection prompt — it is subject to the same reasoning that proposed the action, and to any instruction that reached the model through retrieved content or tool output. An approval the run can grant is not a control; it is a delay that produces an audit trail suggesting there was one.
+
+  The second failure needs no compromised model and survives every other control on the path. An approval is the one place in a system where a human interval separates reading a row from acting on it, and the expiry window is satisfied by a decision made a minute ago. Where the effect's magnitude is a field on the resource rather than an argument on the call — a refund for an order's total, a transfer of an account's balance — the approver and the executing call read it separately, minutes or hours apart, and an argument-by-argument check between them compares values that both agree on while the value that matters moved. A person approves one amount and another leaves.
 
 discharges: [AAC-0078, AAC-0056, AAC-0081]
 
@@ -56,6 +58,31 @@ design_decisions:
       the harness checks them where the action executes. What is never
       acceptable is the agent deciding at the time which of the two it is
       looking at.
+  - key: approval_staleness
+    question: Which state has to still hold when a grant is executed?
+    tension: >-
+      Comparing the whole resource is the complete reading and fails grants for
+      fields that move by themselves — a day counter, a last-seen timestamp — so
+      the control fires on changes nobody judged and is switched off. Comparing
+      nothing is what every system does by default and is how an approved amount
+      and an executed amount come to differ.
+    resolution: >-
+      The fields the assessment's own decision depended on, named by the
+      assessment because it is what read them, and compared as recorded rather
+      than as re-parsed. A field that was recorded and can no longer be read
+      counts as changed: a check that cannot see the fact it is checking must
+      not conclude the fact is unchanged.
+  - question: A grant that has gone stale — retry, or ask again?
+    tension: >-
+      Re-assessing automatically keeps the customer moving and quietly converts
+      one person's decision about one situation into standing permission over
+      whatever the situation becomes. Asking again is slower and is the only
+      reading under which the approver decided the thing they were shown.
+    resolution: >-
+      Ask again. Nothing was attempted, so there is no half-finished effect to
+      reconcile, and the outcome is reported as its own kind rather than as a
+      failure — a failure asks an operator to find what broke, and here nothing
+      did.
   - question: Is there a standing pre-approval for routine cases?
     tension: >-
       Pre-approving common actions keeps throughput and recreates the standing
