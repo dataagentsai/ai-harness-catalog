@@ -7,7 +7,7 @@ collated from the capabilities themselves rather than restated beside them.
 The written half — where the seams fall, which position owns what — is in
 [A6-tool-using-agent.md](A6-tool-using-agent.md).
 
-**71 capabilities**, across 16 of 16 layers.
+**72 capabilities**, across 16 of 16 layers.
 
 | Layer | Owes |
 |---|---|
@@ -15,7 +15,7 @@ The written half — where the seams fall, which position owns what — is in
 | **L2** Model invocation | AHC-0004, AHC-0009, AHC-0014, AHC-0015, AHC-0027, AHC-0092, AHC-0105 |
 | **L3** Tool layer | AHC-0036, AHC-0037, AHC-0038, AHC-0039, AHC-0040, AHC-0043, AHC-0100, AHC-0104, AHC-0107 |
 | **L4** Control loop | AHC-0041, AHC-0042, AHC-0043, AHC-0044, AHC-0074, AHC-0100, AHC-0104, AHC-0106 |
-| **L5** State and memory | AHC-0044, AHC-0045, AHC-0102, AHC-0108, AHC-0109 |
+| **L5** State and memory | AHC-0044, AHC-0045, AHC-0102, AHC-0108, AHC-0109, AHC-0115 |
 | **L6** I/O contracts | AHC-0001, AHC-0015, AHC-0016, AHC-0017, AHC-0025, AHC-0094, AHC-0106, AHC-0110 |
 | **L7** Policy enforcement | AHC-0008, AHC-0018, AHC-0019, AHC-0093, AHC-0094, AHC-0095 |
 | **L8** Concurrency and flow control | AHC-0020, AHC-0021, AHC-0095, AHC-0096, AHC-0097, AHC-0098 |
@@ -26,7 +26,7 @@ The written half — where the seams fall, which position owns what — is in
 | **L13** Cost accounting | AHC-0007, AHC-0012, AHC-0024, AHC-0030, AHC-0031, AHC-0097, AHC-0101, AHC-0111 |
 | **L14** Human-in-the-loop | AHC-0039, AHC-0057 |
 | **L15** Release and configuration | AHC-0003, AHC-0009, AHC-0032, AHC-0033, AHC-0092 |
-| **L16** Identity and authorization | AHC-0034, AHC-0035, AHC-0040, AHC-0099, AHC-0113 |
+| **L16** Identity and authorization | AHC-0034, AHC-0035, AHC-0040, AHC-0099, AHC-0113, AHC-0115 |
 
 ## L1 · Context assembly
 
@@ -400,6 +400,18 @@ Where the harness reduces context by producing a summary rather than by discardi
 - `AHC-0109/summary_provenance` — What produces the summary, and does that change what it may be trusted with?
 
 **Discharges** AAC-0036, AAC-0058, AAC-0004
+
+### AHC-0115 — Every store the harness writes to can be asked about one person, and emptied of them
+
+*MUST · core · security*
+
+Each store the harness writes carries, as a queryable field rather than only inside a serialized payload, the identifier of the person whose data it holds, and offers one operation that removes that person's records and reports how many went. A single entry point calls those operations in a declared order, and where one store's records are keyed by identifiers that exist only in another — a run id on a conversation row, keying a ledger — the order is the one that reads those identifiers before destroying the rows that carry them. An unidentified request removes nothing. Where removing a record would restore a capability the record exists to refuse, what the record says is removed and that it exists is kept, so the refusal still holds afterwards.
+
+**Answer in the profile:**
+
+- `AHC-0115/erasure_key` — What identifies the person — the login, or the domain identifier?
+
+**Discharges** AAC-0117, AAC-0095
 
 ## L6 · I/O contracts
 
@@ -921,11 +933,12 @@ Every tool declares whether it reads, writes reversibly, or writes irreversibly,
 
 *MUST · safety*
 
-Actions in the irreversible class from AHC-0039 are held pending an approval issued by a principal outside the run, naming the specific action and resource, unless the specification states the conditions under which the agent holds that authority itself — conditions over declared state, checked where the action executes, never a judgement the model makes. The run has no tool, argument or instruction path by which it can approve itself or widen those conditions, and a pending action that is never approved expires rather than proceeding.
+Actions in the irreversible class from AHC-0039 are held pending an approval issued by a principal outside the run, naming the specific action and resource, unless the specification states the conditions under which the agent holds that authority itself — conditions over declared state, checked where the action executes, never a judgement the model makes. The run has no tool, argument or instruction path by which it can approve itself or widen those conditions, and a pending action that is never approved expires rather than proceeding. The approval also records the state its assessment judged, and that state is re-established immediately before the action executes; where it has changed the action does not proceed and the decision is sought again against what is now true.
 
 **Answer in the profile:**
 
 - `AHC-0057/irreversible_scope` — Does every irreversible action need a person?
+- `AHC-0057/approval_staleness` — Which state has to still hold when a grant is executed?
 
 **Discharges** AAC-0078, AAC-0056, AAC-0081
 
@@ -1017,3 +1030,15 @@ There is one place where a request becomes an identity, and it derives that iden
 The eval entrypoint can drive the deployed system through its own serving path — the same edge, identity provider, gateway and tools real traffic uses — as a declared synthetic identity whose reads and effects are confined to data only it owns. Synthetic runs are marked in the record so every production rate can exclude them, and they run on a schedule held by the monitoring side, which alerts when a case fails or when a scheduled run does not report.
 
 **Discharges** AAC-0116, AAC-0016, AAC-0082, AAC-0079
+
+### AHC-0115 — Every store the harness writes to can be asked about one person, and emptied of them
+
+*MUST · core · security*
+
+Each store the harness writes carries, as a queryable field rather than only inside a serialized payload, the identifier of the person whose data it holds, and offers one operation that removes that person's records and reports how many went. A single entry point calls those operations in a declared order, and where one store's records are keyed by identifiers that exist only in another — a run id on a conversation row, keying a ledger — the order is the one that reads those identifiers before destroying the rows that carry them. An unidentified request removes nothing. Where removing a record would restore a capability the record exists to refuse, what the record says is removed and that it exists is kept, so the refusal still holds afterwards.
+
+**Answer in the profile:**
+
+- `AHC-0115/erasure_key` — What identifies the person — the login, or the domain identifier?
+
+**Discharges** AAC-0117, AAC-0095
