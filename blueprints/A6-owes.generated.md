@@ -106,11 +106,12 @@ Whatever reduces a history — trimming, summarising, windowing — treats a too
 
 *MUST · functional-suitability*
 
-Every fact the harness places in context carries when it was read. The specification declares, per field, how long a read of it stays usable. Before dispatching an action the specification classifies as irreversible, the harness establishes that each fact the action's own preconditions depend on was read inside that field's window, and re-reads it where it was not — the re-read happening before the action, not as a check afterwards. Where a re-read changes the value, the action is planned again against what is now true rather than proceeding on what was believed.
+Every fact the harness places in context carries when it was read. The specification declares, per field, how long a read of it stays usable. Before dispatching an action the specification classifies as irreversible, the harness establishes that each fact the action's own preconditions depend on was read inside that field's window, and re-reads it where it was not — the re-read happening before the action, not as a check afterwards. Where a re-read changes the value, the action is planned again against what is now true rather than proceeding on what was believed. A read is stamped with when it was asked, not when its answer arrived: the answer is true of some moment between the two, and only the earlier bound is safe to count a window from.
 
 **Answer in the profile:**
 
 - `AHC-0107/freshness_scope` — Which facts need a window — all of them, or the ones an action depends on?
+- `AHC-0107/read_stamp` — Is a read stamped when it was asked, or when it was answered?
 
 **Discharges** AAC-0113, AAC-0038
 
@@ -171,7 +172,7 @@ Which models a given caller may reach is configuration resolved at runtime, not 
 
 *SHOULD · core · maintainability*
 
-Temperature, top-p, maximum output length, stop sequences and any seed are set explicitly at the choke point and appear in the resolved configuration record. A parameter the system relies on is never left to a client library default or a provider default. Where a model does not accept a parameter at all, the record says the model fixes it, rather than leaving it absent, so a reader can tell a parameter nobody set from one nobody can.
+Temperature, top-p, maximum output length, stop sequences and any seed are set explicitly at the choke point and appear in the resolved configuration record. A parameter the system relies on is never left to a client library default or a provider default, and explicit means present on the request as sent, not only in the configuration. Where a model does not accept a parameter at all, the record says the model fixes it, rather than leaving it absent, so a reader can tell a parameter nobody set from one nobody can.
 
 **Answer in the profile:**
 
@@ -207,7 +208,11 @@ Where a jurisdiction constrains where content may be processed, the reachable ro
 
 *SHOULD · core · maintainability*
 
-Where provider interactions are recorded for replay, a recording is served only against a request equivalent to the one recorded — under a declared notion of equivalence, which states what may differ without invalidating it. A request with no match is a failure of the run, reported as a miss and distinguishable from the provider being unavailable. The recording declares the format version it was written in, and one written in a version the reader does not know is refused rather than interpreted. Which world served a call — live or recorded — is on the record.
+Where provider interactions are recorded for replay, a recording is served only against a request equivalent to the one recorded — under a declared notion of equivalence, which states what may differ without invalidating it. A request with no match is a failure of the run, reported as a miss and distinguishable from the provider being unavailable. The recording declares the format version it was written in, and one written in a version the reader does not know is refused rather than interpreted. Which world served a call — live or recorded — is on the record. Values the harness mints afresh for every run — a fence's nonce (AHC-0011), when a read was made (AHC-0107), the identifier of an approval or a handoff — are named in the equivalence as what may differ, or no recording made under those capabilities ever replays.
+
+**Answer in the profile:**
+
+- `AHC-0105/replay_equivalence` — What may change about a request without invalidating the recording?
 
 **Discharges** AAC-0059, AAC-0058
 
@@ -281,11 +286,12 @@ Whether several requested actions may run at once is decided from their declared
 
 *MUST · functional-suitability*
 
-Every fact the harness places in context carries when it was read. The specification declares, per field, how long a read of it stays usable. Before dispatching an action the specification classifies as irreversible, the harness establishes that each fact the action's own preconditions depend on was read inside that field's window, and re-reads it where it was not — the re-read happening before the action, not as a check afterwards. Where a re-read changes the value, the action is planned again against what is now true rather than proceeding on what was believed.
+Every fact the harness places in context carries when it was read. The specification declares, per field, how long a read of it stays usable. Before dispatching an action the specification classifies as irreversible, the harness establishes that each fact the action's own preconditions depend on was read inside that field's window, and re-reads it where it was not — the re-read happening before the action, not as a check afterwards. Where a re-read changes the value, the action is planned again against what is now true rather than proceeding on what was believed. A read is stamped with when it was asked, not when its answer arrived: the answer is true of some moment between the two, and only the earlier bound is safe to count a window from.
 
 **Answer in the profile:**
 
 - `AHC-0107/freshness_scope` — Which facts need a window — all of them, or the ones an action depends on?
+- `AHC-0107/read_stamp` — Is a read stamped when it was asked, or when it was answered?
 
 **Discharges** AAC-0113, AAC-0038
 
@@ -355,7 +361,7 @@ Whether several requested actions may run at once is decided from their declared
 
 *MUST · functional-suitability*
 
-A turn ends as a completed answer only where the answer is in it. Where the run instead commits the system to work that has not happened — checking, looking into, coming back, getting someone — the harness returns an outcome that names what will produce the answer: a pending decision with its identifier, a handoff with its reference, or a continuation the caller can drive. There is no terminal state whose content is a commitment and whose record is empty, and the harness does not rely on the model to select the right outcome: it decides from what the run actually did, and treats a commitment with nothing behind it as a failure to complete rather than a completion.
+A turn ends as a completed answer only where the answer is in it. Where the run instead commits the system to work that has not happened — checking, looking into, coming back, getting someone, or an outcome promised as though already under way, such as a refund that will be processed — the harness returns an outcome that names what will produce the answer: a pending decision with its identifier, a handoff with its reference, or a continuation the caller can drive. There is no terminal state whose content is a commitment and whose record is empty, and the harness does not rely on the model to select the right outcome: it decides from what the run actually did, and treats a commitment with nothing behind it as a failure to complete rather than a completion.
 
 **Discharges** AAC-0112, AAC-0079
 
@@ -449,7 +455,7 @@ Where output is streamed, the stream carries an explicit terminal event distingu
 
 *MUST · core · cost*
 
-Requests entering the harness are checked against a declared input type — required fields, size bounds, encoding, and the degenerate cases of empty, whitespace-only and oversized — and rejected at the boundary. No model call is issued for a request the harness could have refused for free.
+Requests entering the harness are checked against a declared input type — required fields, size bounds, encoding, and the degenerate cases of empty, whitespace-only and oversized — and rejected at the boundary. No model call is issued for a request the harness could have refused for free. The size bounds are numbers the profile sets; a profile without them is incomplete rather than defaulted.
 
 **Discharges** AAC-0015, AAC-0008, AAC-0093
 
@@ -465,7 +471,11 @@ The harness returns a value that names which of its terminal states occurred —
 
 *MUST · core · reliability*
 
-Where the harness stops before completing — output length reached, budget exhausted, deadline hit, stream aborted — what it returns is marked as incomplete, states why, and carries whatever was produced separately from a completed result. Incompleteness is a property of the return value, not something a caller infers from the text.
+Where the harness stops before completing — output length reached, budget exhausted, deadline hit, stream aborted — what it returns is marked as incomplete, states why, and carries whatever was produced separately from a completed result. Incompleteness is a property of the return value, not something a caller infers from the text. Each cause is its own recorded termination: a stop at the output length is not folded into budget, deadline, degraded or error, so it can be counted apart from them.
+
+**Answer in the profile:**
+
+- `AHC-0025/output_limit` — Is hitting the output limit an error or an outcome?
 
 **Discharges** AAC-0015, AAC-0002, AAC-0019
 
@@ -473,7 +483,11 @@ Where the harness stops before completing — output length reached, budget exha
 
 *MUST · core · security*
 
-The position that screens what the system produces is distinct from the one that screens what it receives, and declares its own open-or-closed behaviour, its own ordering under AHC-0093, and what the caller receives when it acts. A block on the way out maps to the refused outcome of AHC-0017 rather than returning altered content as though the model had produced it.
+The position that screens what the system produces is distinct from the one that screens what it receives, and declares its own open-or-closed behaviour, its own ordering under AHC-0093, and what the caller receives when it acts. A block on the way out maps to the refused outcome of AHC-0017 rather than returning altered content as though the model had produced it. Rules that read the model's text read it normalised first, so characters that render alike — the dashes and spaces inside an identifier — compare as one, and a rule matching identifiers is not blinded by a character the model chose.
+
+**Answer in the profile:**
+
+- `AHC-0094/output_rule_reading` — What does a rule over the model's text take as a claim or a recital?
 
 **Discharges** AAC-0092, AAC-0091, AAC-0005
 
@@ -481,7 +495,7 @@ The position that screens what the system produces is distinct from the one that
 
 *MUST · functional-suitability*
 
-A turn ends as a completed answer only where the answer is in it. Where the run instead commits the system to work that has not happened — checking, looking into, coming back, getting someone — the harness returns an outcome that names what will produce the answer: a pending decision with its identifier, a handoff with its reference, or a continuation the caller can drive. There is no terminal state whose content is a commitment and whose record is empty, and the harness does not rely on the model to select the right outcome: it decides from what the run actually did, and treats a commitment with nothing behind it as a failure to complete rather than a completion.
+A turn ends as a completed answer only where the answer is in it. Where the run instead commits the system to work that has not happened — checking, looking into, coming back, getting someone, or an outcome promised as though already under way, such as a refund that will be processed — the harness returns an outcome that names what will produce the answer: a pending decision with its identifier, a handoff with its reference, or a continuation the caller can drive. There is no terminal state whose content is a commitment and whose record is empty, and the harness does not rely on the model to select the right outcome: it decides from what the run actually did, and treats a commitment with nothing behind it as a failure to complete rather than a completion.
 
 **Discharges** AAC-0112, AAC-0079
 
@@ -541,7 +555,11 @@ Where more than one policy applies at a position, the order they run in is decla
 
 *MUST · core · security*
 
-The position that screens what the system produces is distinct from the one that screens what it receives, and declares its own open-or-closed behaviour, its own ordering under AHC-0093, and what the caller receives when it acts. A block on the way out maps to the refused outcome of AHC-0017 rather than returning altered content as though the model had produced it.
+The position that screens what the system produces is distinct from the one that screens what it receives, and declares its own open-or-closed behaviour, its own ordering under AHC-0093, and what the caller receives when it acts. A block on the way out maps to the refused outcome of AHC-0017 rather than returning altered content as though the model had produced it. Rules that read the model's text read it normalised first, so characters that render alike — the dashes and spaces inside an identifier — compare as one, and a rule matching identifiers is not blinded by a character the model chose.
+
+**Answer in the profile:**
+
+- `AHC-0094/output_rule_reading` — What does a rule over the model's text take as a claim or a recital?
 
 **Discharges** AAC-0092, AAC-0091, AAC-0005
 
@@ -549,7 +567,7 @@ The position that screens what the system produces is distinct from the one that
 
 *MUST · core · performance-efficiency*
 
-Each policy runs under a latency ceiling drawn from the request's remaining deadline under AHC-0096, and exceeding it is a distinct condition with its own declared handling — separate from the policy returning a block. A policy that is slow, hung or unreachable resolves to the open-or-closed default from AHC-0008 within a bounded time.
+Each policy runs under a latency ceiling drawn from the request's remaining deadline under AHC-0096, and exceeding it is a distinct condition with its own declared handling — separate from the policy returning a block. A policy that is slow, hung or unreachable resolves to the open-or-closed default from AHC-0008 within a bounded time. The ceiling is a number the profile sets, and never more than the deadline leaves; a profile without it is incomplete rather than defaulted.
 
 **Discharges** AAC-0091, AAC-0007, AAC-0009
 
@@ -559,7 +577,7 @@ Each policy runs under a latency ceiling drawn from the request's remaining dead
 
 *MUST · core · performance-efficiency*
 
-The number of model calls in flight is limited by an explicit control the harness owns, and work beyond that limit queues with a bounded wait rather than being issued. The limit exists whether or not the runtime happens to impose one, and it is expressed in the same unit the provider throttles on.
+The number of model calls in flight is limited by an explicit control the harness owns, and work beyond that limit queues with a bounded wait rather than being issued. The limit exists whether or not the runtime happens to impose one, and it is expressed in the same unit the provider throttles on. The limit is a number the profile sets; a profile without it is incomplete rather than defaulted.
 
 **Discharges** AAC-0007, AAC-0009
 
@@ -575,7 +593,7 @@ A rate-limit response is classified separately from an error, and drives a diffe
 
 *MUST · core · performance-efficiency*
 
-Each policy runs under a latency ceiling drawn from the request's remaining deadline under AHC-0096, and exceeding it is a distinct condition with its own declared handling — separate from the policy returning a block. A policy that is slow, hung or unreachable resolves to the open-or-closed default from AHC-0008 within a bounded time.
+Each policy runs under a latency ceiling drawn from the request's remaining deadline under AHC-0096, and exceeding it is a distinct condition with its own declared handling — separate from the policy returning a block. A policy that is slow, hung or unreachable resolves to the open-or-closed default from AHC-0008 within a bounded time. The ceiling is a number the profile sets, and never more than the deadline leaves; a profile without it is incomplete rather than defaulted.
 
 **Discharges** AAC-0091, AAC-0007, AAC-0009
 
@@ -583,7 +601,7 @@ Each policy runs under a latency ceiling drawn from the request's remaining dead
 
 *MUST · core · performance-efficiency*
 
-A request carries one absolute deadline set at the boundary, and every component beneath it — retrieval, policy evaluation, the model call, tool dispatch, a loop iteration — receives the time remaining rather than applying a timeout of its own. A component with insufficient time left declines rather than starting work it cannot finish.
+A request carries one absolute deadline set at the boundary, and every component beneath it — retrieval, policy evaluation, the model call, tool dispatch, a loop iteration — receives the time remaining rather than applying a timeout of its own. A component with insufficient time left declines rather than starting work it cannot finish. How long a request is given is a number the profile sets; a profile without it is incomplete rather than defaulted.
 
 **Discharges** AAC-0007, AAC-0050, AAC-0009
 
@@ -609,7 +627,7 @@ Work entering the harness carries a declared class — interactive, background, 
 
 *SHOULD · core · maintainability*
 
-Temperature, top-p, maximum output length, stop sequences and any seed are set explicitly at the choke point and appear in the resolved configuration record. A parameter the system relies on is never left to a client library default or a provider default. Where a model does not accept a parameter at all, the record says the model fixes it, rather than leaving it absent, so a reader can tell a parameter nobody set from one nobody can.
+Temperature, top-p, maximum output length, stop sequences and any seed are set explicitly at the choke point and appear in the resolved configuration record. A parameter the system relies on is never left to a client library default or a provider default, and explicit means present on the request as sent, not only in the configuration. Where a model does not accept a parameter at all, the record says the model fixes it, rather than leaving it absent, so a reader can tell a parameter nobody set from one nobody can.
 
 **Answer in the profile:**
 
@@ -639,7 +657,7 @@ Every recorded provider response stores the date it was captured and the resolve
 
 *MUST · core · reliability*
 
-For each way the provider can fail — timeout, rate limit, content refusal, malformed response, total outage — the harness has a declared outcome: retry with a bounded policy, fall back to another route, return a defined degraded result, or fail with a typed error. The set is exhaustive, so an unclassified failure has a declared default rather than propagating whatever the client library raised.
+For each way the provider can fail — timeout, rate limit, content refusal, malformed response, total outage — the harness has a declared outcome: retry with a bounded policy, fall back to another route, return a defined degraded result, or fail with a typed error. The set is exhaustive, so an unclassified failure has a declared default rather than propagating whatever the client library raised. Where a declared outcome turns on a number — how many failures stop calls to a route, how long before it is tried again — the profile sets it; a profile without it is incomplete rather than defaulted.
 
 **Discharges** AAC-0009, AAC-0015
 
@@ -663,7 +681,7 @@ A rate-limit response is classified separately from an error, and drives a diffe
 
 *MUST · core · cost*
 
-A retry count exists per unit of work, not per call site, and it is bounded. Every attempt is counted against the unit's token and spend accumulation, and the number of attempts appears on the unit's record. Nested layers do not each apply their own retry budget on top of one another. A retry is a call repeated because the previous one failed; the calls a unit makes by design — one per loop step — are bounded separately (AHC-0041), and the two bounds are different numbers.
+A retry count exists per unit of work, not per call site, and it is bounded. Every attempt is counted against the unit's token and spend accumulation, and the number of attempts appears on the unit's record. Nested layers do not each apply their own retry budget on top of one another. A retry is a call repeated because the previous one failed; the calls a unit makes by design — one per loop step — are bounded separately (AHC-0041), and the two bounds are different numbers. The retry bound is a number the profile sets; a profile without it is incomplete rather than defaulted.
 
 **Discharges** AAC-0008, AAC-0009, AAC-0102
 
@@ -671,7 +689,11 @@ A retry count exists per unit of work, not per call site, and it is bounded. Eve
 
 *MUST · core · reliability*
 
-Where the harness stops before completing — output length reached, budget exhausted, deadline hit, stream aborted — what it returns is marked as incomplete, states why, and carries whatever was produced separately from a completed result. Incompleteness is a property of the return value, not something a caller infers from the text.
+Where the harness stops before completing — output length reached, budget exhausted, deadline hit, stream aborted — what it returns is marked as incomplete, states why, and carries whatever was produced separately from a completed result. Incompleteness is a property of the return value, not something a caller infers from the text. Each cause is its own recorded termination: a stop at the output length is not folded into budget, deadline, degraded or error, so it can be counted apart from them.
+
+**Answer in the profile:**
+
+- `AHC-0025/output_limit` — Is hitting the output limit an error or an outcome?
 
 **Discharges** AAC-0015, AAC-0002, AAC-0019
 
@@ -691,7 +713,7 @@ Each step states whether it can be re-executed with the same input without addit
 
 *MUST · core · performance-efficiency*
 
-A request carries one absolute deadline set at the boundary, and every component beneath it — retrieval, policy evaluation, the model call, tool dispatch, a loop iteration — receives the time remaining rather than applying a timeout of its own. A component with insufficient time left declines rather than starting work it cannot finish.
+A request carries one absolute deadline set at the boundary, and every component beneath it — retrieval, policy evaluation, the model call, tool dispatch, a loop iteration — receives the time remaining rather than applying a timeout of its own. A component with insufficient time left declines rather than starting work it cannot finish. How long a request is given is a number the profile sets; a profile without it is incomplete rather than defaulted.
 
 **Discharges** AAC-0007, AAC-0050, AAC-0009
 
@@ -699,7 +721,11 @@ A request carries one absolute deadline set at the boundary, and every component
 
 *SHOULD · core · maintainability*
 
-Where provider interactions are recorded for replay, a recording is served only against a request equivalent to the one recorded — under a declared notion of equivalence, which states what may differ without invalidating it. A request with no match is a failure of the run, reported as a miss and distinguishable from the provider being unavailable. The recording declares the format version it was written in, and one written in a version the reader does not know is refused rather than interpreted. Which world served a call — live or recorded — is on the record.
+Where provider interactions are recorded for replay, a recording is served only against a request equivalent to the one recorded — under a declared notion of equivalence, which states what may differ without invalidating it. A request with no match is a failure of the run, reported as a miss and distinguishable from the provider being unavailable. The recording declares the format version it was written in, and one written in a version the reader does not know is refused rather than interpreted. Which world served a call — live or recorded — is on the record. Values the harness mints afresh for every run — a fence's nonce (AHC-0011), when a read was made (AHC-0107), the identifier of an approval or a handoff — are named in the equivalence as what may differ, or no recording made under those capabilities ever replays.
+
+**Answer in the profile:**
+
+- `AHC-0105/replay_equivalence` — What may change about a request without invalidating the recording?
 
 **Discharges** AAC-0059, AAC-0058
 
@@ -799,7 +825,7 @@ Every run hands the party it served an identifier that later events can cite, an
 
 *SHOULD · core · maintainability*
 
-Every unit of work leaves a record from which it can be judged after the fact without re-running it, and the harness declares that record's fields and checks, at build time, that each is emitted. The minimum, for every archetype: (1) join keys — the unit of work's identifier, the session, a pseudonymous user, the tenant, and the position within the session; (2) versions — the resolved configuration's fingerprint, the model requested and the model that answered, and the version of every rule set that decided anything; (3) the input, redacted; (4) what the system was shown beyond the input — each tool result and retrieved passage, redacted, with its source; (5) what it did — each model call, each tool call with its arguments, its side-effect class and its outcome, and each policy decision; (6) the output, redacted, and how the unit ended — completed, refused, escalated, waiting or failed — with the rule that decided it; (7) tokens, cost and duration, for the unit and for each call; (8) markers — whether the unit was synthetic, whether its payloads were captured, and which resolution mode served it; and (9) outcomes that arrive later, with their kind, source and time (AHC-0112). The content in (3), (4) and (6) is captured for a declared sample rather than for all traffic, and the rest is recorded for every unit.
+Every unit of work leaves a record from which it can be judged after the fact without re-running it, and the harness declares that record's fields and checks, at build time, that each is emitted. The minimum, for every archetype: (1) join keys — the unit of work's identifier, the session, a pseudonymous user, the tenant, and the position within the session; (2) versions — the resolved configuration's fingerprint, the model requested and the model that answered, and the version of every rule set that decided anything; (3) the input, redacted; (4) what the system was shown beyond the input — each tool result and retrieved passage, redacted, with its source; (5) what it did — each model call, each tool call with its arguments, its side-effect class and its outcome, and each policy decision; (6) the output, redacted, and how the unit ended — completed, refused, escalated, waiting or failed — with the rule that decided it; (7) tokens, cost and duration, for the unit and for each call; (8) markers — whether the unit was synthetic, whether its payloads were captured, and which resolution mode served it; and (9) outcomes that arrive later, with their kind, source and time (AHC-0112). The content in (3), (4) and (6) is captured for a declared sample rather than for all traffic, and the rest is recorded for every unit. The sample is a rate the profile sets; a profile without it is incomplete rather than defaulted.
 
 **Discharges** AAC-0014, AAC-0011, AAC-0060, AAC-0080, AAC-0115, AAC-0110
 
@@ -865,7 +891,7 @@ The eval entrypoint can drive the deployed system through its own serving path �
 
 *SHOULD · core · maintainability*
 
-Every unit of work leaves a record from which it can be judged after the fact without re-running it, and the harness declares that record's fields and checks, at build time, that each is emitted. The minimum, for every archetype: (1) join keys — the unit of work's identifier, the session, a pseudonymous user, the tenant, and the position within the session; (2) versions — the resolved configuration's fingerprint, the model requested and the model that answered, and the version of every rule set that decided anything; (3) the input, redacted; (4) what the system was shown beyond the input — each tool result and retrieved passage, redacted, with its source; (5) what it did — each model call, each tool call with its arguments, its side-effect class and its outcome, and each policy decision; (6) the output, redacted, and how the unit ended — completed, refused, escalated, waiting or failed — with the rule that decided it; (7) tokens, cost and duration, for the unit and for each call; (8) markers — whether the unit was synthetic, whether its payloads were captured, and which resolution mode served it; and (9) outcomes that arrive later, with their kind, source and time (AHC-0112). The content in (3), (4) and (6) is captured for a declared sample rather than for all traffic, and the rest is recorded for every unit.
+Every unit of work leaves a record from which it can be judged after the fact without re-running it, and the harness declares that record's fields and checks, at build time, that each is emitted. The minimum, for every archetype: (1) join keys — the unit of work's identifier, the session, a pseudonymous user, the tenant, and the position within the session; (2) versions — the resolved configuration's fingerprint, the model requested and the model that answered, and the version of every rule set that decided anything; (3) the input, redacted; (4) what the system was shown beyond the input — each tool result and retrieved passage, redacted, with its source; (5) what it did — each model call, each tool call with its arguments, its side-effect class and its outcome, and each policy decision; (6) the output, redacted, and how the unit ended — completed, refused, escalated, waiting or failed — with the rule that decided it; (7) tokens, cost and duration, for the unit and for each call; (8) markers — whether the unit was synthetic, whether its payloads were captured, and which resolution mode served it; and (9) outcomes that arrive later, with their kind, source and time (AHC-0112). The content in (3), (4) and (6) is captured for a declared sample rather than for all traffic, and the rest is recorded for every unit. The sample is a rate the profile sets; a profile without it is incomplete rather than defaulted.
 
 **Discharges** AAC-0014, AAC-0011, AAC-0060, AAC-0080, AAC-0115, AAC-0110
 
@@ -891,7 +917,7 @@ Context is bounded before the call, by the component that assembles it, using a 
 
 *MUST · core · cost*
 
-A retry count exists per unit of work, not per call site, and it is bounded. Every attempt is counted against the unit's token and spend accumulation, and the number of attempts appears on the unit's record. Nested layers do not each apply their own retry budget on top of one another. A retry is a call repeated because the previous one failed; the calls a unit makes by design — one per loop step — are bounded separately (AHC-0041), and the two bounds are different numbers.
+A retry count exists per unit of work, not per call site, and it is bounded. Every attempt is counted against the unit's token and spend accumulation, and the number of attempts appears on the unit's record. Nested layers do not each apply their own retry budget on top of one another. A retry is a call repeated because the previous one failed; the calls a unit makes by design — one per loop step — are bounded separately (AHC-0041), and the two bounds are different numbers. The retry bound is a number the profile sets; a profile without it is incomplete rather than defaulted.
 
 **Discharges** AAC-0008, AAC-0009, AAC-0102
 
@@ -949,13 +975,15 @@ Every tool declares whether it reads, writes reversibly, or writes irreversibly,
 
 *MUST · safety*
 
-Actions in the irreversible class from AHC-0039 are held pending an approval issued by a principal outside the run, naming the specific action and resource, unless the specification states the conditions under which the agent holds that authority itself — conditions over declared state, checked by the system on which the effect lands, never a judgement the model makes; a check made only on the harness side of the call does not meet this. An action taken under a person's approval carries the identity of that approval to the executing system, which loads it and confirms it names this action, these arguments and this resource before acting. The run has no tool, argument or instruction path by which it can approve itself or widen those conditions, and a pending action that is never approved expires rather than proceeding. The approval also records the state its assessment judged, and that state is re-established immediately before the action executes; where it has changed the action does not proceed and the decision is sought again against what is now true.
+Actions in the irreversible class from AHC-0039 are held pending an approval issued by a principal outside the run, naming the specific action and resource, unless the specification states the conditions under which the agent holds that authority itself — conditions over declared state, checked by the system on which the effect lands, never a judgement the model makes; a check made only on the harness side of the call does not meet this. An action taken under a person's approval carries the identity of that approval to the executing system, which loads it — from a place the binding names — and confirms it names this action, these arguments and this resource before acting. The run has no tool, argument or instruction path by which it can approve itself or widen those conditions, and a pending action that is never approved expires rather than proceeding. The approval also records the state its assessment judged, and that state is re-established immediately before the action executes; where it has changed the action does not proceed and the decision is sought again against what is now true.
 
 **Answer in the profile:**
 
 - `AHC-0057/irreversible_scope` — Does every irreversible action need a person?
 - `AHC-0057/approval_staleness` — Which state has to still hold when a grant is executed?
+- `AHC-0057/stale_grant` — A grant that has gone stale — retry, or ask again?
 - `AHC-0057/grant_carriage` — How does the system that executes an action know it was approved?
+- `AHC-0057/approval_source` — Where does the executing system read an approval from?
 
 **Discharges** AAC-0078, AAC-0056, AAC-0081
 
@@ -1036,7 +1064,7 @@ The permissions a tool operates under are held by the executing side and scoped 
 
 *MUST · core · security*
 
-There is one place where a request becomes an identity, and it derives that identity from a credential the caller cannot mint or alter — verified against the issuer, checked for expiry, and rejected whole when either fails. Nothing the caller supplies as data may name the identity: not a field beside the credential, not a name in the message, not a claim carried back by the model. A credential that does not verify yields no identity, and the run does not proceed with a lesser one.
+There is one place where a request becomes an identity, and it derives that identity from a credential the caller cannot mint or alter — verified against the issuer, checked for expiry, and rejected whole when either fails. Nothing the caller supplies as data may name the identity: not a field beside the credential, not a name in the message, not a claim carried back by the model. A credential that does not verify yields no identity, and the run does not proceed with a lesser one. The code that mints such credentials, a test issuer included, sits outside what the caller's side can import or invoke: a credential the caller cannot mint is only that while minting is out of its reach.
 
 **Discharges** AAC-0111, AAC-0040, AAC-0032
 

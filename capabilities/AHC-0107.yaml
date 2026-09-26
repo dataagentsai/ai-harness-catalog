@@ -17,7 +17,7 @@ title: |-
   A fact an irreversible action relies on is read inside its declared freshness window
 
 requirement: |-
-  Every fact the harness places in context carries when it was read. The specification declares, per field, how long a read of it stays usable. Before dispatching an action the specification classifies as irreversible, the harness establishes that each fact the action's own preconditions depend on was read inside that field's window, and re-reads it where it was not — the re-read happening before the action, not as a check afterwards. Where a re-read changes the value, the action is planned again against what is now true rather than proceeding on what was believed.
+  Every fact the harness places in context carries when it was read. The specification declares, per field, how long a read of it stays usable. Before dispatching an action the specification classifies as irreversible, the harness establishes that each fact the action's own preconditions depend on was read inside that field's window, and re-reads it where it was not — the re-read happening before the action, not as a check afterwards. Where a re-read changes the value, the action is planned again against what is now true rather than proceeding on what was believed. A read is stamped with when it was asked, not when its answer arrived: the answer is true of some moment between the two, and only the earlier bound is safe to count a window from.
 
 failure_mode: |-
   A system with concurrent writers answers a question about the past and acts as though it were the present. The read says the order is unshipped, the conversation takes a minute, the warehouse ships it, and the cancellation is attempted against a state that no longer exists. Where the far system enforces its own preconditions the write is refused and the damage is bounded — the caller is left explaining a refusal it did not expect, which is recoverable. Where it does not, the effect lands on a row the caller has never actually seen. The quieter half is worse than either: the reply is composed from the stale read, so the customer is told the item has not shipped by an agent that is simultaneously being refused permission to cancel it, and both sentences are traceable to the same lookup.
@@ -39,6 +39,19 @@ design_decisions:
       the harness applies that only where an irreversible action's preconditions
       reach it. A field nothing irreversible depends on may carry a window and
       will never cause a re-read, which is the correct amount of work.
+  - key: read_stamp
+    question: Is a read stamped when it was asked, or when it was answered?
+    tension: >-
+      The answer's arrival is the obvious moment and the one a clock beside
+      the result gives for free, and a slow read then looks fresher than it
+      is — slow enough, and a belief never leaves its window and the re-read
+      never fires. The moment of asking understates freshness, so a slow read
+      is re-read sooner than strictly needed.
+    resolution: >-
+      When it was asked. Re-reading early costs a call; trusting late costs
+      the action this capability exists to stop. The stamp is minted per run,
+      so a recording made under this capability replays only under an
+      equivalence that names it (AHC-0105).
   - question: Re-read before the action, or verify after it?
     tension: >-
       Verifying afterwards is cheaper — most reads are still fresh, and a check
@@ -65,4 +78,4 @@ design_decisions:
 
 realization_policy: own
 
-see_also: [AHC-0044, AHC-0039, AHC-0057, AHC-0074]
+see_also: [AHC-0044, AHC-0039, AHC-0057, AHC-0074, AHC-0105, AHC-0011]

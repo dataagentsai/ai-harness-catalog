@@ -34,6 +34,8 @@ design_decisions:
     resolution: >-
       Per-request nonce where the input is genuinely hostile. A fixed delimiter
       is acceptable only where the assembler also rejects input containing it.
+      A nonce makes every assembled context unique, so a recording of one
+      replays only under an equivalence that names the nonce (AHC-0105).
   - question: Does the label reach the model, or only the record?
     tension: >-
       In-band labelling gives the model something to reason about and is itself
@@ -50,4 +52,4 @@ design_decisions:
 
 realization_policy: own
 
-see_also: [AHC-0002, AHC-0013]
+see_also: [AHC-0002, AHC-0013, AHC-0105]

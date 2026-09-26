@@ -17,7 +17,7 @@ title: |-
   Output-side enforcement is its own point, with its own semantics
 
 requirement: |-
-  The position that screens what the system produces is distinct from the one that screens what it receives, and declares its own open-or-closed behaviour, its own ordering under AHC-0093, and what the caller receives when it acts. A block on the way out maps to the refused outcome of AHC-0017 rather than returning altered content as though the model had produced it.
+  The position that screens what the system produces is distinct from the one that screens what it receives, and declares its own open-or-closed behaviour, its own ordering under AHC-0093, and what the caller receives when it acts. A block on the way out maps to the refused outcome of AHC-0017 rather than returning altered content as though the model had produced it. Rules that read the model's text read it normalised first, so characters that render alike — the dashes and spaces inside an identifier — compare as one, and a rule matching identifiers is not blinded by a character the model chose.
 
 failure_mode: |-
   Treating input and output screening as one configuration applies input semantics to a situation that does not share them. The asymmetries are real: an input block costs nothing, while an output block discards a paid generation; input arrives complete, while output may be streaming and partly delivered; and content the model produced from legitimate input is a different risk from content someone sent you. Systems built with one point typically screen input thoroughly and output barely, which is the wrong way round for the failure that reaches a user.
@@ -38,6 +38,23 @@ design_decisions:
       Retrying may produce a compliant answer and pays twice for one request,
       and a model that produced disallowed content once will frequently do so
       again — so the retry budget drains against a case it cannot fix.
+  - key: output_rule_reading
+    question: What does a rule over the model's text take as a claim or a recital?
+    tension: >-
+      Matching an identifier beside a state word, or any passage of the
+      system's own instructions, is simple and blocks true answers: a listing
+      that shows an order as cancelled reads as a claim to have cancelled it,
+      and a refusal repeating the words the specification gave for refusing
+      reads as the system reciting its instructions. Matching narrowly misses
+      phrasings nobody enumerated.
+    resolution: >-
+      A claim is read by its grammar — the system as the one acting, or an
+      effect stated as done — and checked against what the run's record shows
+      it did (AHC-0108); a state named beside a record is a report, checked
+      against the latest read of it. A recital rule ignores text the run was
+      itself shown in this exchange. Each over-block found is kept as a case,
+      because a block rate read without its over-block rate rewards the rule
+      that fires most.
   - question: Does output screening see the input that produced it?
     tension: >-
       Seeing the request makes the judgement far better — the same sentence can
@@ -47,4 +64,4 @@ design_decisions:
 
 realization_policy: own
 
-see_also: [AHC-0008, AHC-0015, AHC-0093]
+see_also: [AHC-0008, AHC-0015, AHC-0093, AHC-0106, AHC-0108]

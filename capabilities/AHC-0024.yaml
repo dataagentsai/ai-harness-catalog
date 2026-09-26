@@ -16,7 +16,7 @@ title: |-
   Retries are bounded, attributed and visible
 
 requirement: |-
-  A retry count exists per unit of work, not per call site, and it is bounded. Every attempt is counted against the unit's token and spend accumulation, and the number of attempts appears on the unit's record. Nested layers do not each apply their own retry budget on top of one another. A retry is a call repeated because the previous one failed; the calls a unit makes by design — one per loop step — are bounded separately (AHC-0041), and the two bounds are different numbers.
+  A retry count exists per unit of work, not per call site, and it is bounded. Every attempt is counted against the unit's token and spend accumulation, and the number of attempts appears on the unit's record. Nested layers do not each apply their own retry budget on top of one another. A retry is a call repeated because the previous one failed; the calls a unit makes by design — one per loop step — are bounded separately (AHC-0041), and the two bounds are different numbers. The retry bound is a number the profile sets; a profile without it is incomplete rather than defaulted.
 
 failure_mode: |-
   Retries stacked at three layers multiply rather than add: three at the client, three at the harness and three at the gateway is twenty-seven calls for one logical request, and every one of them is billed. Because each layer counts only its own, no single record shows the multiplication, and the spend appears as ordinary traffic volume.

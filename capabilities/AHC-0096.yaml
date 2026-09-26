@@ -17,7 +17,7 @@ title: |-
   A deadline propagates, and every layer honours the remainder
 
 requirement: |-
-  A request carries one absolute deadline set at the boundary, and every component beneath it — retrieval, policy evaluation, the model call, tool dispatch, a loop iteration — receives the time remaining rather than applying a timeout of its own. A component with insufficient time left declines rather than starting work it cannot finish.
+  A request carries one absolute deadline set at the boundary, and every component beneath it — retrieval, policy evaluation, the model call, tool dispatch, a loop iteration — receives the time remaining rather than applying a timeout of its own. A component with insufficient time left declines rather than starting work it cannot finish. How long a request is given is a number the profile sets; a profile without it is incomplete rather than defaulted.
 
 failure_mode: |-
   Independent timeouts at each layer produce a shortest-wins race nobody configured: the observed timeout belongs to whichever layer happened to be tightest, and changing the one you can see has no effect. The opposite is equally common — each layer's timeout is generous, they sum past the caller's own, and the caller gives up while the system continues working and billing for a response no one will receive.

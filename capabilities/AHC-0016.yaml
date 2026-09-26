@@ -16,7 +16,7 @@ title: |-
   Input is validated before any model call is made
 
 requirement: |-
-  Requests entering the harness are checked against a declared input type — required fields, size bounds, encoding, and the degenerate cases of empty, whitespace-only and oversized — and rejected at the boundary. No model call is issued for a request the harness could have refused for free.
+  Requests entering the harness are checked against a declared input type — required fields, size bounds, encoding, and the degenerate cases of empty, whitespace-only and oversized — and rejected at the boundary. No model call is issued for a request the harness could have refused for free. The size bounds are numbers the profile sets; a profile without them is incomplete rather than defaulted.
 
 failure_mode: |-
   Unvalidated, an empty string, a nine-megabyte paste and a null field each become a paid model call that returns something confident and useless. Under any kind of automated retry from a caller, this is also the cheapest denial-of-wallet available to anyone who finds the endpoint.

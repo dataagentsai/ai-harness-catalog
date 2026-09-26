@@ -17,7 +17,7 @@ title: |-
   A trigger produces exactly one run
 
 requirement: |-
-  Every trigger carries an identifier derived from the occasion that caused it, and the harness records that identifier durably before work begins, refusing a second run for the same occasion. **Where the caller can receive one, the refusal carries what the first run answered** rather than only the fact that it happened. Overlap is handled explicitly: a run still in flight when the next trigger arrives either blocks it, queues it or cancels itself, by declared policy.
+  Every trigger carries an identifier derived from the occasion that caused it, and the harness records that identifier durably before work begins, refusing a second run for the same occasion. **Where the caller can receive one, the refusal carries what the first run answered** rather than only the fact that it happened. Overlap is handled explicitly: a run still in flight when the next trigger arrives either blocks it, queues it or cancels itself, by declared policy. The refusal answers only the party the occasion was first delivered for: the claim is named under the verified caller (AHC-0099), and the conversation where there is one, never by an identifier the caller supplies alone, so a second caller presenting the same identifier is not handed the first run's answer. A trigger that arrives with no identifier of its own is its own occasion; one is never derived from its content and the time, which two callers can share.
 
 failure_mode: |-
   Schedulers deliver at least once, retry on ambiguous outcomes, and fire twice across a deployment or a clock adjustment. An unattended agent that takes actions will take them twice — two remediations, two messages, two refunds — and because nobody is watching in real time, the duplicate is discovered from its effects. A refusal that says only *already handled* has a quieter failure of its own: a caller whose reply was lost cannot tell a run that never happened from one that did, and the answer it needs already exists somewhere it has no handle for. Overlapping runs are the same failure with concurrency added: two instances acting on the same state, each unaware of the other.
@@ -25,7 +25,8 @@ failure_mode: |-
 discharges: [AAC-0076, AAC-0047, AAC-0080]
 
 design_decisions:
-  - question: What is the identifier derived from?
+  - key: occasion_source
+    question: What is the identifier derived from?
     tension: >-
       The scheduled instant is stable across retries and collides when a run is
       deliberately re-triggered for the same window. A delivery identifier is
@@ -33,7 +34,24 @@ design_decisions:
       exactly what must be deduplicated.
     resolution: >-
       The occasion, not the delivery. If a re-run is legitimate, it is a new
-      occasion and says so.
+      occasion and says so. Where the occasion carries no identifier, the
+      trigger is its own occasion: an identifier made from what was said and
+      when merges two callers who said "Hi" in the same second, and the
+      second is answered with the first one's reply.
+  - key: claim_scope
+    question: Whose is a claimed occasion?
+    tension: >-
+      Naming the claim by the occasion's identifier alone is simplest, and any
+      caller who presents that identifier — replayed, guessed or collided —
+      collects another party's answer as a duplicate. Naming it under the
+      caller means the same occasion arriving under a different identity is
+      not recognised as the same one.
+    resolution: >-
+      Under the verified caller, and the conversation where there is one. An
+      identifier presented by a different party is not a redelivery; it is a
+      new occasion for that party, whose effects are its own. The refusal's
+      stored answer is the most sensitive thing the claim holds, and the one
+      thing a caller-supplied name must never unlock.
   - question: Where is the claim recorded?
     tension: >-
       Recording in the same store the run writes to keeps it consistent and

@@ -17,7 +17,7 @@ title: |-
   Policy evaluation has its own budget and a declared timeout path
 
 requirement: |-
-  Each policy runs under a latency ceiling drawn from the request's remaining deadline under AHC-0096, and exceeding it is a distinct condition with its own declared handling — separate from the policy returning a block. A policy that is slow, hung or unreachable resolves to the open-or-closed default from AHC-0008 within a bounded time.
+  Each policy runs under a latency ceiling drawn from the request's remaining deadline under AHC-0096, and exceeding it is a distinct condition with its own declared handling — separate from the policy returning a block. A policy that is slow, hung or unreachable resolves to the open-or-closed default from AHC-0008 within a bounded time. The ceiling is a number the profile sets, and never more than the deadline leaves; a profile without it is incomplete rather than defaulted.
 
 failure_mode: |-
   The fail-closed decision is meaningless without a timeout, because a policy that hangs never returns a decision to act on — the request simply stops, and the caller sees a timeout rather than a refusal. Where several policies each carry their own generous ceiling, they sum: five policies at two seconds is ten seconds of screening on a request budgeted for three, and the screening layer becomes the system's dominant latency without appearing in any one component's numbers.

@@ -17,7 +17,7 @@ title: |-
   Concurrency is bounded by the harness, not by the runtime
 
 requirement: |-
-  The number of model calls in flight is limited by an explicit control the harness owns, and work beyond that limit queues with a bounded wait rather than being issued. The limit exists whether or not the runtime happens to impose one, and it is expressed in the same unit the provider throttles on.
+  The number of model calls in flight is limited by an explicit control the harness owns, and work beyond that limit queues with a bounded wait rather than being issued. The limit exists whether or not the runtime happens to impose one, and it is expressed in the same unit the provider throttles on. The limit is a number the profile sets; a profile without it is incomplete rather than defaulted.
 
 failure_mode: |-
   Where the only limit is how many tasks the runtime will schedule, a burst issues every call at once, the provider throttles, and the retry logic converts one burst into several. Latency then collapses for every caller including the ones who arrived before the burst, and the system's behaviour under load is decided by a thread pool size nobody chose for this purpose.

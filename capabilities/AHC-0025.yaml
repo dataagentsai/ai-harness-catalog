@@ -17,7 +17,7 @@ title: |-
   Partial results are typed, never silently truncated
 
 requirement: |-
-  Where the harness stops before completing — output length reached, budget exhausted, deadline hit, stream aborted — what it returns is marked as incomplete, states why, and carries whatever was produced separately from a completed result. Incompleteness is a property of the return value, not something a caller infers from the text.
+  Where the harness stops before completing — output length reached, budget exhausted, deadline hit, stream aborted — what it returns is marked as incomplete, states why, and carries whatever was produced separately from a completed result. Incompleteness is a property of the return value, not something a caller infers from the text. Each cause is its own recorded termination: a stop at the output length is not folded into budget, deadline, degraded or error, so it can be counted apart from them.
 
 failure_mode: |-
   An answer cut off at a token limit reads as a finished answer that happens to end oddly, and downstream systems store it, index it or act on it. The single most damaging version is an artifact producer whose output was truncated mid-statement and remains syntactically valid — the truncation is then indistinguishable from an intended result until something runs it.
@@ -33,11 +33,17 @@ design_decisions:
     resolution: >-
       Return it behind the incomplete marker, so salvaging is a deliberate act
       by the caller rather than the default.
-  - question: Is hitting the output limit an error or an outcome?
+  - key: output_limit
+    question: Is hitting the output limit an error or an outcome?
     tension: >-
       Treating it as an error routes a routine, expected condition to the
       failure path and makes reliability figures track prompt design. Treating
       it as an outcome is accurate and risks it never being looked at.
+    resolution: >-
+      An outcome of its own, named as the length limit. Where the
+      specification's vocabulary of endings has no value for it, the gap is
+      closed there; mapping it onto the nearest existing ending loses the one
+      signal that says the limit, not the model, ended the answer.
   - question: Can the harness continue from where it stopped?
     tension: >-
       Continuation recovers the answer and doubles the context cost, and the

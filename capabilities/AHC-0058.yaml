@@ -17,7 +17,7 @@ title: |-
   Each action class declares its compensating path
 
 requirement: |-
-  For every action the system can take, the harness holds either a declared way to undo it, a declared way to counteract it, or an explicit statement that neither exists. Where a compensating path exists, it is invocable on its own, from the record in AHC-0056, without re-running the trajectory that produced the action.
+  For every action the system can take, the harness holds either a declared way to undo it, a declared way to counteract it, or an explicit statement that neither exists. Which of the three an operation has is declared by the specification of the domain, beside the operation, not decided by whoever builds the harness: whether a return can be closed or an address changed back is a fact about the business. Where a compensating path exists, it is invocable on its own, from the record in AHC-0056, without re-running the trajectory that produced the action.
 
 failure_mode: |-
   When an unattended run does the wrong thing across two hundred resources, recovery without declared compensation is a person reading logs and undoing changes by hand under time pressure — which is slow, error-prone, and frequently makes a second incident. The declaration matters as much as the mechanism: knowing in advance that an action cannot be undone changes whether it should have been automated at all.

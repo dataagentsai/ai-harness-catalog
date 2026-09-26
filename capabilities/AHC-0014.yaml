@@ -17,7 +17,7 @@ title: |-
   Sampling parameters are explicit, never inherited
 
 requirement: |-
-  Temperature, top-p, maximum output length, stop sequences and any seed are set explicitly at the choke point and appear in the resolved configuration record. A parameter the system relies on is never left to a client library default or a provider default. Where a model does not accept a parameter at all, the record says the model fixes it, rather than leaving it absent, so a reader can tell a parameter nobody set from one nobody can.
+  Temperature, top-p, maximum output length, stop sequences and any seed are set explicitly at the choke point and appear in the resolved configuration record. A parameter the system relies on is never left to a client library default or a provider default, and explicit means present on the request as sent, not only in the configuration. Where a model does not accept a parameter at all, the record says the model fixes it, rather than leaving it absent, so a reader can tell a parameter nobody set from one nobody can.
 
 failure_mode: |-
   Defaults differ between client libraries, between providers and between versions of the same library, and they change in minor releases. A system that relies on an inherited default has its output variance decided by a dependency upgrade nobody reviewed, and the change surfaces as unexplained inconsistency weeks later.
@@ -50,7 +50,14 @@ design_decisions:
       model's behaviour under that fixed value as part of what the pin means:
       a change of model re-runs the variance measurement, because the setting
       that bounded variance changed with it. Where the model offers a different
-      control over the same behaviour, set that one explicitly instead.
+      control over the same behaviour, set that one explicitly instead. The
+      answer is the pin's, not the harness's — the same harness under two
+      pins has opposite answers — so it is recorded against the pin and
+      re-answered when the pin changes. A client library written for models
+      that reject sampling parameters may send none at all; a route through a
+      gateway to a model that accepts them then needs them placed in the
+      request body directly, or the record shows a value that never left the
+      process.
   - question: Who owns maximum output length?
     tension: >-
       Set low it truncates legitimate long answers mid-sentence; set high it is

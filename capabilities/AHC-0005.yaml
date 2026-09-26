@@ -18,7 +18,7 @@ title: |-
   A declared degradation path for provider failure
 
 requirement: |-
-  For each way the provider can fail — timeout, rate limit, content refusal, malformed response, total outage — the harness has a declared outcome: retry with a bounded policy, fall back to another route, return a defined degraded result, or fail with a typed error. The set is exhaustive, so an unclassified failure has a declared default rather than propagating whatever the client library raised.
+  For each way the provider can fail — timeout, rate limit, content refusal, malformed response, total outage — the harness has a declared outcome: retry with a bounded policy, fall back to another route, return a defined degraded result, or fail with a typed error. The set is exhaustive, so an unclassified failure has a declared default rather than propagating whatever the client library raised. Where a declared outcome turns on a number — how many failures stop calls to a route, how long before it is tried again — the profile sets it; a profile without it is incomplete rather than defaulted.
 
 failure_mode: |-
   Undeclared, these collapse into one generic exception path, and the system responds identically to a rate limit it should have waited out and a content refusal it should never retry. Retrying a refusal burns budget to receive the same answer; not retrying a throttle turns a survivable blip into an outage.
