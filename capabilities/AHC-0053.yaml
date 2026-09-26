@@ -10,7 +10,7 @@ positions: [P1, P6]
 concern: reliability
 facet: faultlessness
 
-archetypes: [A9]
+archetypes: [A4, A6, A9]
 core: false
 
 title: |-

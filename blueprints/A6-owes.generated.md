@@ -7,7 +7,7 @@ collated from the capabilities themselves rather than restated beside them.
 The written half — where the seams fall, which position owns what — is in
 [A6-tool-using-agent.md](A6-tool-using-agent.md).
 
-**72 capabilities**, across 16 of 16 layers.
+**73 capabilities**, across 16 of 16 layers.
 
 | Layer | Owes |
 |---|---|
@@ -20,12 +20,12 @@ The written half — where the seams fall, which position owns what — is in
 | **L7** Policy enforcement | AHC-0008, AHC-0018, AHC-0019, AHC-0093, AHC-0094, AHC-0095 |
 | **L8** Concurrency and flow control | AHC-0020, AHC-0021, AHC-0095, AHC-0096, AHC-0097, AHC-0098 |
 | **L9** Determinism and replay | AHC-0014, AHC-0022, AHC-0023 |
-| **L10** Failure handling | AHC-0005, AHC-0017, AHC-0021, AHC-0024, AHC-0025, AHC-0074, AHC-0096, AHC-0105, AHC-0110 |
+| **L10** Failure handling | AHC-0005, AHC-0017, AHC-0021, AHC-0024, AHC-0025, AHC-0053, AHC-0074, AHC-0096, AHC-0105, AHC-0110 |
 | **L11** Observability | AHC-0006, AHC-0018, AHC-0019, AHC-0026, AHC-0027, AHC-0029, AHC-0090, AHC-0111, AHC-0112, AHC-0114 |
 | **L12** Eval harness | AHC-0010, AHC-0022, AHC-0028, AHC-0029, AHC-0090, AHC-0112, AHC-0113, AHC-0114 |
 | **L13** Cost accounting | AHC-0007, AHC-0012, AHC-0024, AHC-0030, AHC-0031, AHC-0097, AHC-0101, AHC-0111 |
 | **L14** Human-in-the-loop | AHC-0039, AHC-0057 |
-| **L15** Release and configuration | AHC-0003, AHC-0009, AHC-0032, AHC-0033, AHC-0092 |
+| **L15** Release and configuration | AHC-0003, AHC-0009, AHC-0032, AHC-0033, AHC-0053, AHC-0092 |
 | **L16** Identity and authorization | AHC-0034, AHC-0035, AHC-0040, AHC-0099, AHC-0113, AHC-0115 |
 
 ## L1 · Context assembly
@@ -697,6 +697,19 @@ Where the harness stops before completing — output length reached, budget exha
 
 **Discharges** AAC-0015, AAC-0002, AAC-0019
 
+### AHC-0053 — A trigger produces exactly one run
+
+*MUST · reliability*
+
+Every trigger carries an identifier derived from the occasion that caused it, and the harness records that identifier durably before work begins, refusing a second run for the same occasion. **Where the caller can receive one, the refusal carries what the first run answered** rather than only the fact that it happened. Overlap is handled explicitly: a run still in flight when the next trigger arrives either blocks it, queues it or cancels itself, by declared policy. The refusal answers only the party the occasion was first delivered for: the claim is named under the verified caller (AHC-0099), and the conversation where there is one, never by an identifier the caller supplies alone, so a second caller presenting the same identifier is not handed the first run's answer. A trigger that arrives with no identifier of its own is its own occasion; one is never derived from its content and the time, which two callers can share.
+
+**Answer in the profile:**
+
+- `AHC-0053/occasion_source` — What is the identifier derived from?
+- `AHC-0053/claim_scope` — Whose is a claimed occasion?
+
+**Discharges** AAC-0076, AAC-0047, AAC-0080
+
 ### AHC-0074 — Every step declares whether repeating it is safe
 
 *MUST · reliability*
@@ -1025,6 +1038,19 @@ The unit of rollback is the whole resolved configuration from AHC-0003, not one 
 The resolved configuration promoted to production is byte-identical to the one that went through the release process, carried forward as an artifact rather than rebuilt from source at the destination. Promotion moves a thing; it does not reconstruct one.
 
 **Discharges** AAC-0107, AAC-0012
+
+### AHC-0053 — A trigger produces exactly one run
+
+*MUST · reliability*
+
+Every trigger carries an identifier derived from the occasion that caused it, and the harness records that identifier durably before work begins, refusing a second run for the same occasion. **Where the caller can receive one, the refusal carries what the first run answered** rather than only the fact that it happened. Overlap is handled explicitly: a run still in flight when the next trigger arrives either blocks it, queues it or cancels itself, by declared policy. The refusal answers only the party the occasion was first delivered for: the claim is named under the verified caller (AHC-0099), and the conversation where there is one, never by an identifier the caller supplies alone, so a second caller presenting the same identifier is not handed the first run's answer. A trigger that arrives with no identifier of its own is its own occasion; one is never derived from its content and the time, which two callers can share.
+
+**Answer in the profile:**
+
+- `AHC-0053/occasion_source` — What is the identifier derived from?
+- `AHC-0053/claim_scope` — Whose is a claimed occasion?
+
+**Discharges** AAC-0076, AAC-0047, AAC-0080
 
 ### AHC-0092 — The processing region is pinned and recorded per call
 
