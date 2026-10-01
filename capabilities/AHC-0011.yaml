@@ -33,9 +33,11 @@ design_decisions:
       logs the raw context.
     resolution: >-
       Per-request nonce where the input is genuinely hostile. A fixed delimiter
-      is acceptable only where the assembler also rejects input containing it.
-      A nonce makes every assembled context unique, so a recording of one
-      replays only under an equivalence that names the nonce (AHC-0105).
+      is acceptable only where no untrusted segment can carry it out of the
+      assembler — every copy found inside one is rewritten, or the input is
+      refused, as the third decision says. A nonce makes every assembled
+      context unique, so a recording of one replays only under an equivalence
+      that names the nonce (AHC-0105).
   - question: Does the label reach the model, or only the record?
     tension: >-
       In-band labelling gives the model something to reason about and is itself
@@ -49,6 +51,17 @@ design_decisions:
       Rejecting is safe and turns a legitimate document containing the delimiter
       into an outage. Escaping preserves the document and adds a transformation
       that must itself be correct.
+    resolution: >-
+      Rewrite it. A fixed marker plus a rewrite of every copy found inside the
+      untrusted text meets the requirement, because the segment that leaves the
+      assembler cannot contain the marker — which is the whole of what the
+      requirement asks — while the document survives. Three conditions make it
+      the same guarantee a nonce gives rather than a weaker one: the rewrite
+      happens inside the one assembly function (AHC-0002), on every untrusted
+      segment, so no path reaches the model unrewritten; it matches every
+      spelling the model would read as the marker — case, inner whitespace and
+      look-alike characters — not only the exact bytes; and the record says a
+      rewrite occurred, while the stored original keeps what was received.
 
 realization_policy: own
 
