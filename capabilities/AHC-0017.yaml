@@ -17,7 +17,7 @@ title: |-
   The caller receives a discriminated outcome, never a bare value
 
 requirement: |-
-  The harness returns a value that names which of its terminal states occurred — succeeded, refused by policy, abstained for lack of grounds, degraded to a fallback, exhausted a budget, or failed — and the caller cannot read the payload without having handled the discriminator. Each state is reachable by the caller's own code paths.
+  The harness returns a value that names which of its terminal states occurred, drawn from one list — succeeded, refused by policy, abstained for lack of grounds, degraded to a fallback, exhausted a budget, or failed — and the caller cannot read the payload without having handled the discriminator. A harness returns each state one of its own paths can reach, and has a branch-worthy value for every one it returns; it does not invent a state no path reaches. Abstained is reachable where the harness itself decides there are no grounds to answer — retrieval below the relevance it requires (AHC-0063), a deterministic route with nothing to answer from — and is not a label for a model's sentence saying it does not know. Only failed is a failure: the kinds of AHC-0110 classify what went wrong inside it, and the other five states are outcomes that carry no failure kind.
 
 failure_mode: |-
   Where every state returns a string, a policy refusal, an abstention and a real answer are indistinguishable to the consumer, and all three get rendered to the user or written to a database as though they were results. The system that stores "I don't have enough information to answer that" as a customer record is the standard symptom.
@@ -47,7 +47,13 @@ design_decisions:
       Treating a correct refusal to answer as a failure makes reliability
       metrics punish exactly the behaviour you wanted. Treating it as a success
       hides a corpus that cannot answer anything.
+    resolution: >-
+      Neither. It is its own state and is counted as itself, so a correct
+      abstention costs no reliability and a system that abstains on everything
+      shows up as a rising abstention rate rather than disappearing into the
+      success count. It carries no failure kind under AHC-0110, because nothing
+      went wrong that a caller could retry, escalate or fix.
 
 realization_policy: own
 
-see_also: [AHC-0001, AHC-0005, AHC-0016]
+see_also: [AHC-0001, AHC-0005, AHC-0016, AHC-0063, AHC-0110]

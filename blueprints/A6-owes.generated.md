@@ -486,7 +486,7 @@ Requests entering the harness are checked against a declared input type — requ
 
 *MUST · core · functional-suitability*
 
-The harness returns a value that names which of its terminal states occurred — succeeded, refused by policy, abstained for lack of grounds, degraded to a fallback, exhausted a budget, or failed — and the caller cannot read the payload without having handled the discriminator. Each state is reachable by the caller's own code paths.
+The harness returns a value that names which of its terminal states occurred, drawn from one list — succeeded, refused by policy, abstained for lack of grounds, degraded to a fallback, exhausted a budget, or failed — and the caller cannot read the payload without having handled the discriminator. A harness returns each state one of its own paths can reach, and has a branch-worthy value for every one it returns; it does not invent a state no path reaches. Abstained is reachable where the harness itself decides there are no grounds to answer — retrieval below the relevance it requires (AHC-0063), a deterministic route with nothing to answer from — and is not a label for a model's sentence saying it does not know. Only failed is a failure: the kinds of AHC-0110 classify what went wrong inside it, and the other five states are outcomes that carry no failure kind.
 
 **Discharges** AAC-0002, AAC-0009, AAC-0091
 
@@ -526,7 +526,7 @@ A turn ends as a completed answer only where the answer is in it. Where the run 
 
 *MUST · core · maintainability*
 
-The harness declares one closed vocabulary of failure kinds, and every failure it raises or returns carries exactly one of them. The vocabulary is drawn on what a caller can do about the failure — wait and try again, stop and tell somebody, fix the deployment — and not on which component produced it, because the component is already in the record and does not need saying twice. A new failure without a kind does not build.
+The harness declares one closed vocabulary of failure kinds, and every failure it raises or returns carries exactly one of them. The vocabulary is drawn on what a caller can do about the failure — wait and try again, stop and tell somebody, fix the deployment — and not on which component produced it, because the component is already in the record and does not need saying twice. A new failure without a kind does not build. The kinds classify failures, not outcomes: they are distinct from the terminal states of AHC-0017, which name how a unit of work ended. Succeeded and abstained are never failures and carry no kind, and a failure may still end the unit in more than one state — failed, or degraded where a fallback served. Where a kind shares a word with a state, it carries the same meaning — refused is a no that asking again will not change, exhausted is a declared bound reached — so the two vocabularies never disagree about one event.
 
 **Answer in the profile:**
 
@@ -692,7 +692,7 @@ For each way the provider can fail — timeout, rate limit, content refusal, mal
 
 *MUST · core · functional-suitability*
 
-The harness returns a value that names which of its terminal states occurred — succeeded, refused by policy, abstained for lack of grounds, degraded to a fallback, exhausted a budget, or failed — and the caller cannot read the payload without having handled the discriminator. Each state is reachable by the caller's own code paths.
+The harness returns a value that names which of its terminal states occurred, drawn from one list — succeeded, refused by policy, abstained for lack of grounds, degraded to a fallback, exhausted a budget, or failed — and the caller cannot read the payload without having handled the discriminator. A harness returns each state one of its own paths can reach, and has a branch-worthy value for every one it returns; it does not invent a state no path reaches. Abstained is reachable where the harness itself decides there are no grounds to answer — retrieval below the relevance it requires (AHC-0063), a deterministic route with nothing to answer from — and is not a label for a model's sentence saying it does not know. Only failed is a failure: the kinds of AHC-0110 classify what went wrong inside it, and the other five states are outcomes that carry no failure kind.
 
 **Discharges** AAC-0002, AAC-0009, AAC-0091
 
@@ -775,7 +775,7 @@ Where provider interactions are recorded for replay, a recording is served only 
 
 *MUST · core · maintainability*
 
-The harness declares one closed vocabulary of failure kinds, and every failure it raises or returns carries exactly one of them. The vocabulary is drawn on what a caller can do about the failure — wait and try again, stop and tell somebody, fix the deployment — and not on which component produced it, because the component is already in the record and does not need saying twice. A new failure without a kind does not build.
+The harness declares one closed vocabulary of failure kinds, and every failure it raises or returns carries exactly one of them. The vocabulary is drawn on what a caller can do about the failure — wait and try again, stop and tell somebody, fix the deployment — and not on which component produced it, because the component is already in the record and does not need saying twice. A new failure without a kind does not build. The kinds classify failures, not outcomes: they are distinct from the terminal states of AHC-0017, which name how a unit of work ended. Succeeded and abstained are never failures and carry no kind, and a failure may still end the unit in more than one state — failed, or degraded where a fallback served. Where a kind shares a word with a state, it carries the same meaning — refused is a no that asking again will not change, exhausted is a declared bound reached — so the two vocabularies never disagree about one event.
 
 **Answer in the profile:**
 
