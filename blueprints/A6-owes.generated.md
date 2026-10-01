@@ -636,7 +636,7 @@ Each policy runs under a latency ceiling drawn from the request's remaining dead
 
 *MUST · core · performance-efficiency*
 
-A request carries one absolute deadline set at the boundary, and every component beneath it — retrieval, policy evaluation, the model call, tool dispatch, a loop iteration — receives the time remaining rather than applying a timeout of its own. A component with insufficient time left declines rather than starting work it cannot finish. How long a request is given is a number the profile sets; a profile without it is incomplete rather than defaulted.
+A request carries one absolute deadline set at the boundary, and every component beneath it — retrieval, policy evaluation, the model call, tool dispatch, a loop iteration — receives the time remaining rather than applying a timeout of its own. A component with insufficient time left declines rather than starting work it cannot finish. A caller that has gone ends the request as surely as the deadline: where the boundary can observe the caller leaving — a closed connection, a cancelled call — that is propagated down the same path as cancellation, and no further model or tool call starts. How long a request is given is a number the profile sets; a profile without it is incomplete rather than defaulted.
 
 **Discharges** AAC-0007, AAC-0050, AAC-0009
 
@@ -644,9 +644,9 @@ A request carries one absolute deadline set at the boundary, and every component
 
 *MUST · core · performance-efficiency*
 
-**Owed where** a single request issues several model calls in parallel.
+**Owed where** a single request issues several model or tool calls at once.
 
-Where a single request issues several model calls in parallel — one per document, per chunk, per candidate, per branch — the number is limited by the harness and drawn from the same accumulated budget as the unit under AHC-0007. The bound is separate from the process-wide concurrency limit of AHC-0020.
+Where a single request issues several model calls in parallel — one per document, per chunk, per candidate, per branch — or one step plans several tool calls at once, the number is limited by the harness, per step and per unit of work, and drawn from the same accumulated budget as the unit under AHC-0007. The bound is separate from the process-wide concurrency limit of AHC-0020.
 
 **Discharges** AAC-0007, AAC-0008, AAC-0093
 
@@ -763,7 +763,7 @@ Each step states whether it can be re-executed with the same input without addit
 
 *MUST · core · performance-efficiency*
 
-A request carries one absolute deadline set at the boundary, and every component beneath it — retrieval, policy evaluation, the model call, tool dispatch, a loop iteration — receives the time remaining rather than applying a timeout of its own. A component with insufficient time left declines rather than starting work it cannot finish. How long a request is given is a number the profile sets; a profile without it is incomplete rather than defaulted.
+A request carries one absolute deadline set at the boundary, and every component beneath it — retrieval, policy evaluation, the model call, tool dispatch, a loop iteration — receives the time remaining rather than applying a timeout of its own. A component with insufficient time left declines rather than starting work it cannot finish. A caller that has gone ends the request as surely as the deadline: where the boundary can observe the caller leaving — a closed connection, a cancelled call — that is propagated down the same path as cancellation, and no further model or tool call starts. How long a request is given is a number the profile sets; a profile without it is incomplete rather than defaulted.
 
 **Discharges** AAC-0007, AAC-0050, AAC-0009
 
@@ -995,9 +995,9 @@ The assembler reports the size of what it produced, broken down by segment class
 
 *MUST · core · performance-efficiency*
 
-**Owed where** a single request issues several model calls in parallel.
+**Owed where** a single request issues several model or tool calls at once.
 
-Where a single request issues several model calls in parallel — one per document, per chunk, per candidate, per branch — the number is limited by the harness and drawn from the same accumulated budget as the unit under AHC-0007. The bound is separate from the process-wide concurrency limit of AHC-0020.
+Where a single request issues several model calls in parallel — one per document, per chunk, per candidate, per branch — or one step plans several tool calls at once, the number is limited by the harness, per step and per unit of work, and drawn from the same accumulated budget as the unit under AHC-0007. The bound is separate from the process-wide concurrency limit of AHC-0020.
 
 **Discharges** AAC-0007, AAC-0008, AAC-0093
 

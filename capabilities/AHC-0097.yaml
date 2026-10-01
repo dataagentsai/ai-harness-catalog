@@ -12,16 +12,16 @@ facet: capacity
 
 archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
 core: true
-applies_when: a single request issues several model calls in parallel
+applies_when: a single request issues several model or tool calls at once
 
 title: |-
   Fan-out within one unit of work is bounded
 
 requirement: |-
-  Where a single request issues several model calls in parallel — one per document, per chunk, per candidate, per branch — the number is limited by the harness and drawn from the same accumulated budget as the unit under AHC-0007. The bound is separate from the process-wide concurrency limit of AHC-0020.
+  Where a single request issues several model calls in parallel — one per document, per chunk, per candidate, per branch — or one step plans several tool calls at once, the number is limited by the harness, per step and per unit of work, and drawn from the same accumulated budget as the unit under AHC-0007. The bound is separate from the process-wide concurrency limit of AHC-0020.
 
 failure_mode: |-
-  A process-wide limit constrains total load and says nothing about one request, so a single caller supplying five hundred documents issues five hundred calls that are individually reasonable and collectively the whole budget. Under a queue this is worse than a burst: the unit occupies every available slot, and every other caller waits behind one request that nobody classified as expensive because each of its calls was small.
+  A process-wide limit constrains total load and says nothing about one request, so a single caller supplying five hundred documents issues five hundred calls that are individually reasonable and collectively the whole budget. Under a queue this is worse than a burst: the unit occupies every available slot, and every other caller waits behind one request that nobody classified as expensive because each of its calls was small. The same holds for tools: a step budget counts steps, so one step that plans fifty look-ups — or fifty writes — spends one step and does fifty things.
 
 discharges: [AAC-0007, AAC-0008, AAC-0093]
 
