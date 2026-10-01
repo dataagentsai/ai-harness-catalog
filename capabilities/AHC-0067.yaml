@@ -17,10 +17,12 @@ title: |-
   History is compacted by a declared, recorded strategy
 
 requirement: |-
-  As a conversation grows past the context budget, the harness reduces it by a named strategy — drop oldest, summarise a window, retain a pinned set of facts — and each turn's record states which strategy ran and what it removed. The reduction is performed by the harness, not left to the model to manage inside its own reasoning.
+  As a conversation grows past the context budget, the harness reduces it by a named strategy — drop oldest, summarise a window, retain a pinned set of facts — and each turn's record states which strategy ran and what it removed. The reduction is performed by the harness, not left to the model to manage inside its own reasoning. It bounds the conversation state the harness persists and reads back on the next turn, not only the context assembled from it, and every path that writes that state goes through the one place that applies the bound.
 
 failure_mode: |-
   Uncontrolled, a long conversation either overflows or is truncated from the front, which discards the constraint the user set in their opening message — the budget, the audience, the format — while retaining recent small talk. The assistant then contradicts an instruction it was given and appears to have changed its mind, and no record shows that the instruction is simply no longer present.
+
+  The quieter failure is in the store. Context is bounded on its way to the model and the conversation written back after each turn is not — three places write it and none applies the bound — so the one durable structure grows on every turn, every turn reads all of it back, and the cost and latency of a turn rise with the conversation's age without limit. Every per-call measurement looks normal, because the model is still sent a bounded context.
 
 discharges: [AAC-0038, AAC-0039, AAC-0042]
 
@@ -38,6 +40,20 @@ design_decisions:
       Reusing it is simple and a summarisation error becomes an unnoticed
       permanent falsification of history, since the original is gone. A cheaper
       model is cheaper and worse at exactly this.
+  - question: Bound what is stored, or only what is sent?
+    tension: >-
+      Storing the whole conversation keeps a complete transcript to review and
+      to reduce differently later, and makes the state every turn loads grow
+      without limit. Storing a bounded copy keeps each turn's cost flat and
+      permanently discards what fell outside the bound.
+    resolution: >-
+      Bound what is stored, at the one write path, and hand the caller back
+      what was stored rather than what it was holding — a caller keeping the
+      larger history is looking at state that exists nowhere. A complete
+      transcript, where one is wanted, is a separate record with its own
+      retention (AHC-0115), not the state a turn resumes from; and what has to
+      survive the bound is the structured record of AHC-0108, which is not
+      reduced with the transcript.
   - question: Can the user see that compaction occurred?
     tension: >-
       Surfacing it explains an apparent lapse of memory and exposes an
@@ -45,4 +61,4 @@ design_decisions:
 
 realization_policy: own
 
-see_also: [AHC-0012, AHC-0066, AHC-0069]
+see_also: [AHC-0012, AHC-0066, AHC-0069, AHC-0108, AHC-0115]

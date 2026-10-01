@@ -17,10 +17,12 @@ title: |-
   Session state has a declared boundary and lifetime
 
 requirement: |-
-  What constitutes one conversation is defined by the harness — what starts it, what ends it, how long it survives inactivity — and the state is addressed by an identifier the harness issues rather than inferred from a connection, a cookie or the presence of prior messages. Expiry is a declared behaviour, not the eviction policy of whatever store is underneath.
+  What constitutes one conversation is defined by the harness — what starts it, what ends it, how long it survives inactivity — and the state is addressed by an identifier the harness issues rather than inferred from a connection, a cookie or the presence of prior messages. Expiry is a declared behaviour, not the eviction policy of whatever store is underneath. That identifier is the one handed to the caller, and the conversation's latest state is retrievable by it alone, however many runs the conversation has spanned; state filed only under an identifier minted per run or per turn does not meet this, because no caller holds that identifier when the next message arrives.
 
 failure_mode: |-
   Where the boundary is implicit, sessions end when infrastructure decides they do: a load balancer moves the connection, a process restarts, a cache evicts under pressure. The user experiences an assistant that abruptly forgets mid-conversation, and the cause is a configuration two layers away that nobody associated with conversation quality.
+
+  The quieter variant has a boundary and still cannot be continued. State is checkpointed faithfully, under the identifier of the run that wrote it, and a fresh run is minted for every turn, so nothing a caller can present finds the conversation again. Every test passes, because tests hand the state from one turn to the next in memory; the defect appears as the first request handler that cannot be written: three lines in, it needs the conversation behind what the caller sent, and has no way to find it.
 
 discharges: [AAC-0038, AAC-0040, AAC-0037]
 

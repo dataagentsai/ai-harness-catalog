@@ -17,10 +17,12 @@ title: |-
   Escalation carries the context with it
 
 requirement: |-
-  Handing a conversation to a person transfers the transcript, what the system attempted, and why it escalated, into the surface that person already works in. The path is exercised under load rather than only when the system decides to use it, and it works when the model is unavailable.
+  Handing a conversation to a person transfers the transcript, what the system attempted, and why it escalated, into the surface that person already works in, where it appears without anyone having to go and look for it. A handoff recorded only in the system's own store, which no person's surface reads, has not been made. The path is exercised under load rather than only when the system decides to use it, and it works when the model is unavailable.
 
 failure_mode: |-
   An escalation that hands over only a ticket makes the user repeat everything, which is the moment an assistant becomes worse than no assistant. The load case is worse still: the trigger for escalation is frequently the same outage that took the model down, so the path least exercised is the one needed exactly when everything else has failed.
+
+  The variant no load test finds: the escalation is written, completely and correctly, to a table that no person's tool reads. Every check on the system's side passes — the record exists, the context is in it, the user was given a reference — and the queue's entries are, to anyone who could act on them, indistinguishable from lost.
 
 discharges: [AAC-0043, AAC-0009, AAC-0037]
 
