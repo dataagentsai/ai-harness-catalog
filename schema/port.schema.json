@@ -92,6 +92,11 @@
         "additionalProperties": false,
         "required": ["must", "because"],
         "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "description": "Optional, permanent once given. The name a conformance case uses for the invariant it checks, as `port/key`, the way a profile names a decision as `AHC-####/key`. Renaming one breaks every suite that cited it, so a key is never reused or changed; an invariant that stops being right is reworded under the same key only if every case written against it still means the same thing."
+          },
           "must": { "type": "string", "minLength": 20 },
           "because": {
             "type": "string",
@@ -103,6 +108,31 @@
             "enum": ["static", "dynamic", "declared"],
             "description": "How an adopter could establish it holds. 'declared' means neither a static rule nor a replayable test can reach it, so it has to be asserted and owned — and that is worth knowing before anyone claims coverage."
           }
+        }
+      }
+    },
+    "standards": {
+      "type": "array",
+      "description": "Optional. Published specifications that already define all or part of this seam's wire — a protocol, an envelope, a set of semantic conventions. Cited, never required: an implementation that conforms to one supplies the operations it covers, and the port's invariants hold on top of it whoever supplies them. A port cites a standard rather than restating it, which is principle 1 applied to the seam. The only place in a port that may carry a proper name, because a citation of a specification is not an endorsement of a product.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "url", "kind", "covers"],
+        "properties": {
+          "name": { "type": "string", "minLength": 3 },
+          "url": { "type": "string", "pattern": "^https://" },
+          "kind": {
+            "enum": ["open-standard", "de-facto"],
+            "description": "'open-standard' — maintained by a standards body or an open governance process. 'de-facto' — one vendor's interface that many others accept. Saying which is the honesty that keeps a citation from reading as a standard it is not."
+          },
+          "covers": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+            "description": "Which of this port's operations the specification defines a wire for. The linter checks each is an operation of this port. An operation no standard covers is the harness's own, and is where a typed signature would be needed if one ever is."
+          },
+          "note": { "type": "string" }
         }
       }
     },

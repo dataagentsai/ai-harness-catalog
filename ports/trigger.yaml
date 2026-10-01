@@ -63,6 +63,17 @@ invariants:
     capability: AHC-0059
     checkable: static
 
+standards:
+  - name: CloudEvents
+    url: https://github.com/cloudevents/spec/blob/main/cloudevents/spec.md
+    kind: open-standard
+    covers: [subscribe]
+    note: >-
+      An envelope whose id and source together identify one occurrence, which is
+      the de-duplication key this port requires. Acknowledging a trigger and
+      reporting a heartbeat are the transport's and the harness's, not the
+      envelope's.
+
 substitution_test: >-
   Replace the implementation with a manual invocation. De-duplication, bounded
   authority and liveness reporting must behave identically; only what causes the

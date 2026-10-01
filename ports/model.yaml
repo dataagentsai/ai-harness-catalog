@@ -67,6 +67,19 @@ invariants:
     capability: AHC-0004
     checkable: static
 
+standards:
+  - name: OpenAI-compatible chat completions API
+    url: https://platform.openai.com/docs/api-reference/chat
+    kind: de-facto
+    covers: [invoke, stream, describe]
+    note: >-
+      Accepted by most providers and gateways, which is why a stack can swap
+      either without touching the harness. It is one vendor's interface, not a
+      standard, and no open standard for a model call exists yet. The invariants
+      here — no retries inside the implementation, sampling parameters passed
+      exactly, throttling distinct from failure, usage never zero by default —
+      hold on top of it, and are where implementations of it most often differ.
+
 substitution_test: >-
   Replace the implementation with one backed by recorded fixtures. The system
   must behave identically with no network reachable; only latency and the

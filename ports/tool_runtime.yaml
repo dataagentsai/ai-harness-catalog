@@ -65,6 +65,17 @@ invariants:
     capability: AHC-0077
     checkable: static
 
+standards:
+  - name: Model Context Protocol
+    url: https://modelcontextprotocol.io/specification
+    kind: open-standard
+    covers: [describe, execute, cancel]
+    note: >-
+      Listing tools, calling one, and cancelling a call in flight. The protocol
+      carries a call; it does not validate arguments before execution, hold
+      authority where the tool executes, or bound what comes back, so those
+      invariants stay the harness's whichever server answers.
+
 substitution_test: >-
   Replace the implementation with an in-process stub registry. Dispatch,
   validation, bounding and failure shape must be identical; only isolation

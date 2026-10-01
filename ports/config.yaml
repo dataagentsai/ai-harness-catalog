@@ -58,6 +58,18 @@ invariants:
     capability: AHC-0033
     checkable: declared
 
+standards:
+  - name: OpenFeature specification
+    url: https://openfeature.dev/specification/
+    kind: open-standard
+    covers: [resolve]
+    note: >-
+      Evaluation of a value against a context, returning the value with a reason.
+      It evaluates; it does not version content, so serving a prompt by version
+      (fetch_version, list_versions) is this port's own, and so is the rule that
+      one unit of work sees one immutable snapshot rather than a fresh
+      evaluation per lookup.
+
 substitution_test: >-
   Replace the implementation with a file on disk. Behaviour must be identical
   for a given snapshot; only how the snapshot was obtained, and how quickly a

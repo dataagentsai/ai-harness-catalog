@@ -62,6 +62,24 @@ invariants:
     capability: AHC-0018
     checkable: declared
 
+standards:
+  - name: OpenTelemetry semantic conventions for generative AI
+    url: https://opentelemetry.io/docs/specs/semconv/gen-ai/
+    kind: open-standard
+    covers: [start_span, set_attributes, add_event]
+    note: >-
+      Names the spans, attributes and events of a model call, so this port
+      authors none of them (see notes). Redaction before an implementation sees
+      a payload, export never failing the unit of work, and policy and cost
+      events never sampled away are not the conventions' rules, and hold on top.
+  - name: W3C Trace Context
+    url: https://www.w3.org/TR/trace-context/
+    kind: open-standard
+    covers: [inject_context, extract_context]
+    note: >-
+      The traceparent and tracestate fields. A hop that is not an HTTP request —
+      a tool call's metadata, a queued message — carries the same two fields.
+
 substitution_test: >-
   Replace the implementation with one that writes to a local file. The system
   must be unchanged; only where the record lands, and how it is queried, may

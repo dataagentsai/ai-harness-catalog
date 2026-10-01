@@ -51,6 +51,24 @@ invariants:
     capability: AHC-0034
     checkable: dynamic
 
+standards:
+  - name: OpenID Connect Core 1.0
+    url: https://openid.net/specs/openid-connect-core-1_0.html
+    kind: open-standard
+    covers: [principal]
+    note: >-
+      A verified token and its claims establish who the principal is. Its
+      absence is an error here, never a fallback to the harness's own identity.
+  - name: OAuth 2.0 Token Exchange (RFC 8693)
+    url: https://www.rfc-editor.org/rfc/rfc8693
+    kind: open-standard
+    covers: [exchange]
+    note: >-
+      A credential for a named audience, issued against the caller's own. That
+      it never carries authority the original lacked is a rule about how the
+      exchange is configured, which the specification permits and does not
+      require. No standard is cited for authorize.
+
 substitution_test: >-
   Replace the implementation with a static test principal. Every authorization
   decision point must still be reached and still be recorded; only the source of

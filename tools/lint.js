@@ -245,9 +245,28 @@ for (const pf of portFiles) {
     if (!byId.has(c)) err(pf, `serves unknown capability ${c}`);
     servedCaps.add(c);
   }
+  const invKeys = new Set();
   for (const inv of doc.invariants) {
     if (inv.capability && !byId.has(inv.capability)) {
       err(pf, `invariant cites unknown capability ${inv.capability}`);
+    }
+    if (inv.key) {
+      if (invKeys.has(inv.key)) err(pf, `invariant key "${inv.key}" appears twice`);
+      invKeys.add(inv.key);
+    }
+  }
+
+  /*
+   * A cited standard is the one place a port may carry a proper name, and the
+   * product rule below deliberately does not read it: citing a specification
+   * is principle 1, not an endorsement. What is checked is that the citation
+   * says which operations it defines — a standard "for" a port that covers
+   * none of its operations is a recommendation wearing a citation.
+   */
+  const opNames = new Set(doc.operations.map((o) => o.name));
+  for (const st of doc.standards || []) {
+    for (const c of st.covers) {
+      if (!opNames.has(c)) err(pf, `standard "${st.name}" covers "${c}", which is not an operation of this port`);
     }
   }
 
@@ -580,6 +599,11 @@ if (ports.size) {
   const core = [...ports.values()].filter((p) => p.tier === "core").length;
   console.log(`  ports          ${ports.size} (${core} core, ${ports.size - core} by archetype)`);
   console.log(`  seam coverage  ${servedCaps.size} capabilities cross a port; ${byId.size - servedCaps.size} are structural`);
+  const cited = [...ports.values()].filter((p) => (p.standards || []).length).length;
+  const invAll = [...ports.values()].reduce((n, p) => n + p.invariants.length, 0);
+  const invKeyed = [...ports.values()].reduce((n, p) => n + p.invariants.filter((i) => i.key).length, 0);
+  console.log(`  standards      ${cited} of ${ports.size} ports cite a published specification for their wire`);
+  console.log(`  invariants     ${invKeyed} of ${invAll} carry a key a conformance case can name`);
 }
 const ddTotal = [...byId.values()].reduce((n, c) => n + (c.design_decisions || []).length, 0);
 const ddKeyed = [...byId.values()].reduce((n, c) => n + (c.design_decisions || []).filter((d) => d.key).length, 0);
