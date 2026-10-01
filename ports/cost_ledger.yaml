@@ -33,25 +33,29 @@ operations:
     optional: true
 
 invariants:
-  - must: Usage is attributed to a unit of work, never only to a call.
+  - key: attributed_to_unit
+    must: Usage is attributed to a unit of work, never only to a call.
     because: >-
       Per-call accounting cannot answer what a task cost, so a runaway
       trajectory looks like ordinary traffic and no ceiling can be set at all.
     capability: AHC-0007
     checkable: static
-  - must: A retry is recorded as another attempt on the same unit, not as new work.
+  - key: retry_is_same_unit
+    must: A retry is recorded as another attempt on the same unit, not as new work.
     because: >-
       Counted as separate healthy traffic, retries inflate volume, hide a
       failure rate, and make the cost of unreliability invisible.
     capability: AHC-0024
     checkable: dynamic
-  - must: The running total is readable while the unit of work is still running.
+  - key: total_readable_in_flight
+    must: The running total is readable while the unit of work is still running.
     because: >-
       A total available only at the end can inform a report but cannot stop
       anything, which is the entire purpose of a ceiling.
     capability: AHC-0030
     checkable: dynamic
-  - must: Tags are those applied at the boundary, never re-derived downstream.
+  - key: boundary_tags_kept
+    must: Tags are those applied at the boundary, never re-derived downstream.
     because: >-
       Re-derived attribution drifts from the boundary's view, and two systems
       then disagree about who pays with no way to reconcile them.

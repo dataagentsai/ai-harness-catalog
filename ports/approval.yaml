@@ -15,7 +15,7 @@ summary: >-
   decision the run cannot make for itself — and the path by which an operator
   stops a run from outside it.
 
-serves: [AHC-0039, AHC-0054, AHC-0057, AHC-0058, AHC-0070, AHC-0080]
+serves: [AHC-0039, AHC-0054, AHC-0057, AHC-0058, AHC-0070, AHC-0080, AHC-0102]
 
 kernel_owns: >-
   Which action classes require approval, what the run does while it waits,
@@ -35,30 +35,58 @@ operations:
     intent: Deliver an external instruction to halt a run that is already in progress.
 
 invariants:
-  - must: A run cannot grant its own approval.
+  - key: no_self_grant
+    must: A run cannot grant its own approval.
     because: >-
       An approval reachable from the code being approved is not a control; the
       loop will find it, and the record will show an authorised action.
     capability: AHC-0057
     checkable: static
-  - must: A stop signal reaches a run that is already in progress.
+  - key: stop_reaches_running_run
+    must: A stop signal reaches a run that is already in progress.
     because: >-
       An unattended run that can only be stopped by killing a process loses its
       in-flight state, so the operator's choice is damage or more damage.
     capability: AHC-0054
     checkable: dynamic
-  - must: A rejection is returned as an outcome carrying its reason.
+  - key: rejection_is_an_outcome
+    must: A rejection is returned as an outcome carrying its reason.
     because: >-
       Discarded, the rejection teaches nobody anything and the same action is
       resubmitted tomorrow, which is how reviewers stop reviewing.
     capability: AHC-0080
     checkable: dynamic
-  - must: A request carries the context needed to decide it.
+  - key: request_carries_context
+    must: A request carries the context needed to decide it.
     because: >-
       A reviewer who has to reconstruct what happened either approves blindly or
       becomes the bottleneck, and both outcomes remove the control.
     capability: AHC-0070
     checkable: declared
+  - key: undecided_expires
+    must: A request that is never decided expires, and an expired request is never carried out.
+    because: >-
+      A pending action with no end is a standing permission waiting for anyone
+      who finds it, and the one carried out a week later acts on a situation
+      nobody judged.
+    capability: AHC-0057
+    checkable: dynamic
+  - key: decision_records_what_it_judged
+    must: A decision is recorded once, with who made it and the state it was made against, and is never changed afterwards.
+    because: >-
+      Without the state it judged, a grant cannot be checked against what has
+      moved since; without finality, the record of who decided can be
+      rewritten by the next decision.
+    capability: AHC-0057
+    checkable: dynamic
+  - key: survival_is_declared
+    must: A pending request outlives the process that raised it, or the implementation declares that it does not.
+    because: >-
+      Run state that points at an approval which vanished on restart reads the
+      absence as nothing owed, and the action a person was told is waiting is
+      silently dropped, with no error anywhere.
+    capability: AHC-0102
+    checkable: dynamic
 
 substitution_test: >-
   Replace the implementation with a command-line prompt. Which actions stop for

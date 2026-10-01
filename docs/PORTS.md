@@ -4,7 +4,7 @@ A capability says what must exist. A **port** says where the harness meets
 something it does not own, and what must hold across that meeting whoever
 implements it.
 
-Seventeen of them: ten every harness has, seven pulled in by archetype.
+Eighteen of them: ten every harness has, eight pulled in by archetype.
 
 ## Why the layer exists
 
@@ -24,7 +24,9 @@ language without this repository shipping a package.
 
 - **Not an interface definition.** No signatures, no types, no language, no
   error taxonomy. `operations` states intent; a generated interface states
-  shape, and generation belongs downstream.
+  shape, and generation belongs downstream. Whether three ports should go
+  further is an experiment, with its criteria fixed before it runs:
+  [PORTS-AS-A-STANDARD.md](PORTS-AS-A-STANDARD.md).
 - **Not a partition of the catalog.** Most capabilities are structural and cross
   no seam at all — 26 of 98 today. A capability with no port is normal, not a
   gap, and the linter reports the split as information rather than a fault.
@@ -55,6 +57,20 @@ wrapper on it: the swap that must be possible, and what may legitimately differ
 afterwards. If no such swap can be described, the seam is in the wrong place.
 `model` must survive being replaced by recorded fixtures; `state` by an
 in-memory map; `policy` by moving from in-process to a gateway.
+
+## Standards a port cites, and the names a conformance case uses
+
+**`standards`** cites a published specification that already defines part of a
+seam's wire — trace context, a tool protocol, a feature-flag evaluation — and
+says which operations it covers. A citation never adds or removes an invariant;
+an implementation that conforms to the specification supplies those operations,
+and the port's invariants hold on top. It is the one field in a port where a
+proper name may appear, because citing a specification is principle 1, not an
+endorsement. A citation of one vendor's interface is marked `de-facto`.
+
+**`key`** on an invariant is a permanent name a conformance case cites as
+`port/key`, the way a profile cites a decision as `AHC-####/key`. The cases
+themselves live outside this repository.
 
 ## Core and extension
 
