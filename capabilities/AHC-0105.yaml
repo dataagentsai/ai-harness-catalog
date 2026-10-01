@@ -12,6 +12,7 @@ facet: testability
 
 archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
 core: true
+applies_when: provider interactions are recorded for replay
 
 title: |-
   A recorded interaction replays only against the request that produced it, and a miss fails the run

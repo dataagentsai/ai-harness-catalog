@@ -12,6 +12,7 @@ facet: operational constraint
 
 archetypes: [A8]
 core: false
+applies_when: the harness runs what the model produced
 
 title: |-
   Generated artifacts execute only in a bounded sandbox

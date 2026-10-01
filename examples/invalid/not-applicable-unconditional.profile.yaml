@@ -1,0 +1,40 @@
+# MUST FAIL — "not applicable" on a capability that is owed unconditionally.
+#
+# AHC-0004, one choke point for every model call, states no condition: every
+# system of every shape owes it. Marking it not applicable is an accepted gap
+# with its owner and review date taken off, which is the one thing the block
+# exists not to allow. AHC-0015, which does state a condition, is listed
+# correctly beside it, so the failure is the unconditional entry and nothing else.
+apiVersion: harness-profile/v1
+
+subject:
+  name: broken-not-applicable
+  archetypes: [A1]
+
+catalog:
+  ahc: "0.3.0"
+
+decisions: {}
+
+thresholds:
+  max_concurrency: 4
+
+bindings:
+  model:       { approach: in-house,     adapter: http-messages-client }
+  config:      { approach: in-house,     adapter: versioned-files }
+  telemetry:   { approach: open-source,  adapter: otlp-http }
+  policy:      { approach: in-house,     adapter: inprocess-rules }
+  identity:    { approach: in-house,     adapter: request-principal }
+  secrets:     { approach: cloud-native, adapter: managed-secret-store }
+  cost_ledger: { approach: in-house,     adapter: memory-ledger }
+  admission:   { approach: in-house,     adapter: semaphore }
+  recorder:    { approach: in-house,     adapter: file-fixtures }
+  eval_task:   { approach: platform,     adapter: external-eval-runner }
+
+accepted_gaps: []
+
+not_applicable:
+  - capability: AHC-0015
+    reason: The answer is returned whole in one response; nothing is streamed.
+  - capability: AHC-0004
+    reason: There is only one model client, so a choke point seems unnecessary.

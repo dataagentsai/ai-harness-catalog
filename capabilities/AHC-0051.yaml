@@ -12,6 +12,7 @@ facet: faultlessness
 
 archetypes: [A7]
 core: false
+applies_when: agents read and write common state
 
 title: |-
   Shared state between agents has exactly one owner

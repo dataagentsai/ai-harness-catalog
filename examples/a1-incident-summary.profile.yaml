@@ -75,15 +75,24 @@ bindings:
 # Owned, dated and identified. An undiscovered gap is a finding; this is a
 # position.
 accepted_gaps:
-  - capability: AHC-0092
-    reason: >-
-      Single-region deployment with one provider endpoint, so there is no
-      routing choice to pin or record.
-    owner: platform-team
-    review: "2026-12-01"
   - capability: AHC-0098
     reason: >-
       All traffic is interactive and arrives through one entry point, so there
       is no second class for a priority scheme to separate it from.
     owner: platform-team
     review: "2026-12-01"
+
+# ----------------------------------------------------------- not applicable
+# Not gaps. Each of these capabilities states the condition under which it is
+# owed at all (`applies_when`), and here the condition does not hold — so there
+# is nothing to own and nothing to review, only a reason a reviewer can check.
+# The linter refuses this block for a capability that states no condition.
+not_applicable:
+  - capability: AHC-0092
+    reason: >-
+      No residency rule binds this system: the incident text it summarises may
+      be processed in any region the provider serves from.
+    revisit_when: a customer contract or a regulation names a region
+  - capability: AHC-0015
+    reason: The summary is returned whole in one response; nothing is streamed.
+    revisit_when: the summary is streamed to the caller

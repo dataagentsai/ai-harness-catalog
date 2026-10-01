@@ -11,6 +11,7 @@ concern: cost
 
 archetypes: [A5, A6, A7, A9]
 core: false
+applies_when: the specification states which requests are answerable without the model
 
 title: |-
   A request the specification can answer without the model is answered without it

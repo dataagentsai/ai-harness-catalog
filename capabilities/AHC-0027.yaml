@@ -12,6 +12,7 @@ facet: analysability
 
 archetypes: [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10]
 core: true
+applies_when: more than one route can serve a request — several deployments, several providers, a cache, a fallback or a cheaper tier
 
 title: |-
   The record states which route served the call, and why

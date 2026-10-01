@@ -9,6 +9,11 @@ The written half — where the seams fall, which position owns what — is in
 
 **73 capabilities**, across 16 of 16 layers.
 
+**8 of them are owed only where their condition holds**, marked *Owed where* below:
+AHC-0015, AHC-0027, AHC-0092, AHC-0093, AHC-0097, AHC-0100, AHC-0105, AHC-0109. A system for which the condition does not hold
+lists the capability under `not_applicable` in its profile, with the reason — not as an
+accepted gap, because nothing is owed. Every other capability here is owed unconditionally.
+
 | Layer | Owes |
 |---|---|
 | **L1** Context assembly | AHC-0002, AHC-0011, AHC-0012, AHC-0013, AHC-0031, AHC-0035, AHC-0038, AHC-0045, AHC-0103, AHC-0107, AHC-0108, AHC-0109 |
@@ -131,6 +136,8 @@ The harness maintains, separately from the message history, a typed record of wh
 
 *MUST · security*
 
+**Owed where** the harness reduces context by producing a summary rather than by discarding whole units.
+
 Where the harness reduces context by producing a summary rather than by discarding whole units, the summary carries the provenance of its least trusted input, and is placed and fenced accordingly. A summary over any untrusted material is untrusted material. The labelling is applied by the component that produces the summary, from the labels its inputs already carry, and is never inferred afterwards from the summary's own text.
 
 **Answer in the profile:**
@@ -184,6 +191,8 @@ Temperature, top-p, maximum output length, stop sequences and any seed are set e
 
 *SHOULD · core · reliability*
 
+**Owed where** output is streamed to the caller.
+
 Where output is streamed, the stream carries an explicit terminal event distinguishing normal completion from abort, refusal and provider failure, and the caller can cancel it such that work downstream actually stops. A stream that simply ends is indistinguishable from a connection that dropped, and the contract must make them distinguishable.
 
 **Discharges** AAC-0092, AAC-0002, AAC-0008
@@ -191,6 +200,8 @@ Where output is streamed, the stream carries an explicit terminal event distingu
 ### AHC-0027 — The record states which route served the call, and why
 
 *MUST · core · maintainability*
+
+**Owed where** more than one route can serve a request — several deployments, several providers, a cache, a fallback or a cheaper tier.
 
 Where more than one route can serve a request — several deployments, several providers, a cache, a fallback, a cheaper tier — the record names the route that served it, the reason it was selected, and whether the response came from a cache rather than the model.
 
@@ -200,13 +211,17 @@ Where more than one route can serve a request — several deployments, several p
 
 *MAY · core · security*
 
-Where a jurisdiction constrains where content may be processed, the reachable routes are restricted to endpoints in permitted regions as configuration under AHC-0009, and the region that actually served each call is recorded alongside the route under AHC-0027. Applies when a data-residency obligation exists.
+**Owed where** a jurisdiction constrains where content may be processed — a data-residency obligation exists.
+
+Where a jurisdiction constrains where content may be processed, the reachable routes are restricted to endpoints in permitted regions as configuration under AHC-0009, and the region that actually served each call is recorded alongside the route under AHC-0027.
 
 **Discharges** AAC-0097, AAC-0094, AAC-0096
 
 ### AHC-0105 — A recorded interaction replays only against the request that produced it, and a miss fails the run
 
 *SHOULD · core · maintainability*
+
+**Owed where** provider interactions are recorded for replay.
 
 Where provider interactions are recorded for replay, a recording is served only against a request equivalent to the one recorded — under a declared notion of equivalence, which states what may differ without invalidating it. A request with no match is a failure of the run, reported as a miss and distinguishable from the provider being unavailable. The recording declares the format version it was written in, and one written in a version the reader does not know is refused rather than interpreted. Which world served a call — live or recorded — is on the record. Values the harness mints afresh for every run — a fence's nonce (AHC-0011), when a read was made (AHC-0107), the identifier of an approval or a handoff — are named in the equivalence as what may differ, or no recording made under those capabilities ever replays.
 
@@ -269,6 +284,8 @@ When a tool errors, times out or returns nothing, the dispatcher converts that i
 ### AHC-0100 — A request the specification can answer without the model is answered without it
 
 *MUST · cost*
+
+**Owed where** the specification states which requests are answerable without the model.
 
 Where the specification states which requests are answerable deterministically, those requests reach a path that answers them from declared data and declared templates, and that path is selected before any model is called. The classification is made from the request and the conversation's own state — never from model output — and the deterministic answer contains nothing the model produced. Which path served the request is recorded, and the classification rules are versioned configuration rather than code edited in passing.
 
@@ -345,6 +362,8 @@ Each step states whether it can be re-executed with the same input without addit
 
 *MUST · cost*
 
+**Owed where** the specification states which requests are answerable without the model.
+
 Where the specification states which requests are answerable deterministically, those requests reach a path that answers them from declared data and declared templates, and that path is selected before any model is called. The classification is made from the request and the conversation's own state — never from model output — and the deterministic answer contains nothing the model produced. Which path served the request is recorded, and the classification rules are versioned configuration rather than code edited in passing.
 
 **Discharges** AAC-0100, AAC-0059, AAC-0089
@@ -407,6 +426,8 @@ The harness maintains, separately from the message history, a typed record of wh
 
 *MUST · security*
 
+**Owed where** the harness reduces context by producing a summary rather than by discarding whole units.
+
 Where the harness reduces context by producing a summary rather than by discarding whole units, the summary carries the provenance of its least trusted input, and is placed and fenced accordingly. A summary over any untrusted material is untrusted material. The labelling is applied by the component that produces the summary, from the labels its inputs already carry, and is never inferred afterwards from the summary's own text.
 
 **Answer in the profile:**
@@ -446,6 +467,8 @@ No model output reaches business logic as an unparsed string. A single parse-and
 ### AHC-0015 — Streaming has a completion and abort contract
 
 *SHOULD · core · reliability*
+
+**Owed where** output is streamed to the caller.
 
 Where output is streamed, the stream carries an explicit terminal event distinguishing normal completion from abort, refusal and provider failure, and the caller can cancel it such that work downstream actually stops. A stream that simply ends is indistinguishable from a connection that dropped, and the contract must make them distinguishable.
 
@@ -547,6 +570,8 @@ Prompts and responses are transformed at the point of capture, so that no unreda
 
 *MUST · core · security*
 
+**Owed where** more than one policy applies at one position.
+
 Where more than one policy applies at a position, the order they run in is declared rather than incidental, and each states whether it may modify what the next one sees. A policy that transforms content and a policy that inspects content are distinguished, and the record from AHC-0018 states the order that ran.
 
 **Discharges** AAC-0091, AAC-0006, AAC-0004
@@ -608,6 +633,8 @@ A request carries one absolute deadline set at the boundary, and every component
 ### AHC-0097 — Fan-out within one unit of work is bounded
 
 *MUST · core · performance-efficiency*
+
+**Owed where** a single request issues several model calls in parallel.
 
 Where a single request issues several model calls in parallel — one per document, per chunk, per candidate, per branch — the number is limited by the harness and drawn from the same accumulated budget as the unit under AHC-0007. The bound is separate from the process-wide concurrency limit of AHC-0020.
 
@@ -734,6 +761,8 @@ A request carries one absolute deadline set at the boundary, and every component
 
 *SHOULD · core · maintainability*
 
+**Owed where** provider interactions are recorded for replay.
+
 Where provider interactions are recorded for replay, a recording is served only against a request equivalent to the one recorded — under a declared notion of equivalence, which states what may differ without invalidating it. A request with no match is a failure of the run, reported as a miss and distinguishable from the provider being unavailable. The recording declares the format version it was written in, and one written in a version the reader does not know is refused rather than interpreted. Which world served a call — live or recorded — is on the record. Values the harness mints afresh for every run — a fence's nonce (AHC-0011), when a read was made (AHC-0107), the identifier of an approval or a handoff — are named in the equivalence as what may differ, or no recording made under those capabilities ever replays.
 
 **Answer in the profile:**
@@ -797,6 +826,8 @@ A single identifier is created where a unit of work begins and is carried by eve
 ### AHC-0027 — The record states which route served the call, and why
 
 *MUST · core · maintainability*
+
+**Owed where** more than one route can serve a request — several deployments, several providers, a cache, a fallback or a cheaper tier.
 
 Where more than one route can serve a request — several deployments, several providers, a cache, a fallback, a cheaper tier — the record names the route that served it, the reason it was selected, and whether the response came from a cache rather than the model.
 
@@ -954,6 +985,8 @@ The assembler reports the size of what it produced, broken down by segment class
 
 *MUST · core · performance-efficiency*
 
+**Owed where** a single request issues several model calls in parallel.
+
 Where a single request issues several model calls in parallel — one per document, per chunk, per candidate, per branch — the number is limited by the harness and drawn from the same accumulated budget as the unit under AHC-0007. The bound is separate from the process-wide concurrency limit of AHC-0020.
 
 **Discharges** AAC-0007, AAC-0008, AAC-0093
@@ -1056,7 +1089,9 @@ Every trigger carries an identifier derived from the occasion that caused it, an
 
 *MAY · core · security*
 
-Where a jurisdiction constrains where content may be processed, the reachable routes are restricted to endpoints in permitted regions as configuration under AHC-0009, and the region that actually served each call is recorded alongside the route under AHC-0027. Applies when a data-residency obligation exists.
+**Owed where** a jurisdiction constrains where content may be processed — a data-residency obligation exists.
+
+Where a jurisdiction constrains where content may be processed, the reachable routes are restricted to endpoints in permitted regions as configuration under AHC-0009, and the region that actually served each call is recorded alongside the route under AHC-0027.
 
 **Discharges** AAC-0097, AAC-0094, AAC-0096
 

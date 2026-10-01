@@ -377,6 +377,23 @@ function profileIssues(doc, prf) {
       w(`accepts a gap on ${g.capability}, which no declared shape owes`);
     }
   }
+  /*
+   * Not applicable is a narrower claim than a gap, and so a cheaper one: no
+   * owner, no review date. That is exactly why it is confined to capabilities
+   * that state their own condition. On any other capability it is a gap that
+   * has stopped saying so — the escape hatch the assurance catalog's report
+   * format warns about, arriving by the other door.
+   */
+  const gapped = new Set(doc.accepted_gaps.map((g) => g.capability));
+  for (const n of doc.not_applicable || []) {
+    const cap = byId.get(n.capability);
+    if (!cap) { e(`not_applicable references unknown ${n.capability}`); continue; }
+    if (!cap.applies_when) {
+      e(`${n.capability} is not conditional, so it cannot be not_applicable — meet it, or accept it as a gap with an owner and a review date`);
+    }
+    if (gapped.has(n.capability)) e(`${n.capability} is both an accepted gap and not applicable — it is one or the other`);
+    if (!owed.includes(cap)) w(`marks ${n.capability} not applicable, which no declared shape owes`);
+  }
   return { E, W };
 }
 

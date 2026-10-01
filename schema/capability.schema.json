@@ -69,6 +69,11 @@
       "type": "boolean",
       "description": "True if every AI application needs this regardless of shape. Presentational: core capabilities already list all archetypes."
     },
+    "applies_when": {
+      "type": "string",
+      "minLength": 10,
+      "description": "Optional. The condition under which a system of the listed shapes owes this capability at all, as a clause completing 'Owed where…' — 'output is streamed', 'a data-residency obligation exists'. Present only when the WHOLE requirement hangs on it, never for a clause inside an otherwise unconditional requirement. It is the only thing that lets a profile record the capability as not_applicable rather than as an accepted gap; without it, a capability is owed by every system of its shapes. The same condition is stated in the requirement's own words, so the two are read together."
+    },
     "title": { "type": "string", "minLength": 8, "maxLength": 120 },
     "requirement": {
       "type": "string",

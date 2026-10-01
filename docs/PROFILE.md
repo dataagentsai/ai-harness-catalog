@@ -36,7 +36,8 @@ accepted_gaps: [ { capability, reason, owner, review } ]
 All six are required, and empty is allowed for three of them. That is
 deliberate: an empty `decisions` block says every applicable decision is
 outstanding, which is a legitimate starting state and an illegitimate finishing
-one. Omitting the block entirely would let it be forgotten instead.
+one. Omitting the block entirely would let it be forgotten instead. A seventh
+block, `not_applicable`, is optional — see the end of this section.
 
 ### `source` — the field that earns its place
 
@@ -77,6 +78,29 @@ An owned, dated, identified gap is a defensible position; an undiscovered one is
 a finding. An empty list is therefore a claim rather than an absence — it says
 every applicable capability is accounted for somewhere else.
 
+### `not_applicable` — optional, and narrow on purpose
+
+Some capabilities are owed only under a condition, and say so in `applies_when`:
+a streaming contract where output is streamed, a pinned region where a residency
+rule exists. A system for which the condition does not hold lists the capability
+here with the reason, and optionally what would change that:
+
+```yaml
+not_applicable:
+  - capability: AHC-0015
+    reason: The answer is returned whole in one response; nothing is streamed.
+    revisit_when: the answer is streamed to the caller
+```
+
+It is not a gap — nothing is owed, so there is no owner and no review date —
+and that is exactly why it is confined to capabilities that state a condition.
+The linter refuses an entry for any other capability, and refuses a capability
+listed both here and in `accepted_gaps`. Before this block existed, the only way
+to say *this does not apply* was to file it as an accepted gap with a review
+date, which reads as a debt being carried; the reference agent had three of
+those (AHC-0015, AHC-0092, AHC-0109). The assurance catalog's report format
+draws the same line with its `not-applicable` status.
+
 ## What the linter checks
 
 `npm run lint` validates every `examples/*.profile.yaml` against the schema and
@@ -89,6 +113,8 @@ then against the catalog itself:
   them is.
 - Decision keys and accepted gaps reference capabilities that exist and that the
   declared shapes actually owe.
+- A `not_applicable` entry names a capability that declares `applies_when`, and
+  is not also an accepted gap.
 - The pinned catalog version matches the checkout.
 
 Roughly thirty lines, no dependency beyond a YAML parser. That is the point
@@ -98,7 +124,8 @@ interchange format. See [OPENNESS.md](OPENNESS.md), rules 2 and 6.
 ## Fixtures that must fail
 
 `examples/invalid/` holds profiles broken in one specific way each — a core port
-unbound, an agent with no declared loop owner. The build fails if the linter
+unbound, an agent with no declared loop owner, an unconditional capability marked
+not applicable. The build fails if the linter
 stops rejecting them.
 
 A check nobody has watched fail is not a check, and this is the cheapest

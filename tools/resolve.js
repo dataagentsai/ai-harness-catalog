@@ -35,6 +35,7 @@
  *                   point, and the reason this is not a shallow merge.
  *   accepted_gaps   concatenated, child first. A baseline's gap does not stop
  *                   being a gap because a system inherited it.
+ *   not_applicable  concatenated, child first, on the same argument.
  *   x_untested      concatenated.
  * ---------------------------------------------------------------------------
  *
@@ -55,7 +56,7 @@ const path = require("path");
 const yaml = require("js-yaml");
 
 const OBJECT_KEYS = ["harness", "decisions", "thresholds"];
-const LIST_KEYS = ["accepted_gaps", "x_untested"];
+const LIST_KEYS = ["accepted_gaps", "not_applicable", "x_untested"];
 
 /** Fields whose change means the child has left the baseline. */
 const IDENTITY_FIELDS = ["approach", "adapter"];

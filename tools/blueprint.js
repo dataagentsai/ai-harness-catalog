@@ -59,6 +59,15 @@ for (const cap of owed) {
     byLayer.get(layer).push(cap);
   }
 }
+/*
+ * A capability whose whole requirement hangs on a condition — streaming, a
+ * residency rule — is owed by every shape it lists, but only where the
+ * condition holds. Saying "owes" without the condition made the A6 blueprint
+ * contradict a profile that had correctly found AHC-0015 and AHC-0092 not to
+ * apply, and the only way the profile could say so was as an accepted gap.
+ */
+const conditional = owed.filter((c) => c.applies_when);
+
 const ordered = [...byLayer.keys()].sort(
   (a, b) => Number(a.slice(1)) - Number(b.slice(1))
 );
@@ -75,6 +84,15 @@ const lines = [
   "",
   `**${owed.length} capabilities**, across ${ordered.length} of ${LAYER.size} layers.`,
   "",
+  ...(conditional.length
+    ? [
+        `**${conditional.length} of them are owed only where their condition holds**, marked *Owed where* below:`,
+        `${conditional.map((c) => c.id).join(", ")}. A system for which the condition does not hold`,
+        "lists the capability under `not_applicable` in its profile, with the reason — not as an",
+        "accepted gap, because nothing is owed. Every other capability here is owed unconditionally.",
+        "",
+      ]
+    : []),
   "| Layer | Owes |",
   "|---|---|",
 ];
@@ -88,6 +106,7 @@ for (const layer of ordered) {
   for (const cap of byLayer.get(layer)) {
     lines.push(`### ${cap.id} — ${cap.title.trim()}`, "");
     lines.push(`*${cap.level}${cap.core ? " · core" : ""} · ${cap.concern}*`, "");
+    if (cap.applies_when) lines.push(`**Owed where** ${cap.applies_when.trim()}.`, "");
     lines.push(cap.requirement.trim(), "");
     const keyed = (cap.design_decisions || []).filter((d) => d.key);
     if (keyed.length) {

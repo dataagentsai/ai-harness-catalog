@@ -12,6 +12,7 @@ facet: resistance
 
 archetypes: [A3, A4, A6, A7, A9]
 core: false
+applies_when: the harness reduces context by producing a summary rather than by discarding whole units
 
 title: |-
   A summary carries the least trusted provenance of what it summarised

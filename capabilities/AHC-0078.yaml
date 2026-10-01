@@ -12,6 +12,7 @@ facet: operational constraint
 
 archetypes: [A8]
 core: false
+applies_when: output modifies existing material
 
 title: |-
   The edit scope is declared and enforced outside the model

@@ -155,6 +155,28 @@
           "review": { "type": "string", "format": "date" }
         }
       }
+    },
+    "not_applicable": {
+      "type": "array",
+      "description": "Optional. Capabilities whose stated condition (`applies_when`) does not hold for this system — it does not stream, no residency rule binds it. Not a gap: nothing is owed, so there is no owner and no review date. Only a capability that declares `applies_when` may appear here; the linter refuses any other, because 'not applicable' on an unconditional capability is an accepted gap that has stopped saying so. Mirrors the assurance catalog's `not-applicable` report status.",
+      "items": {
+        "type": "object",
+        "required": ["capability", "reason"],
+        "additionalProperties": false,
+        "patternProperties": { "^x_": {} },
+        "properties": {
+          "capability": { "type": "string", "pattern": "^AHC-[0-9]{4}$" },
+          "reason": {
+            "type": "string",
+            "minLength": 20,
+            "description": "Why the condition does not hold here, in terms a reviewer can check — 'the response is returned whole; nothing is streamed', not 'not relevant'."
+          },
+          "revisit_when": {
+            "type": "string",
+            "description": "Optional. The change to this system that would make the condition hold — 'streaming is added'."
+          }
+        }
+      }
     }
   }
 }
