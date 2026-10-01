@@ -620,7 +620,7 @@ The number of model calls in flight is limited by an explicit control the harnes
 
 *MUST · core · reliability*
 
-A rate-limit response is classified separately from an error, and drives a different path: wait for the interval the provider indicated, reduce the rate in flight, and only then retry. Any retry after a throttle is spaced with randomised backoff so that concurrent callers do not resume in step.
+A rate-limit response is classified separately from an error, and drives a different path: wait for the interval the provider indicated, reduce the rate in flight, and only then retry. Any retry after a throttle is spaced with randomised backoff so that concurrent callers do not resume in step. The randomised spread is added to the indicated interval, never raced against it: the pause after a throttle is at least the interval the provider indicated.
 
 **Discharges** AAC-0009, AAC-0007
 
@@ -710,7 +710,7 @@ The harness returns a value that names which of its terminal states occurred, dr
 
 *MUST · core · reliability*
 
-A rate-limit response is classified separately from an error, and drives a different path: wait for the interval the provider indicated, reduce the rate in flight, and only then retry. Any retry after a throttle is spaced with randomised backoff so that concurrent callers do not resume in step.
+A rate-limit response is classified separately from an error, and drives a different path: wait for the interval the provider indicated, reduce the rate in flight, and only then retry. Any retry after a throttle is spaced with randomised backoff so that concurrent callers do not resume in step. The randomised spread is added to the indicated interval, never raced against it: the pause after a throttle is at least the interval the provider indicated.
 
 **Discharges** AAC-0009, AAC-0007
 

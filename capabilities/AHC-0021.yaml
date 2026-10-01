@@ -17,7 +17,7 @@ title: |-
   Throttling is handled as a distinct condition from failure
 
 requirement: |-
-  A rate-limit response is classified separately from an error, and drives a different path: wait for the interval the provider indicated, reduce the rate in flight, and only then retry. Any retry after a throttle is spaced with randomised backoff so that concurrent callers do not resume in step.
+  A rate-limit response is classified separately from an error, and drives a different path: wait for the interval the provider indicated, reduce the rate in flight, and only then retry. Any retry after a throttle is spaced with randomised backoff so that concurrent callers do not resume in step. The randomised spread is added to the indicated interval, never raced against it: the pause after a throttle is at least the interval the provider indicated.
 
 failure_mode: |-
   Collapsed into the generic error path, a throttle is retried immediately, which produces another throttle. Where several callers were throttled at the same moment, they retry at the same moment, and the system converges on a synchronised burst that guarantees the limit stays exceeded. The provider is not down, and the system behaves as though it were.
