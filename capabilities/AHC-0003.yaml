@@ -18,7 +18,7 @@ title: |-
   The running configuration is resolved once and recorded
 
 requirement: |-
-  Model identifier, prompt version, sampling parameters, tool set and enabled policies are resolved from pinned configuration when the harness is constructed, not read ad hoc at each call site. The resolved set is emitted as a single record that identifies exactly what is running, and the same record is reproducible from a commit plus a configuration reference.
+  Model identifier, the prompt — identified by its content, not by a label that can stay the same while the text changes — sampling parameters, tool set and enabled policies are resolved from pinned configuration when the harness is constructed, not read ad hoc at each call site. The resolved set is emitted as a single record that identifies exactly what is running, and the same record is reproducible from a commit plus a configuration reference.
 
 failure_mode: |-
   Without a single resolution point, "which model answered this?" becomes an archaeology exercise across environment variables, defaults buried in a client library, and a provider alias that silently moved to a new version last Tuesday. Rollback becomes guesswork because nobody can state what the previous configuration was.

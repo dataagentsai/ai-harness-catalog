@@ -16,7 +16,7 @@ title: |-
   The loop has a no-progress condition, not only a step ceiling
 
 requirement: |-
-  The loop detects that it is repeating — the same tool with the same arguments, an alternation between two states, a sequence of steps that changes nothing observable — and terminates on that condition independently of whether the step ceiling has been reached. Progress is defined by the harness in terms it can observe, not by asking the model whether it is making any.
+  The loop detects that it is repeating — the same tool with the same arguments returning the same result, an alternation between two states, a sequence of steps that changes nothing observable — and terminates on that condition independently of whether the step ceiling has been reached. Progress is defined by the harness in terms it can observe, not by asking the model whether it is making any.
 
 failure_mode: |-
   A step ceiling alone converts an infinite loop into an expensive finite one: the agent repeats the same failing call forty times and stops because it ran out of steps, having spent the entire budget on one mistake. The user waits the full duration to receive nothing, and the record shows a normal budget exhaustion rather than a stuck loop.

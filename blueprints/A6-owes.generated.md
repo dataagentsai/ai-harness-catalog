@@ -326,7 +326,7 @@ Step count, wall-clock time and token spend are counted by the loop itself and c
 
 *MUST · cost*
 
-The loop detects that it is repeating — the same tool with the same arguments, an alternation between two states, a sequence of steps that changes nothing observable — and terminates on that condition independently of whether the step ceiling has been reached. Progress is defined by the harness in terms it can observe, not by asking the model whether it is making any.
+The loop detects that it is repeating — the same tool with the same arguments returning the same result, an alternation between two states, a sequence of steps that changes nothing observable — and terminates on that condition independently of whether the step ceiling has been reached. Progress is defined by the harness in terms it can observe, not by asking the model whether it is making any.
 
 **Discharges** AAC-0055, AAC-0063, AAC-0054
 
@@ -342,7 +342,7 @@ When a tool errors, times out or returns nothing, the dispatcher converts that i
 
 *MUST · reliability*
 
-After each step, the loop's state — the steps taken, their results, the accumulated budget and the current position — is written somewhere that survives the process. A trajectory can be resumed from its last checkpoint, and can be replayed from the record without re-executing tools that write.
+The loop's state — the steps taken, their results, the accumulated budget and the current position — is written somewhere that survives the process, at boundaries the harness declares and always before an irreversible dispatch, landing ahead of the effect. A trajectory can be resumed from its last checkpoint, and can be replayed from the record without re-executing tools that write.
 
 **Discharges** AAC-0059, AAC-0060, AAC-0080, AAC-0046
 
@@ -390,7 +390,7 @@ A turn ends as a completed answer only where the answer is in it. Where the run 
 
 *MUST · reliability*
 
-After each step, the loop's state — the steps taken, their results, the accumulated budget and the current position — is written somewhere that survives the process. A trajectory can be resumed from its last checkpoint, and can be replayed from the record without re-executing tools that write.
+The loop's state — the steps taken, their results, the accumulated budget and the current position — is written somewhere that survives the process, at boundaries the harness declares and always before an irreversible dispatch, landing ahead of the effect. A trajectory can be resumed from its last checkpoint, and can be replayed from the record without re-executing tools that write.
 
 **Discharges** AAC-0059, AAC-0060, AAC-0080, AAC-0046
 
@@ -1039,7 +1039,7 @@ Actions in the irreversible class from AHC-0039 are held pending an approval iss
 
 *MUST · core · maintainability*
 
-Model identifier, prompt version, sampling parameters, tool set and enabled policies are resolved from pinned configuration when the harness is constructed, not read ad hoc at each call site. The resolved set is emitted as a single record that identifies exactly what is running, and the same record is reproducible from a commit plus a configuration reference.
+Model identifier, the prompt — identified by its content, not by a label that can stay the same while the text changes — sampling parameters, tool set and enabled policies are resolved from pinned configuration when the harness is constructed, not read ad hoc at each call site. The resolved set is emitted as a single record that identifies exactly what is running, and the same record is reproducible from a commit plus a configuration reference.
 
 **Discharges** AAC-0012, AAC-0107, AAC-0101
 

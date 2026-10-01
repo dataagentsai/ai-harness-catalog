@@ -17,7 +17,7 @@ title: |-
   The trajectory is checkpointed, not held only in memory
 
 requirement: |-
-  After each step, the loop's state — the steps taken, their results, the accumulated budget and the current position — is written somewhere that survives the process. A trajectory can be resumed from its last checkpoint, and can be replayed from the record without re-executing tools that write.
+  The loop's state — the steps taken, their results, the accumulated budget and the current position — is written somewhere that survives the process, at boundaries the harness declares and always before an irreversible dispatch, landing ahead of the effect. A trajectory can be resumed from its last checkpoint, and can be replayed from the record without re-executing tools that write.
 
 failure_mode: |-
   Held only in process memory, a deployment, a crash or a scale-in event during a long trajectory destroys every step of work and every token spent on it, with no way to resume and frequently no record of how far it got. Where the agent had already taken irreversible actions, the system is now in a state nobody can reconstruct: the effects happened and the account of them did not survive.
@@ -32,7 +32,11 @@ design_decisions:
       the last one — which, for an agent, may include an irreversible action.
     resolution: >-
       Checkpoint before any irreversible dispatch, whatever the general policy.
-      That write must land before the effect does.
+      That write must land before the effect does. Between those points the
+      boundary is the harness's to declare — every step, or every turn — and
+      what a coarser one loses on a crash is reads and model calls, which a
+      resume repeats at a cost and without harm; that trade is acceptable only
+      because no irreversible effect can fall inside it.
   - question: Does resumption re-run the last step or continue past it?
     tension: >-
       Re-running is simple and repeats an effect that may already have applied.
