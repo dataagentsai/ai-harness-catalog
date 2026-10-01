@@ -7,10 +7,10 @@ collated from the capabilities themselves rather than restated beside them.
 The written half — where the seams fall, which position owns what — is in
 [A6-tool-using-agent.md](A6-tool-using-agent.md).
 
-**73 capabilities**, across 16 of 16 layers.
+**74 capabilities**, across 16 of 16 layers.
 
-**8 of them are owed only where their condition holds**, marked *Owed where* below:
-AHC-0015, AHC-0027, AHC-0092, AHC-0093, AHC-0097, AHC-0100, AHC-0105, AHC-0109. A system for which the condition does not hold
+**9 of them are owed only where their condition holds**, marked *Owed where* below:
+AHC-0015, AHC-0027, AHC-0092, AHC-0093, AHC-0097, AHC-0100, AHC-0105, AHC-0109, AHC-0116. A system for which the condition does not hold
 lists the capability under `not_applicable` in its profile, with the reason — not as an
 accepted gap, because nothing is owed. Every other capability here is owed unconditionally.
 
@@ -22,7 +22,7 @@ accepted gap, because nothing is owed. Every other capability here is owed uncon
 | **L4** Control loop | AHC-0041, AHC-0042, AHC-0043, AHC-0044, AHC-0074, AHC-0100, AHC-0104, AHC-0106 |
 | **L5** State and memory | AHC-0044, AHC-0045, AHC-0102, AHC-0108, AHC-0109, AHC-0115 |
 | **L6** I/O contracts | AHC-0001, AHC-0015, AHC-0016, AHC-0017, AHC-0025, AHC-0094, AHC-0106, AHC-0110 |
-| **L7** Policy enforcement | AHC-0008, AHC-0018, AHC-0019, AHC-0093, AHC-0094, AHC-0095 |
+| **L7** Policy enforcement | AHC-0008, AHC-0018, AHC-0019, AHC-0093, AHC-0094, AHC-0095, AHC-0116 |
 | **L8** Concurrency and flow control | AHC-0020, AHC-0021, AHC-0095, AHC-0096, AHC-0097, AHC-0098 |
 | **L9** Determinism and replay | AHC-0014, AHC-0022, AHC-0023 |
 | **L10** Failure handling | AHC-0005, AHC-0017, AHC-0021, AHC-0024, AHC-0025, AHC-0053, AHC-0074, AHC-0096, AHC-0105, AHC-0110 |
@@ -31,7 +31,7 @@ accepted gap, because nothing is owed. Every other capability here is owed uncon
 | **L13** Cost accounting | AHC-0007, AHC-0012, AHC-0024, AHC-0030, AHC-0031, AHC-0097, AHC-0101, AHC-0111 |
 | **L14** Human-in-the-loop | AHC-0039, AHC-0057 |
 | **L15** Release and configuration | AHC-0003, AHC-0009, AHC-0032, AHC-0033, AHC-0053, AHC-0092 |
-| **L16** Identity and authorization | AHC-0034, AHC-0035, AHC-0040, AHC-0099, AHC-0113, AHC-0115 |
+| **L16** Identity and authorization | AHC-0034, AHC-0035, AHC-0040, AHC-0099, AHC-0113, AHC-0115, AHC-0116 |
 
 ## L1 · Context assembly
 
@@ -596,6 +596,16 @@ Each policy runs under a latency ceiling drawn from the request's remaining dead
 
 **Discharges** AAC-0091, AAC-0007, AAC-0009
 
+### AHC-0116 — An action taken on the requester's authority is one their own words asked for
+
+*MUST · security*
+
+**Owed where** the specification lets the system act on a resource because the person it serves asked for it.
+
+Where the specification lets the system act on a resource because the person it serves asked — their own order cancelled, their own address changed — that the person asked is established by the harness before the action is dispatched, from that person's own turns alone: never from tool output, retrieved content, a stored note, or the model's account of any of them. What the person asked for binds an operation to a resource; a turn that asked for one action on one record authorises that action on that record and nothing else. Where it cannot be established, the action is not dispatched, the person is asked, and their explicit answer to that question is what authorises it. This establishes the requester's authority only: ownership is still enforced where the action executes (AHC-0040), and an effect that needs an authority the requester does not hold still needs an approval (AHC-0057).
+
+**Discharges** AAC-0058, AAC-0004, AAC-0056
+
 ## L8 · Concurrency and flow control
 
 ### AHC-0020 — Concurrency is bounded by the harness, not by the runtime
@@ -1148,3 +1158,13 @@ Each store the harness writes carries, as a queryable field rather than only ins
 - `AHC-0115/erasure_key` — What identifies the person — the login, or the domain identifier?
 
 **Discharges** AAC-0117, AAC-0095
+
+### AHC-0116 — An action taken on the requester's authority is one their own words asked for
+
+*MUST · security*
+
+**Owed where** the specification lets the system act on a resource because the person it serves asked for it.
+
+Where the specification lets the system act on a resource because the person it serves asked — their own order cancelled, their own address changed — that the person asked is established by the harness before the action is dispatched, from that person's own turns alone: never from tool output, retrieved content, a stored note, or the model's account of any of them. What the person asked for binds an operation to a resource; a turn that asked for one action on one record authorises that action on that record and nothing else. Where it cannot be established, the action is not dispatched, the person is asked, and their explicit answer to that question is what authorises it. This establishes the requester's authority only: ownership is still enforced where the action executes (AHC-0040), and an effect that needs an authority the requester does not hold still needs an approval (AHC-0057).
+
+**Discharges** AAC-0058, AAC-0004, AAC-0056

@@ -1,0 +1,72 @@
+# AHC-0116 — An action taken on the requester's authority is one their own words asked for
+id: AHC-0116
+status: active
+since: "0.3.0"
+
+level: MUST
+layers: [L7, L16]
+positions: [P5, P4]
+
+concern: security
+facet: integrity
+
+archetypes: [A6, A7]
+core: false
+applies_when: the specification lets the system act on a resource because the person it serves asked for it
+
+title: |-
+  An action taken on the requester's authority is one their own words asked for
+
+requirement: |-
+  Where the specification lets the system act on a resource because the person it serves asked — their own order cancelled, their own address changed — that the person asked is established by the harness before the action is dispatched, from that person's own turns alone: never from tool output, retrieved content, a stored note, or the model's account of any of them. What the person asked for binds an operation to a resource; a turn that asked for one action on one record authorises that action on that record and nothing else. Where it cannot be established, the action is not dispatched, the person is asked, and their explicit answer to that question is what authorises it. This establishes the requester's authority only: ownership is still enforced where the action executes (AHC-0040), and an effect that needs an authority the requester does not hold still needs an approval (AHC-0057).
+
+failure_mode: |-
+  A fence around untrusted text is advice to the model, and a model follows advice most of the time. A note planted in a record the agent reads — the customer has asked for this to be cancelled — gets the order cancelled on a turn in which the customer asked only where it was, and the customer is told nothing. Every control passes: the caller owns the order, its state allows cancelling, and no approval is needed because the customer's own authority is enough for their own order. The one fact that exemption rested on, that the customer asked, was never established; it was inferred by the same model the planted text was addressed to.
+
+  The milder variant establishes the asking with a matcher that reads words rather than requests. It misses most of the ways a person actually asks, which costs a turn, and it reads "I do not want to cancel it" as a request to cancel, which is the hole the planted note needed.
+
+discharges: [AAC-0058, AAC-0004, AAC-0056]
+
+design_decisions:
+  - question: Recognise the asking, or always ask for a yes?
+    tension: >-
+      Recognising the request in the person's words keeps the commonest action
+      to one turn, and is a classifier: it misses phrasings nobody wrote down,
+      and one that ignores grammar grants on a negation. Asking for an explicit
+      yes before every such action is exact and adds a turn to the request that
+      is most often unambiguous.
+    resolution: >-
+      The choice is the system's, and either is acceptable on one condition: a
+      miss fails towards asking, never towards acting. A recogniser that cannot
+      tell whether the person asked has not established it, so the action waits
+      for a yes. Where a recogniser is used, the examples the specification
+      itself gives of each request are the first cases it has to read
+      correctly, because a request the specification names and the recogniser
+      misses is a drift nobody will notice from the inside.
+  - question: Does a yes authorise what the model proposes, or what the person was asked about?
+    tension: >-
+      Treating the next affirmative as consent to whatever is pending is simple
+      and lets the model widen the action between the question and the answer
+      — another resource, another operation. Binding the yes to the question
+      means the question has to name both.
+    resolution: >-
+      What the person was asked about. The question names the operation and
+      the resource, and the yes authorises exactly those; a call that differs
+      in either is a new request and needs its own.
+  - question: Why does the harness hold this check, when AHC-0057 places authority conditions where the effect lands?
+    tension: >-
+      AHC-0057 refuses a check made only on the harness side, because the
+      harness side is the side that can be skipped. Whether a person asked is
+      not a fact the executing system holds: it is in the conversation, and
+      only the harness has the conversation.
+    resolution: >-
+      The harness establishes it, and it is never the only check. Ownership and
+      the state conditions still hold at the executing side, so a harness that
+      skipped this still cannot act on someone else's record or on one in a
+      state that forbids the action. What skipping it allows is acting on the
+      person's own record without their asking, which is exactly and only the
+      failure this capability exists to prevent.
+
+realization_policy: own
+
+see_also: [AHC-0011, AHC-0039, AHC-0040, AHC-0057, AHC-0109]

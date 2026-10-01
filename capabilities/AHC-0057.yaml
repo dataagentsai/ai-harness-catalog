@@ -55,7 +55,9 @@ design_decisions:
       irreversible to the system and recoverable to them. An effect that moves
       value, or that they cannot re-create, is neither. Where the two differ the
       specification states the authority as conditions over declared state, and
-      the harness checks them where the action executes. What is never
+      the harness checks them where the action executes; where the authority is
+      the requester's own, that they asked is established under AHC-0116,
+      which no executing system can check. What is never
       acceptable is the agent deciding at the time which of the two it is
       looking at.
   - key: approval_staleness
@@ -128,4 +130,4 @@ design_decisions:
 
 realization_policy: own
 
-see_also: [AHC-0039, AHC-0054, AHC-0058]
+see_also: [AHC-0039, AHC-0054, AHC-0058, AHC-0116]
