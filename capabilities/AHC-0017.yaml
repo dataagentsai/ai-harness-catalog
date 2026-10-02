@@ -17,7 +17,7 @@ title: |-
   The caller receives a discriminated outcome, never a bare value
 
 requirement: |-
-  The harness returns a value that names which of its terminal states occurred, drawn from one list — succeeded, refused by policy, abstained for lack of grounds, degraded to a fallback, exhausted a budget, or failed — and the caller cannot read the payload without having handled the discriminator. A harness returns each state one of its own paths can reach, and has a branch-worthy value for every one it returns; it does not invent a state no path reaches. Abstained is reachable where the harness itself decides there are no grounds to answer — retrieval below the relevance it requires (AHC-0063), a deterministic route with nothing to answer from — and is not a label for a model's sentence saying it does not know. Only failed is a failure: the kinds of AHC-0110 classify what went wrong inside it, and the other five states are outcomes that carry no failure kind.
+  The harness returns a value that names which of its terminal states occurred, drawn from one list — succeeded, refused by policy, abstained for lack of grounds, degraded to a fallback, exhausted a budget, waiting on something that now holds the work, or failed — and the caller cannot read the payload without having handled the discriminator. A harness returns each state one of its own paths can reach, and has a branch-worthy value for every one it returns; it does not invent a state no path reaches. Abstained is reachable where the harness itself decides there are no grounds to answer — retrieval below the relevance it requires (AHC-0063), a deterministic route with nothing to answer from — and is not a label for a model's sentence saying it does not know. Waiting is reachable where the run left the answer to something that will produce it — a pending decision, a person holding a handoff, a continuation the caller can drive (AHC-0106) — and it carries that thing's reference; a waiting outcome with no reference is not one. Only failed is a failure: the kinds of AHC-0110 classify what went wrong inside it, and the other six states are outcomes that carry no failure kind.
 
 failure_mode: |-
   Where every state returns a string, a policy refusal, an abstention and a real answer are indistinguishable to the consumer, and all three get rendered to the user or written to a database as though they were results. The system that stores "I don't have enough information to answer that" as a customer record is the standard symptom.
@@ -53,7 +53,18 @@ design_decisions:
       shows up as a rising abstention rate rather than disappearing into the
       success count. It carries no failure kind under AHC-0110, because nothing
       went wrong that a caller could retry, escalate or fix.
+  - question: Is waiting one state, or one per thing that can be waited on?
+    tension: >-
+      A pending approval and a handoff to a person are acted on differently by
+      an operator, and AHC-0114's record names them apart (escalated, waiting).
+      But a caller does the same thing with both: shows the reference and does
+      not read the reply as the answer.
+    resolution: >-
+      One state, carrying what it waits on and that thing's reference. The
+      record may name it more finely; the return type branches where callers
+      do. Generation run 3 found the list without it while AHC-0106 and
+      AHC-0114 both required it.
 
 realization_policy: own
 
-see_also: [AHC-0001, AHC-0005, AHC-0016, AHC-0063, AHC-0110]
+see_also: [AHC-0001, AHC-0005, AHC-0016, AHC-0063, AHC-0106, AHC-0110, AHC-0114]

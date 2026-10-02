@@ -114,6 +114,20 @@ for (const layer of ordered) {
       for (const d of keyed) lines.push(`- \`${cap.id}/${d.key}\` — ${d.question}`);
       lines.push("");
     }
+    /*
+     * An unkeyed decision is one the catalog answered itself, and its answer is
+     * part of what is owed. Generation run 3 met AHC-0106 by matching the
+     * reply's wording, which is the option its resolution rejects — and the
+     * resolution was in no document a builder was pointed at.
+     */
+    const settled = (cap.design_decisions || []).filter((d) => !d.key && d.resolution);
+    if (settled.length) {
+      lines.push("**Settled by the catalog:**", "");
+      for (const d of settled) {
+        lines.push(`- *${d.question.trim()}* ${d.resolution.trim().replace(/\s+/g, " ")}`);
+      }
+      lines.push("");
+    }
     if (cap.discharges && cap.discharges.length) {
       lines.push(`**Discharges** ${cap.discharges.join(", ")}`, "");
     }
