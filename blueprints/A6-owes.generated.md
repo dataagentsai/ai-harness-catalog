@@ -7,10 +7,10 @@ collated from the capabilities themselves rather than restated beside them.
 The written half — where the seams fall, which position owns what — is in
 [A6-tool-using-agent.md](A6-tool-using-agent.md).
 
-**75 capabilities**, across 16 of 16 layers.
+**76 capabilities**, across 16 of 16 layers.
 
-**10 of them are owed only where their condition holds**, marked *Owed where* below:
-AHC-0015, AHC-0027, AHC-0092, AHC-0093, AHC-0097, AHC-0100, AHC-0105, AHC-0109, AHC-0116, AHC-0117. A system for which the condition does not hold
+**11 of them are owed only where their condition holds**, marked *Owed where* below:
+AHC-0015, AHC-0027, AHC-0092, AHC-0093, AHC-0097, AHC-0100, AHC-0105, AHC-0109, AHC-0116, AHC-0117, AHC-0118. A system for which the condition does not hold
 lists the capability under `not_applicable` in its profile, with the reason — not as an
 accepted gap, because nothing is owed. Every other capability here is owed unconditionally.
 
@@ -20,8 +20,8 @@ accepted gap, because nothing is owed. Every other capability here is owed uncon
 | **L2** Model invocation | AHC-0004, AHC-0009, AHC-0014, AHC-0015, AHC-0027, AHC-0092, AHC-0105 |
 | **L3** Tool layer | AHC-0036, AHC-0037, AHC-0038, AHC-0039, AHC-0040, AHC-0043, AHC-0100, AHC-0104, AHC-0107 |
 | **L4** Control loop | AHC-0041, AHC-0042, AHC-0043, AHC-0044, AHC-0074, AHC-0100, AHC-0104, AHC-0106 |
-| **L5** State and memory | AHC-0044, AHC-0045, AHC-0102, AHC-0108, AHC-0109, AHC-0115, AHC-0117 |
-| **L6** I/O contracts | AHC-0001, AHC-0015, AHC-0016, AHC-0017, AHC-0025, AHC-0094, AHC-0106, AHC-0110, AHC-0117 |
+| **L5** State and memory | AHC-0044, AHC-0045, AHC-0102, AHC-0108, AHC-0109, AHC-0115, AHC-0117, AHC-0118 |
+| **L6** I/O contracts | AHC-0001, AHC-0015, AHC-0016, AHC-0017, AHC-0025, AHC-0094, AHC-0106, AHC-0110, AHC-0117, AHC-0118 |
 | **L7** Policy enforcement | AHC-0008, AHC-0018, AHC-0019, AHC-0093, AHC-0094, AHC-0095, AHC-0116 |
 | **L8** Concurrency and flow control | AHC-0020, AHC-0021, AHC-0095, AHC-0096, AHC-0097, AHC-0098 |
 | **L9** Determinism and replay | AHC-0014, AHC-0022, AHC-0023 |
@@ -174,7 +174,7 @@ Every fact the harness places in context carries when it was read. The specifica
 
 *MUST · functional-suitability*
 
-The harness maintains, separately from the message history, a typed record of what this unit of work is about: what was asked, which records are in play, which actions have landed, and what is outstanding. It is written as those things happen rather than derived from the transcript afterwards, it is bounded by construction, and it is what a handoff, a resumption or a summary is built from. Where a transcript is reduced, this record is not reduced with it.
+The harness maintains, separately from the message history, a typed record of what this unit of work is about: what was asked — each distinct concern as its own item, with its own outcome once it has one (AHC-0118) — which records are in play, which actions have landed, and what is outstanding. It is written as those things happen rather than derived from the transcript afterwards, it is bounded by construction, and it is what a handoff, a resumption or a summary is built from. Where a transcript is reduced, this record is not reduced with it.
 
 **Answer in the profile:**
 
@@ -399,7 +399,7 @@ The permissions a tool operates under are held by the executing side and scoped 
 
 *MUST · reliability*
 
-When a tool errors, times out or returns nothing, the dispatcher converts that into a structured result the loop feeds back as an ordinary observation, distinguishing a transient failure from a permanent one and an empty result from an error. The loop continues under its existing budget rather than unwinding.
+When a tool errors, times out or returns nothing, the dispatcher converts that into a structured result the loop feeds back as an ordinary observation, distinguishing a transient failure from a permanent one and an empty result from an error. Which of the two a failure is comes from a kind the far end states as a field, never from the wording of its message; a transient failure may be retried inside the tool, under the same idempotency key and AHC-0024's bound, and a permanent one is not retried at all. The loop continues under its existing budget rather than unwinding.
 
 **Settled by the catalog:**
 
@@ -488,7 +488,7 @@ The loop detects that it is repeating — the same tool with the same arguments 
 
 *MUST · reliability*
 
-When a tool errors, times out or returns nothing, the dispatcher converts that into a structured result the loop feeds back as an ordinary observation, distinguishing a transient failure from a permanent one and an empty result from an error. The loop continues under its existing budget rather than unwinding.
+When a tool errors, times out or returns nothing, the dispatcher converts that into a structured result the loop feeds back as an ordinary observation, distinguishing a transient failure from a permanent one and an empty result from an error. Which of the two a failure is comes from a kind the far end states as a field, never from the wording of its message; a transient failure may be retried inside the tool, under the same idempotency key and AHC-0024's bound, and a permanent one is not retried at all. The loop continues under its existing budget rather than unwinding.
 
 **Settled by the catalog:**
 
@@ -616,7 +616,7 @@ A write of run or conversation state either lands complete or does not land: a r
 
 *MUST · functional-suitability*
 
-The harness maintains, separately from the message history, a typed record of what this unit of work is about: what was asked, which records are in play, which actions have landed, and what is outstanding. It is written as those things happen rather than derived from the transcript afterwards, it is bounded by construction, and it is what a handoff, a resumption or a summary is built from. Where a transcript is reduced, this record is not reduced with it.
+The harness maintains, separately from the message history, a typed record of what this unit of work is about: what was asked — each distinct concern as its own item, with its own outcome once it has one (AHC-0118) — which records are in play, which actions have landed, and what is outstanding. It is written as those things happen rather than derived from the transcript afterwards, it is bounded by construction, and it is what a handoff, a resumption or a summary is built from. Where a transcript is reduced, this record is not reduced with it.
 
 **Answer in the profile:**
 
@@ -680,6 +680,22 @@ Before the model is given the context for a turn, the harness re-reads every rec
 - *Does the stale result stay in context?* It stays, marked superseded, with the fresh read after it and named as what is now true. A reduced history may drop it; it is never the only copy of anything, because the record of what is in play holds the latest read.
 
 **Discharges** AAC-0029, AAC-0110
+
+### AHC-0118 — Every concern the caller raises reaches an outcome of its own
+
+*MUST · functional-suitability*
+
+**Owed where** a caller can raise more than one concern in one message.
+
+When a message raises more than one concern, the harness records each as its own item in the work record (AHC-0108) before any reply is composed, and a unit of work does not end as complete while any item lacks an outcome: answered, handed to a person with a reference, waiting on a decision with its identifier, or declined with a reason. An item the system has no route for is handed to a person rather than left unmentioned. A handoff carries every open item, so the person taking over sees what was raised as well as what was done. Whether an item has an outcome is decided from the record, never from the reply's wording.
+
+**Settled by the catalog:**
+
+- *Who splits a message into concerns — the harness, or the model?* The splitting may be a model's; the record and the check are the harness's. Items are recorded at intake, before the reply exists, from a structured output the harness validates; and the closing check — every item has an outcome — is a computation over that record. A split that finds nothing in a message the router could not classify is itself an item, handed to a person: a miss fails towards a person, never towards silence.
+- *Answer every concern in one reply, or one per turn?* Every item in the first reply, each with its outcome, even where the outcome is "a person has this, reference E-123". Lookups for separate items are independent and may run concurrently (AHC-0097 bounds how many).
+- *Is a concern outside the specification's intents dropped, refused, or handed on?* Handed on, unless the specification refuses it by name — a refusal is an outcome; silence is not. What the specification does not mention, it has not decided, and a person is who decides it.
+
+**Discharges** AAC-0112
 
 ## L6 · I/O contracts
 
@@ -816,6 +832,22 @@ Before the model is given the context for a turn, the harness re-reads every rec
 - *Does the stale result stay in context?* It stays, marked superseded, with the fresh read after it and named as what is now true. A reduced history may drop it; it is never the only copy of anything, because the record of what is in play holds the latest read.
 
 **Discharges** AAC-0029, AAC-0110
+
+### AHC-0118 — Every concern the caller raises reaches an outcome of its own
+
+*MUST · functional-suitability*
+
+**Owed where** a caller can raise more than one concern in one message.
+
+When a message raises more than one concern, the harness records each as its own item in the work record (AHC-0108) before any reply is composed, and a unit of work does not end as complete while any item lacks an outcome: answered, handed to a person with a reference, waiting on a decision with its identifier, or declined with a reason. An item the system has no route for is handed to a person rather than left unmentioned. A handoff carries every open item, so the person taking over sees what was raised as well as what was done. Whether an item has an outcome is decided from the record, never from the reply's wording.
+
+**Settled by the catalog:**
+
+- *Who splits a message into concerns — the harness, or the model?* The splitting may be a model's; the record and the check are the harness's. Items are recorded at intake, before the reply exists, from a structured output the harness validates; and the closing check — every item has an outcome — is a computation over that record. A split that finds nothing in a message the router could not classify is itself an item, handed to a person: a miss fails towards a person, never towards silence.
+- *Answer every concern in one reply, or one per turn?* Every item in the first reply, each with its outcome, even where the outcome is "a person has this, reference E-123". Lookups for separate items are independent and may run concurrently (AHC-0097 bounds how many).
+- *Is a concern outside the specification's intents dropped, refused, or handed on?* Handed on, unless the specification refuses it by name — a refusal is an outcome; silence is not. What the specification does not mention, it has not decided, and a person is who decides it.
+
+**Discharges** AAC-0112
 
 ## L7 · Policy enforcement
 

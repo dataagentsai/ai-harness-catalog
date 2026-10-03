@@ -17,7 +17,7 @@ title: |-
   A tool failure is a loop state, not an exception
 
 requirement: |-
-  When a tool errors, times out or returns nothing, the dispatcher converts that into a structured result the loop feeds back as an ordinary observation, distinguishing a transient failure from a permanent one and an empty result from an error. The loop continues under its existing budget rather than unwinding.
+  When a tool errors, times out or returns nothing, the dispatcher converts that into a structured result the loop feeds back as an ordinary observation, distinguishing a transient failure from a permanent one and an empty result from an error. Which of the two a failure is comes from a kind the far end states as a field, never from the wording of its message; a transient failure may be retried inside the tool, under the same idempotency key and AHC-0024's bound, and a permanent one is not retried at all. The loop continues under its existing budget rather than unwinding.
 
 failure_mode: |-
   Where a tool error propagates as an exception, one failing dependency ends the whole trajectory, discarding every step of work already paid for — even when the agent had six other ways to make progress. The opposite failure is equally common: an empty result rendered as a bare empty string, which the model reads as "nothing exists" rather than "that query matched nothing", and confidently reports absence as fact.

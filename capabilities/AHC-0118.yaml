@@ -1,0 +1,66 @@
+# AHC-0118 — Every concern the caller raises reaches an outcome of its own
+id: AHC-0118
+status: active
+since: "0.3.0"
+
+level: MUST
+layers: [L5, L6]
+positions: [P3, P4]
+
+concern: functional-suitability
+facet: functional completeness
+
+archetypes: [A4, A6, A7]
+core: false
+applies_when: a caller can raise more than one concern in one message
+
+title: |-
+  Every concern the caller raises reaches an outcome of its own
+
+requirement: |-
+  When a message raises more than one concern, the harness records each as its own item in the work record (AHC-0108) before any reply is composed, and a unit of work does not end as complete while any item lacks an outcome: answered, handed to a person with a reference, waiting on a decision with its identifier, or declined with a reason. An item the system has no route for is handed to a person rather than left unmentioned. A handoff carries every open item, so the person taking over sees what was raised as well as what was done. Whether an item has an outcome is decided from the record, never from the reply's wording.
+
+failure_mode: |-
+  A customer opens with three problems — a cracked hinge, a double charge, a warranty question. The first reply deals with the hinge, fluently and correctly, and the other two never come back: the conversation continues about the hinge, the model has no reason to return to what it did not pick up, and every check passes because nothing said was false. Days later the customer writes again about the double charge, and the person on the human queue finds nothing in the record showing it was ever raised, because the record held one question — the latest — and the transcript summarised into it.
+
+discharges: [AAC-0112]
+
+design_decisions:
+  - question: Who splits a message into concerns — the harness, or the model?
+    tension: >-
+      Splitting is reading language, which is what a model is for, and a
+      harness that tried it with patterns would miss the phrasings nobody wrote
+      down. But leaving the whole thing to the model is how the second and
+      third concerns were lost: the model that splits is the model that answers,
+      and it answers what it found.
+    resolution: >-
+      The splitting may be a model's; the record and the check are the
+      harness's. Items are recorded at intake, before the reply exists, from a
+      structured output the harness validates; and the closing check — every
+      item has an outcome — is a computation over that record. A split that
+      finds nothing in a message the router could not classify is itself an
+      item, handed to a person: a miss fails towards a person, never towards
+      silence.
+  - question: Answer every concern in one reply, or one per turn?
+    tension: >-
+      One per turn keeps each reply short and lets each be confirmed. It is
+      also exactly the pattern in which the second concern is never reached,
+      because the customer answers the first reply and the conversation moves
+      on with them.
+    resolution: >-
+      Every item in the first reply, each with its outcome, even where the
+      outcome is "a person has this, reference E-123". Lookups for separate
+      items are independent and may run concurrently (AHC-0097 bounds how many).
+  - question: Is a concern outside the specification's intents dropped, refused, or handed on?
+    tension: >-
+      Refusing it is honest and leaves the customer with nowhere to go.
+      Dropping it is what happened. Handing it to a person costs a person's
+      time for something the system could have said no to.
+    resolution: >-
+      Handed on, unless the specification refuses it by name — a refusal is an
+      outcome; silence is not. What the specification does not mention, it has
+      not decided, and a person is who decides it.
+
+realization_policy: own
+
+see_also: [AHC-0017, AHC-0039, AHC-0097, AHC-0106, AHC-0108]
