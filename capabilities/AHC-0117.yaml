@@ -1,0 +1,67 @@
+# AHC-0117 — What the caller is told about a record was read inside that field's freshness window
+id: AHC-0117
+status: active
+since: "0.3.0"
+
+level: MUST
+layers: [L1, L5, L6]
+positions: [P3, P5]
+
+concern: functional-suitability
+facet: functional correctness
+
+archetypes: [A4, A6, A7, A9]
+core: false
+applies_when: work on one subject resumes after a pause, or a reply states the current value of a field the specification gives a freshness window
+
+title: |-
+  What the caller is told about a record was read inside that field's freshness window
+
+requirement: |-
+  Before the model is given the context for a turn, the harness re-reads every record in play (AHC-0108) whose last read of a windowed field has outlived that field's freshness window, and places the fresh value in context as what is now true, superseding the older result rather than appearing beside it as an equal. The re-read is the harness's own call, made from the record of what is in play, and never depends on the model choosing to look again. A reply that states the value of such a field is judged against the latest read, so a claim that matches only a superseded result is a false claim, not a grounded one. This extends AHC-0107 from the action to the answer: the field's window is declared once and applies to both.
+
+failure_mode: |-
+  A conversation paused for days is resumed with its history intact, and the history holds a tool result that was true when it was read. The model has every reason to trust it: it is a tool result, not a guess, and it sits in context exactly as fresh results do. The reply repeats it — the laptop is still in transit — days after the device reached the repair centre. Every check passes. The claim is supported by a tool result, which is what a grounding check asks; no irreversible action was taken, so the freshness check before actions never ran; and the model did nothing wrong by its own lights. The record had moved, and nothing that could have noticed was asked to look.
+
+discharges: [AAC-0029, AAC-0110]
+
+design_decisions:
+  - question: Who re-reads — the harness, or the model through a tool call?
+    tension: >-
+      Letting the model call the tool again needs no new machinery and is the
+      model's normal way of finding things out. But the failure is precisely a
+      model that believes it already knows: a stale result in context looks
+      exactly like a fresh one, and an instruction to re-check is advice the
+      model follows most of the time.
+    resolution: >-
+      The harness, deterministically, before the turn's context is assembled.
+      The records in play are known without the model (AHC-0108), the windows
+      are declared in the specification, and the stamps say when each read was
+      asked (AHC-0107), so which reads have expired is a computation rather
+      than a judgement. The model may still read anything it likes; it is never
+      the reason a stale value is caught.
+  - question: Re-read everything on resume, or only what has expired?
+    tension: >-
+      Re-reading every record in play is simple and costs a call per record
+      on every resumption, most of them unchanged. Re-reading only expired
+      windowed fields needs the stamps and the windows, and costs nothing for a
+      conversation that resumes within them.
+    resolution: >-
+      Only what has expired. A field with no window is one the specification
+      says does not go stale in the sense that matters; a read inside its
+      window is still usable. After a pause of days every windowed read has
+      expired, so a resumed conversation re-reads exactly what it is about.
+  - question: Does the stale result stay in context?
+    tension: >-
+      Removing it makes the history a lie about what the system saw then.
+      Keeping it beside the fresh one leaves the model two tool results that
+      disagree, with nothing saying which is current.
+    resolution: >-
+      It stays, marked superseded, with the fresh read after it and named as
+      what is now true. A reduced history may drop it; it is never the only
+      copy of anything, because the record of what is in play holds the
+      latest read.
+
+realization_policy: own
+
+see_also: [AHC-0011, AHC-0044, AHC-0107, AHC-0108]

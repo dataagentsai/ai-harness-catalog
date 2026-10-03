@@ -7,21 +7,21 @@ collated from the capabilities themselves rather than restated beside them.
 The written half — where the seams fall, which position owns what — is in
 [A6-tool-using-agent.md](A6-tool-using-agent.md).
 
-**74 capabilities**, across 16 of 16 layers.
+**75 capabilities**, across 16 of 16 layers.
 
-**9 of them are owed only where their condition holds**, marked *Owed where* below:
-AHC-0015, AHC-0027, AHC-0092, AHC-0093, AHC-0097, AHC-0100, AHC-0105, AHC-0109, AHC-0116. A system for which the condition does not hold
+**10 of them are owed only where their condition holds**, marked *Owed where* below:
+AHC-0015, AHC-0027, AHC-0092, AHC-0093, AHC-0097, AHC-0100, AHC-0105, AHC-0109, AHC-0116, AHC-0117. A system for which the condition does not hold
 lists the capability under `not_applicable` in its profile, with the reason — not as an
 accepted gap, because nothing is owed. Every other capability here is owed unconditionally.
 
 | Layer | Owes |
 |---|---|
-| **L1** Context assembly | AHC-0002, AHC-0011, AHC-0012, AHC-0013, AHC-0031, AHC-0035, AHC-0038, AHC-0045, AHC-0103, AHC-0107, AHC-0108, AHC-0109 |
+| **L1** Context assembly | AHC-0002, AHC-0011, AHC-0012, AHC-0013, AHC-0031, AHC-0035, AHC-0038, AHC-0045, AHC-0103, AHC-0107, AHC-0108, AHC-0109, AHC-0117 |
 | **L2** Model invocation | AHC-0004, AHC-0009, AHC-0014, AHC-0015, AHC-0027, AHC-0092, AHC-0105 |
 | **L3** Tool layer | AHC-0036, AHC-0037, AHC-0038, AHC-0039, AHC-0040, AHC-0043, AHC-0100, AHC-0104, AHC-0107 |
 | **L4** Control loop | AHC-0041, AHC-0042, AHC-0043, AHC-0044, AHC-0074, AHC-0100, AHC-0104, AHC-0106 |
-| **L5** State and memory | AHC-0044, AHC-0045, AHC-0102, AHC-0108, AHC-0109, AHC-0115 |
-| **L6** I/O contracts | AHC-0001, AHC-0015, AHC-0016, AHC-0017, AHC-0025, AHC-0094, AHC-0106, AHC-0110 |
+| **L5** State and memory | AHC-0044, AHC-0045, AHC-0102, AHC-0108, AHC-0109, AHC-0115, AHC-0117 |
+| **L6** I/O contracts | AHC-0001, AHC-0015, AHC-0016, AHC-0017, AHC-0025, AHC-0094, AHC-0106, AHC-0110, AHC-0117 |
 | **L7** Policy enforcement | AHC-0008, AHC-0018, AHC-0019, AHC-0093, AHC-0094, AHC-0095, AHC-0116 |
 | **L8** Concurrency and flow control | AHC-0020, AHC-0021, AHC-0095, AHC-0096, AHC-0097, AHC-0098 |
 | **L9** Determinism and replay | AHC-0014, AHC-0022, AHC-0023 |
@@ -205,6 +205,22 @@ Where the harness reduces context by producing a summary rather than by discardi
 - *Is discarding whole units an acceptable alternative?* Yes, and it is the right default until measurement says otherwise. A system that discards whole exchanges meets this capability vacuously and should say so in its binding rather than leave a reader wondering which way it went.
 
 **Discharges** AAC-0036, AAC-0058, AAC-0004
+
+### AHC-0117 — What the caller is told about a record was read inside that field's freshness window
+
+*MUST · functional-suitability*
+
+**Owed where** work on one subject resumes after a pause, or a reply states the current value of a field the specification gives a freshness window.
+
+Before the model is given the context for a turn, the harness re-reads every record in play (AHC-0108) whose last read of a windowed field has outlived that field's freshness window, and places the fresh value in context as what is now true, superseding the older result rather than appearing beside it as an equal. The re-read is the harness's own call, made from the record of what is in play, and never depends on the model choosing to look again. A reply that states the value of such a field is judged against the latest read, so a claim that matches only a superseded result is a false claim, not a grounded one. This extends AHC-0107 from the action to the answer: the field's window is declared once and applies to both.
+
+**Settled by the catalog:**
+
+- *Who re-reads — the harness, or the model through a tool call?* The harness, deterministically, before the turn's context is assembled. The records in play are known without the model (AHC-0108), the windows are declared in the specification, and the stamps say when each read was asked (AHC-0107), so which reads have expired is a computation rather than a judgement. The model may still read anything it likes; it is never the reason a stale value is caught.
+- *Re-read everything on resume, or only what has expired?* Only what has expired. A field with no window is one the specification says does not go stale in the sense that matters; a read inside its window is still usable. After a pause of days every windowed read has expired, so a resumed conversation re-reads exactly what it is about.
+- *Does the stale result stay in context?* It stays, marked superseded, with the fresh read after it and named as what is now true. A reduced history may drop it; it is never the only copy of anything, because the record of what is in play holds the latest read.
+
+**Discharges** AAC-0029, AAC-0110
 
 ## L2 · Model invocation
 
@@ -649,6 +665,22 @@ Each store the harness writes carries, as a queryable field rather than only ins
 
 **Discharges** AAC-0117, AAC-0095
 
+### AHC-0117 — What the caller is told about a record was read inside that field's freshness window
+
+*MUST · functional-suitability*
+
+**Owed where** work on one subject resumes after a pause, or a reply states the current value of a field the specification gives a freshness window.
+
+Before the model is given the context for a turn, the harness re-reads every record in play (AHC-0108) whose last read of a windowed field has outlived that field's freshness window, and places the fresh value in context as what is now true, superseding the older result rather than appearing beside it as an equal. The re-read is the harness's own call, made from the record of what is in play, and never depends on the model choosing to look again. A reply that states the value of such a field is judged against the latest read, so a claim that matches only a superseded result is a false claim, not a grounded one. This extends AHC-0107 from the action to the answer: the field's window is declared once and applies to both.
+
+**Settled by the catalog:**
+
+- *Who re-reads — the harness, or the model through a tool call?* The harness, deterministically, before the turn's context is assembled. The records in play are known without the model (AHC-0108), the windows are declared in the specification, and the stamps say when each read was asked (AHC-0107), so which reads have expired is a computation rather than a judgement. The model may still read anything it likes; it is never the reason a stale value is caught.
+- *Re-read everything on resume, or only what has expired?* Only what has expired. A field with no window is one the specification says does not go stale in the sense that matters; a read inside its window is still usable. After a pause of days every windowed read has expired, so a resumed conversation re-reads exactly what it is about.
+- *Does the stale result stay in context?* It stays, marked superseded, with the fresh read after it and named as what is now true. A reduced history may drop it; it is never the only copy of anything, because the record of what is in play holds the latest read.
+
+**Discharges** AAC-0029, AAC-0110
+
 ## L6 · I/O contracts
 
 ### AHC-0001 — Every model response crosses a typed boundary
@@ -768,6 +800,22 @@ The harness declares one closed vocabulary of failure kinds, and every failure i
 - *Where is it enforced?* At build time, by enumerating the failures the package declares and failing on any that carries no kind. It is the same shape as every other rule here that survived: the ones stated and not checked are the ones quietly untrue a quarter later.
 
 **Discharges** AAC-0079, AAC-0009, AAC-0011
+
+### AHC-0117 — What the caller is told about a record was read inside that field's freshness window
+
+*MUST · functional-suitability*
+
+**Owed where** work on one subject resumes after a pause, or a reply states the current value of a field the specification gives a freshness window.
+
+Before the model is given the context for a turn, the harness re-reads every record in play (AHC-0108) whose last read of a windowed field has outlived that field's freshness window, and places the fresh value in context as what is now true, superseding the older result rather than appearing beside it as an equal. The re-read is the harness's own call, made from the record of what is in play, and never depends on the model choosing to look again. A reply that states the value of such a field is judged against the latest read, so a claim that matches only a superseded result is a false claim, not a grounded one. This extends AHC-0107 from the action to the answer: the field's window is declared once and applies to both.
+
+**Settled by the catalog:**
+
+- *Who re-reads — the harness, or the model through a tool call?* The harness, deterministically, before the turn's context is assembled. The records in play are known without the model (AHC-0108), the windows are declared in the specification, and the stamps say when each read was asked (AHC-0107), so which reads have expired is a computation rather than a judgement. The model may still read anything it likes; it is never the reason a stale value is caught.
+- *Re-read everything on resume, or only what has expired?* Only what has expired. A field with no window is one the specification says does not go stale in the sense that matters; a read inside its window is still usable. After a pause of days every windowed read has expired, so a resumed conversation re-reads exactly what it is about.
+- *Does the stale result stay in context?* It stays, marked superseded, with the fresh read after it and named as what is now true. A reduced history may drop it; it is never the only copy of anything, because the record of what is in play holds the latest read.
+
+**Discharges** AAC-0029, AAC-0110
 
 ## L7 · Policy enforcement
 
