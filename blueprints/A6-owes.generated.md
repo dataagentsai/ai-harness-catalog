@@ -957,7 +957,7 @@ Where the specification lets the system act on a resource because the person it 
 
 *MUST · core · performance-efficiency*
 
-The number of model calls in flight is limited by an explicit control the harness owns, and work beyond that limit queues with a bounded wait rather than being issued. The limit exists whether or not the runtime happens to impose one, and it is expressed in the same unit the provider throttles on. The limit is a number the profile sets; a profile without it is incomplete rather than defaulted.
+The number of model calls in flight is limited by an explicit control the harness owns, and work beyond that limit queues with a bounded wait rather than being issued, and work still queued when the wait runs out is shed with a typed outcome rather than issued late. The limit exists whether or not the runtime happens to impose one, and it is expressed in the same unit the provider throttles on. The limit and the wait are numbers the profile sets; a profile without either is incomplete rather than defaulted (generation run 4 found the wait unnumbered).
 
 **Settled by the catalog:**
 
