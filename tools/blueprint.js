@@ -38,6 +38,7 @@ if (!named) {
 }
 
 const LAYER = new Map(layers.layers.map((l) => [l.id, l.name]));
+const written = `${archetype}-${named.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.md`;
 
 const owed = fs
   .readdirSync(path.join(ROOT, "capabilities"))
@@ -79,8 +80,12 @@ const lines = [
   "",
   "The derived half of this blueprint: every capability this shape owes,",
   "collated from the capabilities themselves rather than restated beside them.",
-  `The written half — where the seams fall, which position owns what — is in`,
-  `[${archetype}-${named.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.md](${archetype}-${named.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.md).`,
+  ...(fs.existsSync(path.join(ROOT, "blueprints", written))
+    ? [
+        `The written half — where the seams fall, which position owns what — is in`,
+        `[${written}](${written}).`,
+      ]
+    : ["There is no written half for this shape yet: only the collation exists."]),
   "",
   `**${owed.length} capabilities**, across ${ordered.length} of ${LAYER.size} layers.`,
   "",

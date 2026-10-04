@@ -54,9 +54,14 @@ design_decisions:
       phrased badly.
     resolution: >-
       The outcome the system already has for work that continues, chosen by what
-      the run can actually do next, and never a completion. Where nothing can
-      continue it, the turn is a failure and is recorded as one — an unkeepable
-      promise is a defect in the run, not a style of answer.
+      the run can actually do next, and never a completion. A handoff is such an
+      outcome wherever the system has one: a person reachable is something that
+      can produce the answer, so the promise is made true by fetching them,
+      with the reference the caller needs. Only where nothing can continue it —
+      no decision to wait on, no person, no continuation — is the turn a
+      failure, recorded as one: an unkeepable promise is a defect in the run,
+      not a style of answer. Generation run 4 read "nothing can continue it"
+      without the handoff and failed a turn a person could have taken.
   - question: Is this the same control as abstention?
     tension: >-
       Both are about a model's prose standing in for a typed outcome, and one
