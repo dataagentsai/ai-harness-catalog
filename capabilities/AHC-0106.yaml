@@ -40,7 +40,12 @@ design_decisions:
       legitimate answers are pure text.
     resolution: >-
       Decide from what the run did, and use the wording only to separate the two
-      kinds of pure-text turn. A turn that produced no effect, holds no pending
+      kinds of pure-text turn. The wording that commits is any first-person
+      statement that the system will check, look into, find out, come back, get
+      someone or have something done — "let me check on that", "I'll look into
+      it" — when the answer it promises is not in the same reply; a reply that
+      says it will check and then gives the answer is not one (generation run 5
+      read "let me check" as no commitment). A turn that produced no effect, holds no pending
       decision and opened no handoff has nothing that can produce a later
       answer; if its reply also commits to producing one, the harness has caught
       a state the system cannot honour. Neither signal is sufficient alone: the
