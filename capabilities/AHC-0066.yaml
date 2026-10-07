@@ -32,6 +32,12 @@ design_decisions:
       User-controlled boundaries match intent and mean state accumulates
       indefinitely for anyone who never starts a new one. System-controlled
       expiry is bounded and cuts across a conversation someone was still having.
+    resolution: >-
+      Both, with the system holding the outer bound. The user may end a session
+      whenever they like; the system ends it after a declared inactivity
+      lifetime, and activity does not extend it without limit. What a person
+      expects to carry across that boundary is the job of gated memory
+      (AHC-0069), not of a session that never closes.
   - question: Where does the state live?
     tension: >-
       In-process is fast and ties the conversation to one instance, so any
@@ -45,6 +51,13 @@ design_decisions:
       Retaining the transcript enables review and long-term memory and turns an
       ephemeral exchange into a stored record with a retention obligation
       attached.
+    resolution: >-
+      Only what a declared purpose needs, each with its own retention. With no
+      purpose declared, the transcript ends with the session; where review
+      needs it, it is kept for the stated review window and is erasable per
+      person (AHC-0115). What outlives the session as knowledge about the user
+      is what the memory gate admitted (AHC-0069), and the record of actions
+      taken (AHC-0056) is kept on its own terms regardless.
 
 realization_policy: own
 

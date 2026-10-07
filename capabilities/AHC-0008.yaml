@@ -48,11 +48,23 @@ design_decisions:
       Collapsing them simplifies the interface and makes an outage look like a
       policy decision, which sends the incident to the wrong team for the first
       hour.
+    resolution: >-
+      Yes: distinct outcomes. A refusal names the policy that decided it; a
+      refusal caused by the policy machinery being unavailable, under a declared
+      closed default, is its own outcome saying so. The caller cannot fix
+      either, but the operator routes them to different teams, and only the
+      second is an incident.
   - question: Streamed responses — screen before or during?
     tension: >-
       Screening the completed response means buffering, which discards the
       latency benefit that motivated streaming. Screening incrementally means
       tokens already delivered cannot be recalled.
+    resolution: >-
+      As AHC-0015 settles it: buffer where a policy must hold absolutely, screen
+      incrementally where the risk tolerates tokens already delivered, and
+      declare per policy which applies. The enforcement position records which
+      mode ran, so a streamed response is never assumed to have had the buffered
+      guarantee.
 
 realization_policy: own
 

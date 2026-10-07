@@ -40,10 +40,22 @@ design_decisions:
       Rolling back is correct and requires every delegated action to have a
       compensating path under AHC-0058, which most do not. Leaving them applied
       is simple and leaves the system partially changed by a task that failed.
+    resolution: >-
+      Compensated where the action class declares a compensating path
+      (AHC-0058); listed in the parent's outcome and handed to a person where it
+      does not. A failed task must not leave changes nobody knows about, and
+      improvising an inverse for an action that has none is a second unreviewed
+      action, not a rollback.
   - question: Does the supervisor see the sub-agent's trajectory or just its result?
     tension: >-
       The full trajectory helps it judge whether to trust a marginal result and
       costs the context that delegation existed to save.
+    resolution: >-
+      The result, with a structured summary of the trajectory — outcome kind,
+      steps, spend and effects taken — and a reference to the full trajectory in
+      the record. The supervisor judges from the summary; a person or an
+      evaluator follows the reference. Carrying the trajectory into context
+      spends what delegation existed to save.
 
 realization_policy: own
 

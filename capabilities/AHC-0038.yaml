@@ -46,6 +46,12 @@ design_decisions:
     tension: >-
       Retaining it makes the step reconstructable afterwards and stores a large
       payload that may carry material AHC-0019 would rather not persist.
+    resolution: >-
+      Yes, in the record by reference rather than inline, under the same
+      redaction (AHC-0019) and retention as other payloads. A shaped result
+      whose original is gone makes every question about what the agent missed
+      unanswerable. Where redaction would not let a payload persist, the
+      redacted form is kept, and the record says so.
 
 realization_policy: own
 

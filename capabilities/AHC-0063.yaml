@@ -31,16 +31,35 @@ design_decisions:
       exists in the harness rather than being an emergent property of prompt
       wording, and that the threshold is part of the resolved configuration so
       changing it is a reviewable change.
+    resolution: >-
+      A value in the resolved configuration (AHC-0003), chosen per deployment
+      by evaluating it against labelled answerable and unanswerable questions,
+      and never expressed in prompt wording. The catalog fixes where the
+      threshold lives and how it changes, not its number; changing it is a
+      release like any other.
   - question: Does an abstention still cost a model call?
     tension: >-
       Abstaining before generation is free and cannot use the model's judgement
       that a marginal passage was in fact sufficient. Generating first is more
       accurate and pays for every unanswerable question.
+    resolution: >-
+      No. Below the threshold the harness abstains without calling the
+      generator; the model's judgement on marginal passages is what the
+      threshold is calibrated against offline, not something bought per
+      request. A generator run on every question also reopens the path to an
+      unsourced parametric answer. Above the threshold the generator runs and
+      may still decline, which maps to the same outcome.
   - question: Is a partial answer with an abstention allowed?
     tension: >-
       Answering the supported half and abstaining on the rest is the most useful
       response and is the hardest state for a consumer to handle correctly,
       since it is neither wholly grounded nor wholly refused.
+    resolution: >-
+      Allowed, as the typed partial outcome of AHC-0025: the supported parts
+      with their sources, and each abstained part named as an item rather than
+      as a sentence in the prose. A consumer can then tell which is which
+      without reading the answer, and one that handles only complete answers
+      sees a partial outcome, never a complete one with a hole in it.
 
 realization_policy: own
 

@@ -40,6 +40,14 @@ design_decisions:
       Holding the run open preserves context and holds resources for an
       unbounded human interval. Suspending and resuming from a checkpoint is
       efficient and needs the state machinery of AHC-0044 to be sound.
+    resolution: >-
+      Suspend to a checkpoint and resume on the decision. A human interval is
+      unbounded — a minute, a night, a weekend — and a run held open for it
+      holds a worker and a budget clock and dies with the process, taking the
+      pending action with it. Resuming already re-establishes the judged state
+      before executing, which this capability requires anyway. Holding the run
+      open is right only where the approver is expected inside the request's
+      own deadline, such as a person in the same live session.
   - key: irreversible_scope
     question: Does every irreversible action need a person?
     tension: >-

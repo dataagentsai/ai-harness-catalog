@@ -40,6 +40,14 @@ design_decisions:
       Reusing it is simple and a summarisation error becomes an unnoticed
       permanent falsification of history, since the original is gone. A cheaper
       model is cheaper and worse at exactly this.
+    resolution: >-
+      Whichever model evaluates well at summarising, pinned as its own entry in
+      the resolved configuration and evaluated as its own task; the serving
+      model is a sound default, not a rule. The protection against falsified
+      history is not the choice of model: what must survive is held outside the
+      summary — the extracted constraints and the structured record of
+      AHC-0108 — and the summary carries the provenance of what it summarised
+      (AHC-0109).
   - question: Bound what is stored, or only what is sent?
     tension: >-
       Storing the whole conversation keeps a complete transcript to review and
@@ -58,6 +66,12 @@ design_decisions:
     tension: >-
       Surfacing it explains an apparent lapse of memory and exposes an
       implementation detail that reduces confidence in the product.
+    resolution: >-
+      Yes, as a marker in the conversation where earlier turns were condensed,
+      not as an announcement inside a reply. An unexplained lapse of memory
+      costs more confidence than a visible boundary, and the marker tells the
+      user what they may need to restate. The record always states it,
+      whatever the user sees.
 
 realization_policy: own
 

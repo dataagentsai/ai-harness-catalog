@@ -37,6 +37,13 @@ design_decisions:
       Terminating is safe and abandons a task that a nudge might complete.
       Forcing the current agent to answer without delegating gets an answer that
       the agent has already indicated it is not confident about.
+    resolution: >-
+      Terminate with a distinct cycle outcome carrying the partial work and the
+      delegation path, and let the caller decide what follows — under AHC-0049,
+      often a handoff to a person. Forcing an answer from an agent that has
+      signalled it cannot give one produces a low-confidence answer that reads
+      like a normal one; if a forced answer is ever returned, it is marked as
+      such.
   - question: Is a cycle a defect or an expected condition?
     tension: >-
       Treating it as expected means quietly handling it forever, so the topology

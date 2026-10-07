@@ -30,6 +30,12 @@ design_decisions:
       Equal division is simple and starves the one genuinely expensive step.
       Weighting is accurate and encodes an estimate that will be wrong as the
       pipeline changes, quietly, in whichever direction nobody re-checks.
+    resolution: >-
+      Weighted, from measured cost rather than estimate. The weights are
+      recomputed from the per-step spend and latency that recent runs recorded,
+      so they move with the pipeline instead of drifting from it, and whatever
+      a step leaves unspent flows to the steps after it. An equal split is the
+      starting point only for a pipeline with no history.
   - question: What happens when the remaining allowance runs out mid-graph?
     tension: >-
       Stopping returns a partial result under AHC-0025 and abandons work already
@@ -42,6 +48,12 @@ design_decisions:
       Sharing keeps the total honest and makes branches interfere with each
       other in ways that depend on scheduling. Separate allowances are
       predictable and multiply the total by the fan-out.
+    resolution: >-
+      The same allowance, reserved per branch when the fan-out starts. Separate
+      allowances multiply the run's ceiling by the fan-out, which is the summed
+      total this capability exists to prevent. Reserving each branch its share
+      of the one allowance up front stops branches starving each other by
+      scheduling, and what a branch leaves unspent returns to the run.
 
 realization_policy: own
 

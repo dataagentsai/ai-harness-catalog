@@ -30,6 +30,12 @@ design_decisions:
       assembler never has to drop anything, and rejects requests the system
       could have served by summarising. Bounding higher accepts them and pushes
       the decision into AHC-0012.
+    resolution: >-
+      At the token budget, unless AHC-0012 declares a strategy that can serve a
+      larger input — droppable segments or summarised history — and then at the
+      ceiling that strategy can actually serve. Accepting input the assembler
+      can only refuse is paying to reach the same refusal later; the bound is
+      never higher than what some declared strategy handles.
   - question: Does validation failure look like a model refusal to the caller?
     tension: >-
       Collapsing them simplifies the interface and hides an integration bug —
@@ -42,6 +48,12 @@ design_decisions:
     tension: >-
       Publishing the input type lets callers fail locally and free; it also
       fixes the shape earlier than you may want it fixed.
+    resolution: >-
+      Yes: publish the input type as a versioned schema, and keep the harness's
+      own check authoritative. A caller that validates locally saves the round
+      trip; a caller that does not is still refused at the boundary. Fixing the
+      shape early is the cost of having a contract, and versioning is how it
+      changes.
 
 realization_policy: own
 

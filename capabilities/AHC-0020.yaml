@@ -31,6 +31,12 @@ design_decisions:
       ten long ones consume vastly different provider capacity. Tokens track
       what is actually throttled and must be estimated before the call, since
       the true count is only known after it.
+    resolution: >-
+      By whatever the provider throttles on, which for most providers is both.
+      Tokens are estimated before the call — the assembled input counted, the
+      output taken at its maximum length — and the estimate is released and
+      corrected when the call reports actual usage. Bounding requests alone is
+      right only where the provider limits nothing else.
   - question: Queue, or shed?
     tension: >-
       Queueing preserves work and turns overload into unbounded latency, which
@@ -44,6 +50,12 @@ design_decisions:
       Per process is simple and multiplies by however many replicas are running,
       so autoscaling silently raises the effective limit at the worst moment.
       Global is accurate and needs shared state on the request path.
+    resolution: >-
+      Global: the provider's limit is per account, not per replica. Where shared
+      state on the request path is unacceptable, each process takes the global
+      limit divided by the maximum replica count, and that maximum is part of
+      the limit's configuration, so autoscaling cannot raise the effective limit
+      without a change anyone can see.
 
 realization_policy: own
 

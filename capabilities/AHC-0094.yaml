@@ -38,6 +38,13 @@ design_decisions:
       Retrying may produce a compliant answer and pays twice for one request,
       and a model that produced disallowed content once will frequently do so
       again — so the retry budget drains against a case it cannot fix.
+    resolution: >-
+      At most once, and only where the block's reason class is one a fresh
+      generation can change; never where the request itself asked for the
+      blocked content. The retry is charged to the same unit under AHC-0007 and
+      counted under AHC-0024, and a second block ends in the refused outcome.
+      Retrying further spends the budget on a case the model has shown it will
+      repeat.
   - key: output_rule_reading
     question: What does a rule over the model's text take as a claim or a recital?
     tension: >-
@@ -61,6 +68,12 @@ design_decisions:
       be fine as an answer to one question and not another — and doubles the
       material entering the screening component, including under AHC-0083 the
       untrusted half.
+    resolution: >-
+      Yes, fenced as untrusted under AHC-0083 and separate from the output being
+      screened. Whether an answer is acceptable often cannot be decided without
+      the question, and the recital rule above already needs to know what the
+      run was shown. Rules that need only the output, such as identifier
+      patterns, read only the output.
 
 realization_policy: own
 

@@ -45,6 +45,11 @@ design_decisions:
     tension: >-
       Collapsing them is simpler and is the direct cause of an agent reporting
       that a record does not exist when the search backend was merely down.
+    resolution: >-
+      Yes. Empty, error and success are distinct kinds in the structured result,
+      and a failure is never rendered as an empty set. The model is told either
+      that the query matched nothing or that the lookup failed and absence is
+      unknown, because the second must never be reported as the first.
 
 realization_policy: own
 

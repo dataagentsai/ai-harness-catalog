@@ -49,6 +49,13 @@ design_decisions:
       Delimiting untrusted segments in-band helps the model but is itself
       spoofable by the untrusted content. Keeping labels out-of-band is
       unspoofable but gives the model nothing to act on.
+    resolution: >-
+      Both, with the out-of-band label authoritative. The assembled record
+      carries each segment's provenance where untrusted content cannot reach it,
+      and the in-band delimiters are rendered from that record, with any
+      occurrence of the delimiter inside untrusted material neutralised before
+      it is placed. The in-band marking is a hint to the model, never the
+      control: nothing that enforces a boundary reads it back from the prompt.
 
 realization_policy: own
 

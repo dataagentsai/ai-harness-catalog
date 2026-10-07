@@ -46,6 +46,12 @@ design_decisions:
       Stopping is safe and abandons a genuinely large legitimate job halfway.
       Escalating for a raised limit keeps the job alive and puts a person under
       time pressure in the path of the control.
+    resolution: >-
+      Stop, then ask. The run stops at the bound with its progress checkpointed,
+      and a person may raise the limit for that run and resume it from where it
+      stopped; the raise is a recorded configuration change scoped to the one
+      run. Nothing acts while the question is open, so the person's time
+      pressure is about finishing a job, never about containing damage.
 
 realization_policy: own
 

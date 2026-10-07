@@ -39,11 +39,22 @@ design_decisions:
       Propagating it stops the spend and may abandon a tool call midway, leaving
       a side effect half-applied. Not propagating is safe for state and keeps
       paying for output nobody will read.
+    resolution: >-
+      Yes, to every step not yet started and to every model call in flight. A
+      tool call that has already been issued is not abandoned midway: it runs to
+      its own completion or compensation, its outcome is recorded, and no
+      further step follows it. Spend stops at the next boundary, and state is
+      never left half-applied.
   - question: How does a partial stream reach the record?
     tension: >-
       Recording only completed responses leaves the aborted ones — the
       interesting ones — invisible. Recording partials means storing fragments
       that were never a valid output.
+    resolution: >-
+      As a partial, recorded with its terminal event and the cause, under the
+      incomplete marking of AHC-0025, and stored apart from completed outputs so
+      nothing downstream mistakes a fragment for a result. The aborted streams
+      are the ones an investigation needs; excluding them hides the failures.
 
 realization_policy: own
 

@@ -47,6 +47,13 @@ design_decisions:
       near-expired deadline as a fresh one. Drawing from the remaining deadline
       adapts and can leave a policy almost no time on a slow request, which is
       the moment it silently resolves to its default.
+    resolution: >-
+      Both: each policy gets the smaller of its profile-set ceiling and what the
+      remaining deadline leaves after reserving the time its default path needs.
+      The fixed ceiling bounds a policy on a fresh request, and the remainder
+      bounds the layer so the policies cannot sum past the deadline. A policy
+      left no usable time resolves to its default at once, recorded as starved
+      by the deadline, distinct from a timeout and from a block.
 
 realization_policy: own
 

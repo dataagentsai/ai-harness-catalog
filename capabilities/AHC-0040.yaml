@@ -38,12 +38,24 @@ design_decisions:
       Passing the agent's identity enables per-agent policy downstream and adds
       a header the downstream must be built to honour, which usually means it
       does not.
+    resolution: >-
+      Yes. The agent's identity travels with every call alongside the end user's
+      (AHC-0034), and the executing side records it whether or not it enforces
+      on it. Per-agent policy is then available wherever a downstream supports
+      it; where it does not, per-tool credentials are the enforcement and the
+      agent identity is attribution only.
   - question: Is the tool inventory itself protected?
     tension: >-
       A registry that any code path can add to means a new tool is a new
       capability with no review. Locking it down means adding a tool becomes a
       change-management exercise, which is exactly when people start using a
       generic escape-hatch tool instead.
+    resolution: >-
+      Protected. A tool enters the registry only through the release process, as
+      part of the resolved configuration (AHC-0003) and with its declared class
+      (AHC-0039). Keep that path cheap rather than open — a new read tool should
+      be a small reviewed change — and register any generic escape hatch, such
+      as arbitrary code or arbitrary requests, as the irreversible class it is.
 
 realization_policy: own
 

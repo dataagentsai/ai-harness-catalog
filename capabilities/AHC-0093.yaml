@@ -50,6 +50,12 @@ design_decisions:
       genuinely different requirements — the output side has AHC-0094's
       streaming constraint, which forces some ordering choices that make no
       sense on input.
+    resolution: >-
+      Yes: each side declares its own order, under the same rule of inspect
+      before transform. The output side is shaped by streaming (AHC-0094) and
+      the input side never is, so one shared order would either constrain input
+      for no reason or ignore the streaming constraint. Both orders are
+      configuration, and the record under AHC-0018 states which side ran which.
 
 realization_policy: own
 

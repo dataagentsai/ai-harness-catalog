@@ -47,6 +47,12 @@ design_decisions:
       Propagating it keeps a background task's sub-work in the background and
       requires the class to travel with every handoff under AHC-0047. Not
       propagating means a bulk job's sub-agents compete as interactive work.
+    resolution: >-
+      It propagates, and child work may lower it but never raise it. The class
+      travels in the handoff payload under AHC-0047 and is recorded on each
+      child unit, because a bulk job whose sub-work is admitted as interactive
+      defeats the allocation entirely. This is the same rule as at the entry
+      point: priority only flows downward.
 
 realization_policy: own
 

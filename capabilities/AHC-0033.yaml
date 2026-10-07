@@ -31,11 +31,23 @@ design_decisions:
       A container image is unambiguous and does not cover a prompt fetched at
       runtime from a registry. A resolved manifest covers the fetch and is only
       as good as the enforcement that nothing re-resolves after it.
+    resolution: >-
+      The resolved configuration record of AHC-0003, addressed by digest, in
+      which everything it names — code image, prompt text, model pin, policy set
+      — is itself referenced by content hash rather than by tag or by "latest".
+      A container image is one entry in it, not the whole of it. The serving
+      side starts only from a digest it was handed, so nothing can re-resolve
+      after promotion.
   - question: Does the promoted artifact pin transitive dependencies?
     tension: >-
       Pinning everything is reproducible and freezes security updates until
       someone deliberately moves the pin. Floating keeps patches flowing and
       means the artifact is not one.
+    resolution: >-
+      Pin everything, by digest, inside the artifact. A security update is a new
+      artifact that goes through the release process like any other change;
+      floating is the very drift this capability exists to remove. Where patch
+      latency matters, make the pipeline faster, not the pin looser.
 
 realization_policy: see_aac
 realization_note: |-

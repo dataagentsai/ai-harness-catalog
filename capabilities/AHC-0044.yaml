@@ -50,6 +50,13 @@ design_decisions:
       Retention long enough for reconstruction means storing full trajectories
       including tool results, which is a large, sensitive corpus growing with
       traffic.
+    resolution: >-
+      In full, until the unit of work reaches a terminal outcome and a declared
+      resume window has passed; after that it reduces to what reconstruction
+      needs — dispatch intents, outcomes and references for every write — under
+      the record's ordinary retention and redaction (AHC-0019). Full tool
+      results serve resumption, which has ended; the account of effects serves
+      reconstruction, which has not.
 
 realization_policy: own
 

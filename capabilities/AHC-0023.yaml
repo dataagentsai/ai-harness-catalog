@@ -40,11 +40,20 @@ design_decisions:
       noisy diffs of model prose to code review. Generated ones keep the
       repository clean and make the run depend on something that must be
       available.
+    resolution: >-
+      Committed — or, where they are large, stored outside the repository and
+      referenced from it by content digest. Either way a clone pins exactly
+      which recordings a run uses. Mark them as generated so review tooling
+      folds them away, and review them as a set when a re-cut changes them.
   - question: How old is too old?
     tension: >-
       Any threshold published here would be wrong; what matters is that the age
       is visible at the point of use rather than discoverable by reading file
       metadata.
+    resolution: >-
+      Older than the last re-cut the schedule called for. The catalog sets no
+      age; the system's re-cut schedule does, and a fixture past it is reported
+      as overdue wherever it is used rather than silently trusted.
 
 realization_policy: own
 

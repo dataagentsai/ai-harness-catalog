@@ -38,6 +38,13 @@ design_decisions:
       A score is comparable across releases and implies a precision the judge
       does not have — the gap between 0.72 and 0.78 is usually noise. Categories
       are honest and lose the ability to observe a small movement.
+    resolution: >-
+      A category is the verdict; a score is carried only where calibration under
+      AHC-0084 shows the judge separates finer than the categories do. A
+      declared set is what the boundary validates, and a category cannot imply
+      precision the judge does not have. Movement across releases is observed as
+      category rates over a fixed set, which is a measurement; movement in an
+      uncalibrated score is usually noise read as signal.
   - question: What happens to an uncertain verdict downstream?
     tension: >-
       Treating it as a failure makes the judge's hesitancy indistinguishable

@@ -45,6 +45,12 @@ design_decisions:
     tension: >-
       Starting over is simple and pays for the discarded tokens twice, and the
       user may have already seen the abandoned prefix.
+    resolution: >-
+      Start over, and count it as an attempt. The abandoned prefix is a partial
+      result under AHC-0025, recorded as such; where the caller has already seen
+      it, the stream's terminal event tells them the response restarted rather
+      than splicing a new answer onto the old prefix. Stitching two generations
+      together produces text no single call wrote.
   - question: Is a repair attempt a retry?
     tension: >-
       Re-asking the model to fix malformed output is a second call with a second

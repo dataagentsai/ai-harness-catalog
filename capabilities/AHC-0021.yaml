@@ -37,11 +37,23 @@ design_decisions:
       Switching keeps throughput and moves load onto a route whose behaviour may
       differ from the one that was evaluated. Not switching preserves
       consistency and accepts the reduced rate.
+    resolution: >-
+      Only to a route declared as a fallback for that task and evaluated as one;
+      otherwise wait. The switch is recorded with throttling as its reason
+      (AHC-0027), so quality movement during the throttle is attributable. An
+      unevaluated route is a different system, and a throttle is not a reason to
+      ship one.
   - question: Should the limit adapt downward after repeated throttling?
     tension: >-
       Adaptive reduction settles quickly on a sustainable rate and can ratchet
       down on a transient blip and stay there, quietly capping throughput long
       after the cause is gone.
+    resolution: >-
+      Yes, and it recovers by itself. The limit falls on repeated throttles and
+      climbs back toward the configured value as calls succeed, never below a
+      declared floor and never above the configured limit. Every change is
+      recorded, so a limit still lowered long after the throttling stopped is
+      visible rather than a silent cap.
 
 realization_policy: own
 

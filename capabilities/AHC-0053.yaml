@@ -57,11 +57,28 @@ design_decisions:
       Recording in the same store the run writes to keeps it consistent and
       unavailable when that store is the thing that is down. A separate store
       is available and can disagree with reality.
+    resolution: >-
+      In the store that holds the run's own durable state (AHC-0044), written
+      before the first step. When that store is down the run could neither
+      checkpoint nor record its intents, so refusing to start is the correct
+      outcome rather than an outage the claim caused. The trigger fails closed,
+      and the scheduler's retry carries the same occasion and is deduplicated
+      once the store returns; a separate store's disagreements with reality are
+      duplicates nobody sees.
   - question: What if a run dies holding the claim?
     tension: >-
       A claim with no expiry blocks the schedule forever after one crash. A
       claim that expires permits the duplicate it existed to prevent, at
       precisely the moment when a partially-completed run is most likely.
+    resolution: >-
+      The claim is a lease that expires into recovery, never into a fresh run.
+      When it lapses, the next delivery of the same occasion takes over the
+      original run from its last checkpoint under the original claim, and any
+      intent recorded without an outcome (AHC-0056) is resolved through its
+      idempotency or compensating path (AHC-0058) before anything is redone. A
+      run that cannot be resumed is marked failed and alerted, and the occasion
+      stays claimed: running it again is an operator's decision, recorded as a
+      new occasion.
 
 realization_policy: own
 

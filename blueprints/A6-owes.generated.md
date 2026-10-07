@@ -45,6 +45,7 @@ The bytes sent to the model are produced by a named function from typed inputs, 
 
 - *Where do prompt versions live — in the repository, or in a registry?* Repository by default. Reach for a registry only when non-engineers must change prompts, and then pin the resolved version into the recorded config.
 - *How is the token budget enforced when context exceeds it?* Whichever is chosen, the assembled context must record that it happened. A budget applied without a record is a silent quality change.
+- *Does provenance labelling survive into the prompt itself?* Both, with the out-of-band label authoritative. The assembled record carries each segment's provenance where untrusted content cannot reach it, and the in-band delimiters are rendered from that record, with any occurrence of the delimiter inside untrusted material neutralised before it is placed. The in-band marking is a hint to the model, never the control: nothing that enforces a boundary reads it back from the prompt.
 
 **Discharges** AAC-0003, AAC-0103, AAC-0106
 
@@ -71,6 +72,8 @@ Context is bounded before the call, by the component that assembles it, using a 
 **Settled by the catalog:**
 
 - *What gets dropped first?* Priority is declared per segment class by the assembler's caller, not inferred from position in a list.
+- *Summarise, or refuse?* Refuse, with a typed outcome, when dropping what the caller declared droppable still leaves the context over budget. Summarising is right only for conversation history in a long-running conversation, where the summary is made off the request path, kept as a segment of its own and recorded as derived rather than verbatim. A summary made inside the request to rescue it hides the over-budget case behind a second output nobody checks.
+- *Is the budget measured in provider tokens or an approximation?* Provider tokens wherever the model's tokeniser can be run before the call; an approximation only where it cannot, and then with headroom declared as a number and checked against the provider-reported count after the call. The assembler takes the counter from the resolved configuration, so the coupling to the model is in one place and changes with the pin.
 
 **Discharges** AAC-0019, AAC-0103
 
@@ -97,6 +100,7 @@ The assembler reports the size of what it produced, broken down by segment class
 
 - *Which segment classes are worth separating?* Separate the classes that grow for different reasons and are owned by different people. That is usually four.
 - *Is tool-definition size counted?* Count it separately. It is the most common source of growth nobody attributes.
+- *Where is the comparison made?* On a fixed set at release, as the comparison that attributes growth to the system; and in production as a trend, to catch growth driven by what users send. A release is judged on the first; the second explains cost movement between releases.
 
 **Discharges** AAC-0103, AAC-0102, AAC-0008
 
@@ -110,6 +114,7 @@ Credentials, keys and tokens are held by the components that use them and are ne
 
 - *How do tool results get sanitised?* Centrally, at the point results re-enter context, with tool authors responsible in addition rather than instead.
 - *Can a tool argument ever legitimately be a credential?* Never. A tool that needs a credential holds a reference the model can name; the dispatcher resolves the reference to the secret.
+- *What happens when a secret is detected in context?* Block the call and return a typed failure, then treat the detection as an incident: the secret is rotated, because it has already left its store. One failed run is cheaper than a credential in a provider's logs, and a detector that fires repeatedly is a leak to fix at its source, not a reason to continue past it.
 
 **Discharges** AAC-0006, AAC-0095, AAC-0057
 
@@ -123,6 +128,7 @@ What a tool returns is shaped to a declared size and structure before it is adde
 
 - *Truncate, summarise, or paginate?* Declared per tool, because the right answer differs per tool and a global policy is wrong for most of them.
 - *Does the model learn that truncation happened?* Tell it, and say how much was removed. A silently truncated result is the agent equivalent of a lie.
+- *Is the full result retained outside context?* Yes, in the record by reference rather than inline, under the same redaction (AHC-0019) and retention as other payloads. A shaped result whose original is gone makes every question about what the agent missed unanswerable. Where redaction would not let a payload persist, the redacted form is kept, and the record says so.
 
 **Discharges** AAC-0105, AAC-0053, AAC-0019
 
@@ -136,6 +142,7 @@ Content returned by a tool re-enters context through the same assembly path as a
 
 - *Are some tools trusted enough to skip fencing?* No exemptions. The cost of fencing is a delimiter; the cost of the exception being wrong once is the whole control.
 - *Does fencing survive summarisation?* The summary inherits the provenance of its source. A summary of untrusted content is untrusted content.
+- *What about the agent's own prior reasoning?* It carries the most restrictive provenance of anything it was derived from: a step that read untrusted content produces output fenced as untrusted in later steps. Model-authored text is never promoted to instruction by having been written by the model; only the system's own prompt and the harness's own messages are trusted.
 
 **Discharges** AAC-0058, AAC-0036, AAC-0041
 
@@ -264,6 +271,8 @@ Temperature, top-p, maximum output length, stop sequences and any seed are set e
 **Settled by the catalog:**
 
 - *One parameter set, or one per task?* Per task, resolved through AHC-0003 so the record stays single even when the sets do not.
+- *Is a fixed seed worth using where the provider offers one?* Yes: set it, record it, and design as though it were absent. Evaluations and tests assert on properties and distributions of the output, never on exact text, so a seed that fails to hold costs some noise and breaks nothing.
+- *Who owns maximum output length?* The task's owner, as part of that task's parameter set. It is set from the measured length of legitimate outputs with margin above the longest, not from a cost wish, and when it fires the result is the length-limit outcome of AHC-0025, so its rate is counted and a limit set too low shows up as a number rather than as truncated answers.
 
 **Discharges** AAC-0010, AAC-0012, AAC-0018
 
@@ -278,6 +287,8 @@ Where output is streamed, the stream carries an explicit terminal event distingu
 **Settled by the catalog:**
 
 - *Is output screened before or during the stream?* Buffer where a policy must hold absolutely; stream with incremental screening where the risk is tolerable, and state which was chosen.
+- *Does cancellation propagate past the model call?* Yes, to every step not yet started and to every model call in flight. A tool call that has already been issued is not abandoned midway: it runs to its own completion or compensation, its outcome is recorded, and no further step follows it. Spend stops at the next boundary, and state is never left half-applied.
+- *How does a partial stream reach the record?* As a partial, recorded with its terminal event and the cause, under the incomplete marking of AHC-0025, and stored apart from completed outputs so nothing downstream mistakes a fragment for a result. The aborted streams are the ones an investigation needs; excluding them hides the failures.
 
 **Discharges** AAC-0092, AAC-0002, AAC-0008
 
@@ -293,6 +304,7 @@ Where more than one route can serve a request — several deployments, several p
 
 - *Is the reason recorded, or just the route?* Both. Without the reason, every routing question becomes an inspection of configuration as it was at a past moment.
 - *How is a cache hit distinguished in cost and latency figures?* Record it as a served unit with a cache marker, so both figures can be computed and neither is silently wrong.
+- *Does a semantic cache hit record what it matched against?* Yes: the identifier of the matched entry, the similarity score and the boundary — tenant or scope — that each side belongs to, never a copy of the matched content. The content stays where the cache entry already holds it, and a cross-boundary hit is detectable by comparing two fields in one record.
 
 **Discharges** AAC-0100, AAC-0101, AAC-0098, AAC-0096, AAC-0089
 
@@ -308,6 +320,7 @@ Where a jurisdiction constrains where content may be processed, the reachable ro
 
 - *Refuse, or degrade, when no in-region route is available?* Refuse. A residency obligation that yields to an availability target was not an obligation.
 - *Does the constraint reach caching and telemetry?* The boundary applies to every copy. A compliant inference path feeding a cross-region telemetry backend has moved the data anyway.
+- *Is the region derived from the endpoint or asserted by the provider?* Record both, and say which is which: the region the route was configured for, as intended, and the region the provider asserted for the call, as observed, where the provider exposes it. Enforcement uses the configured region, since it is known before the call; the record keeps evidence and intention apart so an audit can tell what happened from what was meant. Where no per-call assertion exists, the record shows the intended region only, and that gap is a known limit of the route rather than a silent one.
 
 **Discharges** AAC-0097, AAC-0094, AAC-0096
 
@@ -341,6 +354,8 @@ A tool is registered with a machine-readable description of its arguments — na
 **Settled by the catalog:**
 
 - *Generated from the code, or authored separately?* Generate the shape, author the prose, and keep them in one file so the prose is in front of whoever changes the shape.
+- *How much does the description explain about when *not* to use it?* One sentence, only for a tool that evaluation shows is confused with a neighbour, naming the tool to use instead. Resident tokens are measured per release under AHC-0031, so negative guidance must earn its cost against a measured selection error rather than be written by default.
+- *Are all tools always visible?* All visible while the declared set fits comfortably in the context budget. Past that, filter per request with a deterministic filter over declared tool metadata, and record which tools were shown with the call, so the filter can be debugged like any other component. Visibility is never the authorisation boundary (AHC-0040).
 
 **Discharges** AAC-0051, AAC-0052
 
@@ -353,6 +368,7 @@ The dispatcher checks model-produced arguments against the declared contract and
 **Settled by the catalog:**
 
 - *Does a rejection go back to the model, or to the caller?* Back to the model, with the correction attempts counted against the loop's step budget rather than treated as free.
+- *How much does the error message tell the model?* Precise about shape — which field, which constraint — and silent about data: a reference the requester cannot reach is reported exactly as a reference that does not exist. The shape is in the declared contract the model already sees, so naming it discloses nothing; existence is what leaks, so those two cases are indistinguishable from the model's side.
 - *Where does entitlement checking happen?* Downstream is authoritative under AHC-0034. Dispatch-level checks are an optimisation, never the control.
 
 **Discharges** AAC-0052, AAC-0053, AAC-0057
@@ -367,6 +383,7 @@ What a tool returns is shaped to a declared size and structure before it is adde
 
 - *Truncate, summarise, or paginate?* Declared per tool, because the right answer differs per tool and a global policy is wrong for most of them.
 - *Does the model learn that truncation happened?* Tell it, and say how much was removed. A silently truncated result is the agent equivalent of a lie.
+- *Is the full result retained outside context?* Yes, in the record by reference rather than inline, under the same redaction (AHC-0019) and retention as other payloads. A shaped result whose original is gone makes every question about what the agent missed unanswerable. Where redaction would not let a payload persist, the redacted form is kept, and the record says so.
 
 **Discharges** AAC-0105, AAC-0053, AAC-0019
 
@@ -380,6 +397,7 @@ Every tool declares whether it reads, writes reversibly, or writes irreversibly,
 
 - *What counts as irreversible?* Externally visible effects count as irreversible even when technically undoable. The recipient already saw it.
 - *Who issues the grant, and for how long?* Scope the grant to the action class and the specific resource, not to the session. "This agent may act for the next hour" is not a control.
+- *Does a dry-run mode exist?* Yes, at the dispatcher rather than in each tool. In rehearsal, every tool classed as writing returns a declared stand-in result without executing, so rehearsal is one switch in one place and nothing parallel exists to rot. A tool whose rehearsal is meaningless without a realistic result may supply a simulator; the rest are stubbed.
 
 **Discharges** AAC-0056, AAC-0078, AAC-0081
 
@@ -392,6 +410,8 @@ The permissions a tool operates under are held by the executing side and scoped 
 **Settled by the catalog:**
 
 - *One credential per tool, or one per agent?* Per tool where the tool writes. Read-only tools can reasonably share, since the blast radius of a read is bounded by AHC-0034.
+- *Does the executing side know which agent called it?* Yes. The agent's identity travels with every call alongside the end user's (AHC-0034), and the executing side records it whether or not it enforces on it. Per-agent policy is then available wherever a downstream supports it; where it does not, per-tool credentials are the enforcement and the agent identity is attribution only.
+- *Is the tool inventory itself protected?* Protected. A tool enters the registry only through the release process, as part of the resolved configuration (AHC-0003) and with its declared class (AHC-0039). Keep that path cheap rather than open — a new read tool should be a small reviewed change — and register any generic escape hatch, such as arbitrary code or arbitrary requests, as the irreversible class it is.
 
 **Discharges** AAC-0057, AAC-0032, AAC-0072
 
@@ -405,6 +425,7 @@ When a tool errors, times out or returns nothing, the dispatcher converts that i
 
 - *How much of the error does the model see?* A classified failure with a safe message. The raw error belongs in the record, not in context.
 - *Is a transient failure retried by the dispatcher or by the model?* Dispatcher retries reads; writes go back to the model, because only the loop knows whether repeating the action is acceptable.
+- *Does an empty result look different from an error?* Yes. Empty, error and success are distinct kinds in the structured result, and a failure is never rendered as an empty set. The model is told either that the query matched nothing or that the lookup failed and absence is unknown, because the second must never be reported as the first.
 
 **Discharges** AAC-0053, AAC-0065, AAC-0046
 
@@ -468,6 +489,7 @@ Step count, wall-clock time and token spend are counted by the loop itself and c
 - *Loop, or gateway?* Both — the loop owns the trajectory, the gateway backstops the spend. Neither alone covers both failures.
 - *What does the caller get at cutoff?* A typed terminal outcome under AHC-0017, never a bare truncated string.
 - *Do sub-agent and tool costs count against the parent's budget?* They count. A budget that stops at the first delegation is not a budget.
+- *Is the wall-clock limit separate from the step limit?* Separate, both enforced by the loop, each with its own terminal outcome. A step stuck on a slow tool burns time and no tokens, and a fast loop burns tokens in seconds, so either alone leaves one failure open. The wall-clock limit must also be able to stop a step already in flight (AHC-0030), not only the next iteration.
 
 **Discharges** AAC-0055, AAC-0064, AAC-0077, AAC-0050
 
@@ -480,6 +502,7 @@ The loop detects that it is repeating — the same tool with the same arguments 
 **Settled by the catalog:**
 
 - *What counts as progress?* Repetition of an identical call with an identical result, more than a small number of times. Anything cleverer needs evidence before it earns the complexity.
+- *Does the loop tell the model it appears stuck?* Once, as a harness-authored observation naming the call that repeated, and the next repeat terminates without a second warning. One notice is cheap and sometimes breaks the pattern; termination never depends on the model having heeded it, so an agent that acknowledges and repeats costs one step, not the budget.
 - *Is a stuck termination reported differently from a budget one?* Distinct terminal outcomes. They have different causes and different fixes.
 
 **Discharges** AAC-0055, AAC-0063, AAC-0054
@@ -494,6 +517,7 @@ When a tool errors, times out or returns nothing, the dispatcher converts that i
 
 - *How much of the error does the model see?* A classified failure with a safe message. The raw error belongs in the record, not in context.
 - *Is a transient failure retried by the dispatcher or by the model?* Dispatcher retries reads; writes go back to the model, because only the loop knows whether repeating the action is acceptable.
+- *Does an empty result look different from an error?* Yes. Empty, error and success are distinct kinds in the structured result, and a failure is never rendered as an empty set. The model is told either that the query matched nothing or that the lookup failed and absence is unknown, because the second must never be reported as the first.
 
 **Discharges** AAC-0053, AAC-0065, AAC-0046
 
@@ -507,6 +531,7 @@ The loop's state — the steps taken, their results, the accumulated budget and 
 
 - *Checkpoint every step, or at boundaries?* Checkpoint before any irreversible dispatch, whatever the general policy. That write must land before the effect does. Between those points the boundary is the harness's to declare — every step, or every turn — and what a coarser one loses on a crash is reads and model calls, which a resume repeats at a cost and without harm; that trade is acceptable only because no irreversible effect can fall inside it.
 - *Does resumption re-run the last step or continue past it?* Record the dispatch intent before the call and the outcome after, so resumption can tell the difference rather than guessing.
+- *How long does a checkpoint live?* In full, until the unit of work reaches a terminal outcome and a declared resume window has passed; after that it reduces to what reconstruction needs — dispatch intents, outcomes and references for every write — under the record's ordinary retention and redaction (AHC-0019). Full tool results serve resumption, which has ended; the account of effects serves reconstruction, which has not.
 
 **Discharges** AAC-0059, AAC-0060, AAC-0080, AAC-0046
 
@@ -582,6 +607,7 @@ The loop's state — the steps taken, their results, the accumulated budget and 
 
 - *Checkpoint every step, or at boundaries?* Checkpoint before any irreversible dispatch, whatever the general policy. That write must land before the effect does. Between those points the boundary is the harness's to declare — every step, or every turn — and what a coarser one loses on a crash is reads and model calls, which a resume repeats at a cost and without harm; that trade is acceptable only because no irreversible effect can fall inside it.
 - *Does resumption re-run the last step or continue past it?* Record the dispatch intent before the call and the outcome after, so resumption can tell the difference rather than guessing.
+- *How long does a checkpoint live?* In full, until the unit of work reaches a terminal outcome and a declared resume window has passed; after that it reduces to what reconstruction needs — dispatch intents, outcomes and references for every write — under the record's ordinary retention and redaction (AHC-0019). Full tool results serve resumption, which has ended; the account of effects serves reconstruction, which has not.
 
 **Discharges** AAC-0059, AAC-0060, AAC-0080, AAC-0046
 
@@ -595,6 +621,7 @@ Content returned by a tool re-enters context through the same assembly path as a
 
 - *Are some tools trusted enough to skip fencing?* No exemptions. The cost of fencing is a delimiter; the cost of the exception being wrong once is the whole control.
 - *Does fencing survive summarisation?* The summary inherits the provenance of its source. A summary of untrusted content is untrusted content.
+- *What about the agent's own prior reasoning?* It carries the most restrictive provenance of anything it was derived from: a step that read untrusted content produces output fenced as untrusted in later steps. Model-authored text is never promoted to instruction by having been written by the model; only the system's own prompt and the harness's own messages are trusted.
 
 **Discharges** AAC-0058, AAC-0036, AAC-0041
 
@@ -724,6 +751,8 @@ Where output is streamed, the stream carries an explicit terminal event distingu
 **Settled by the catalog:**
 
 - *Is output screened before or during the stream?* Buffer where a policy must hold absolutely; stream with incremental screening where the risk is tolerable, and state which was chosen.
+- *Does cancellation propagate past the model call?* Yes, to every step not yet started and to every model call in flight. A tool call that has already been issued is not abandoned midway: it runs to its own completion or compensation, its outcome is recorded, and no further step follows it. Spend stops at the next boundary, and state is never left half-applied.
+- *How does a partial stream reach the record?* As a partial, recorded with its terminal event and the cause, under the incomplete marking of AHC-0025, and stored apart from completed outputs so nothing downstream mistakes a fragment for a result. The aborted streams are the ones an investigation needs; excluding them hides the failures.
 
 **Discharges** AAC-0092, AAC-0002, AAC-0008
 
@@ -735,7 +764,9 @@ Requests entering the harness are checked against a declared input type — requ
 
 **Settled by the catalog:**
 
+- *Where is the size bound set relative to the token budget?* At the token budget, unless AHC-0012 declares a strategy that can serve a larger input — droppable segments or summarised history — and then at the ceiling that strategy can actually serve. Accepting input the assembler can only refuse is paying to reach the same refusal later; the bound is never higher than what some declared strategy handles.
 - *Does validation failure look like a model refusal to the caller?* Distinct outcomes. A rejection the harness made is not a result the model produced.
+- *Is the same validation available to the caller before sending?* Yes: publish the input type as a versioned schema, and keep the harness's own check authoritative. A caller that validates locally saves the round trip; a caller that does not is still refused at the boundary. Fixing the shape early is the cost of having a contract, and versioning is how it changes.
 
 **Discharges** AAC-0015, AAC-0008, AAC-0093
 
@@ -767,6 +798,7 @@ Where the harness stops before completing — output length reached, budget exha
 **Settled by the catalog:**
 
 - *Return the partial content, or discard it?* Return it behind the incomplete marker, so salvaging is a deliberate act by the caller rather than the default.
+- *Can the harness continue from where it stopped?* Not by default. The harness returns the partial behind the incomplete marker and the caller decides. Where a task's output is routinely longer than one call allows, the task is split into parts designed as separate calls with their own boundaries, not continued across a cut the length limit chose.
 
 **Discharges** AAC-0015, AAC-0002, AAC-0019
 
@@ -783,6 +815,8 @@ The position that screens what the system produces is distinct from the one that
 **Settled by the catalog:**
 
 - *What does the caller receive when output is blocked?* The refused outcome under AHC-0017, with a reason class. A substitute returned as an ordinary result is the system lying about its own behaviour.
+- *Is a blocked generation retried?* At most once, and only where the block's reason class is one a fresh generation can change; never where the request itself asked for the blocked content. The retry is charged to the same unit under AHC-0007 and counted under AHC-0024, and a second block ends in the refused outcome. Retrying further spends the budget on a case the model has shown it will repeat.
+- *Does output screening see the input that produced it?* Yes, fenced as untrusted under AHC-0083 and separate from the output being screened. Whether an answer is acceptable often cannot be decided without the question, and the recital rule above already needs to know what the run was shown. Rules that need only the output, such as identifier patterns, read only the output.
 
 **Discharges** AAC-0092, AAC-0091, AAC-0005
 
@@ -861,6 +895,8 @@ Policies applied to traffic — redaction, screening of untrusted content, outpu
 
 - *Which policies can live at the gateway, and which cannot?* Context-free policies go to the shared position; context-dependent ones stay in the application and are listed as such, so the gap is deliberate rather than discovered.
 - *Fail closed on what, exactly?* Declare it per policy, never globally, and record the choice next to the policy rather than in a runbook.
+- *Is a refusal distinguishable from a failure by the caller?* Yes: distinct outcomes. A refusal names the policy that decided it; a refusal caused by the policy machinery being unavailable, under a declared closed default, is its own outcome saying so. The caller cannot fix either, but the operator routes them to different teams, and only the second is an incident.
+- *Streamed responses — screen before or during?* As AHC-0015 settles it: buffer where a policy must hold absolutely, screen incrementally where the risk tolerates tokens already delivered, and declare per policy which applies. The enforcement position records which mode ran, so a streamed response is never assumed to have had the buffered guarantee.
 
 **Discharges** AAC-0091, AAC-0006, AAC-0004, AAC-0092
 
@@ -874,6 +910,7 @@ Every time a policy runs, it emits a record naming the policy, its version, the 
 
 - *Record the matched content, or only that a match occurred?* Record the policy, the classification and an offset. Recording the matched text reproduces the leak inside the audit trail.
 - *Is an allow decision worth the volume?* Record allows at low cardinality — a counter per policy per interval — and full records for anything not allowed.
+- *Does the record survive when the policy machinery is down?* Yes, because the enforcement position writes it, not the policy. When a policy cannot run, the position (AHC-0008) records the policy as unavailable together with the declared default it applied, so an unavailable policy is never counted as an allow. If the record itself cannot be written, the unavailable case is handled as the policy's declared default, closed unless declared otherwise.
 
 **Discharges** AAC-0091, AAC-0011, AAC-0020
 
@@ -903,6 +940,7 @@ Where more than one policy applies at a position, the order they run in is decla
 
 - *Do transforming policies run before or after inspecting ones?* Inspect first, transform last, and hold the ordering as configuration rather than as registration order.
 - *Does one policy's decision short-circuit the rest?* Evaluate all, act on the first block. The cost is bounded and the record is what makes the policy set improvable.
+- *Can the order differ between the input and output sides?* Yes: each side declares its own order, under the same rule of inspect before transform. The output side is shaped by streaming (AHC-0094) and the input side never is, so one shared order would either constrain input for no reason or ignore the streaming constraint. Both orders are configuration, and the record under AHC-0018 states which side ran which.
 
 **Discharges** AAC-0091, AAC-0006, AAC-0004
 
@@ -919,6 +957,8 @@ The position that screens what the system produces is distinct from the one that
 **Settled by the catalog:**
 
 - *What does the caller receive when output is blocked?* The refused outcome under AHC-0017, with a reason class. A substitute returned as an ordinary result is the system lying about its own behaviour.
+- *Is a blocked generation retried?* At most once, and only where the block's reason class is one a fresh generation can change; never where the request itself asked for the blocked content. The retry is charged to the same unit under AHC-0007 and counted under AHC-0024, and a second block ends in the refused outcome. Retrying further spends the budget on a case the model has shown it will repeat.
+- *Does output screening see the input that produced it?* Yes, fenced as untrusted under AHC-0083 and separate from the output being screened. Whether an answer is acceptable often cannot be decided without the question, and the recital rule above already needs to know what the run was shown. Rules that need only the output, such as identifier patterns, read only the output.
 
 **Discharges** AAC-0092, AAC-0091, AAC-0005
 
@@ -932,6 +972,7 @@ Each policy runs under a latency ceiling drawn from the request's remaining dead
 
 - *Is a policy timeout the same as a policy block?* Distinct conditions, distinct records. They have opposite remedies.
 - *Do policies run in parallel or in sequence?* Parallel within a group that only inspects; sequential where one transforms. The ordering constraint decides, not the latency target.
+- *Where does the policy budget come from?* Both: each policy gets the smaller of its profile-set ceiling and what the remaining deadline leaves after reserving the time its default path needs. The fixed ceiling bounds a policy on a fresh request, and the remainder bounds the layer so the policies cannot sum past the deadline. A policy left no usable time resolves to its default at once, recorded as starved by the deadline, distinct from a timeout and from a block.
 
 **Discharges** AAC-0091, AAC-0007, AAC-0009
 
@@ -961,7 +1002,9 @@ The number of model calls in flight is limited by an explicit control the harnes
 
 **Settled by the catalog:**
 
+- *Bound by requests, or by tokens in flight?* By whatever the provider throttles on, which for most providers is both. Tokens are estimated before the call — the assembled input counted, the output taken at its maximum length — and the estimate is released and corrected when the call reports actual usage. Bounding requests alone is right only where the provider limits nothing else.
 - *Queue, or shed?* Bounded queue with a wait ceiling, then shed. An unbounded queue is a latency incident that has not happened yet.
+- *Is the limit per process or global?* Global: the provider's limit is per account, not per replica. Where shared state on the request path is unacceptable, each process takes the global limit divided by the maximum replica count, and that maximum is part of the limit's configuration, so autoscaling cannot raise the effective limit without a change anyone can see.
 
 **Discharges** AAC-0007, AAC-0009
 
@@ -974,6 +1017,8 @@ A rate-limit response is classified separately from an error, and drives a diffe
 **Settled by the catalog:**
 
 - *Honour the provider's stated wait, or use your own backoff?* Honour the hint where it fits inside the remaining budget; otherwise fail into a declared outcome rather than waiting past the deadline.
+- *Does a throttle on one route trigger a switch to another?* Only to a route declared as a fallback for that task and evaluated as one; otherwise wait. The switch is recorded with throttling as its reason (AHC-0027), so quality movement during the throttle is attributable. An unevaluated route is a different system, and a throttle is not a reason to ship one.
+- *Should the limit adapt downward after repeated throttling?* Yes, and it recovers by itself. The limit falls on repeated throttles and climbs back toward the configured value as calls succeed, never below a declared floor and never above the configured limit. Every change is recorded, so a limit still lowered long after the throttling stopped is visible rather than a silent cap.
 
 **Discharges** AAC-0009, AAC-0007
 
@@ -987,6 +1032,7 @@ Each policy runs under a latency ceiling drawn from the request's remaining dead
 
 - *Is a policy timeout the same as a policy block?* Distinct conditions, distinct records. They have opposite remedies.
 - *Do policies run in parallel or in sequence?* Parallel within a group that only inspects; sequential where one transforms. The ordering constraint decides, not the latency target.
+- *Where does the policy budget come from?* Both: each policy gets the smaller of its profile-set ceiling and what the remaining deadline leaves after reserving the time its default path needs. The fixed ceiling bounds a policy on a fresh request, and the remainder bounds the layer so the policies cannot sum past the deadline. A policy left no usable time resolves to its default at once, recorded as starved by the deadline, distinct from a timeout and from a block.
 
 **Discharges** AAC-0091, AAC-0007, AAC-0009
 
@@ -1015,6 +1061,7 @@ Where a single request issues several model calls in parallel — one per docume
 **Settled by the catalog:**
 
 - *Reject the oversized request, or process it in batches?* Whichever is chosen, decide it at the boundary under AHC-0016 rather than discovering the size after the calls have started.
+- *Does fan-out count toward the unit's deadline or extend it?* It counts toward the unit's deadline, which fan-out never extends. A request too wide to complete inside its deadline is identified at the boundary and either rejected or accepted as an explicit long-running job with its own declared deadline and observable status; an interactive request does not silently become one. Whatever is unfinished when the deadline arrives is returned as a partial result under the next decision.
 - *Is partial fan-out a usable result?* Return it marked incomplete under AHC-0025, naming which branches are missing. Silent partial fan-out is the hardest failure here to notice.
 
 **Discharges** AAC-0007, AAC-0008, AAC-0093
@@ -1029,6 +1076,7 @@ Work entering the harness carries a declared class — interactive, background, 
 
 - *Who assigns the class — the caller, or the entry point?* Derive from the entry point, allow the caller to lower it only. A priority that callers can raise is not a priority.
 - *Reserved capacity, or strict preemption?* Reserve for the top class, allow the rest to use the remainder. Starvation that is only visible at month end is the harder failure to attribute.
+- *Does class survive into delegation and fan-out?* It propagates, and child work may lower it but never raise it. The class travels in the handoff payload under AHC-0047 and is recorded on each child unit, because a bulk job whose sub-work is admitted as interactive defeats the allocation entirely. This is the same rule as at the entry point: priority only flows downward.
 
 **Discharges** AAC-0007, AAC-0009, AAC-0093
 
@@ -1047,6 +1095,8 @@ Temperature, top-p, maximum output length, stop sequences and any seed are set e
 **Settled by the catalog:**
 
 - *One parameter set, or one per task?* Per task, resolved through AHC-0003 so the record stays single even when the sets do not.
+- *Is a fixed seed worth using where the provider offers one?* Yes: set it, record it, and design as though it were absent. Evaluations and tests assert on properties and distributions of the output, never on exact text, so a seed that fails to hold costs some noise and breaks nothing.
+- *Who owns maximum output length?* The task's owner, as part of that task's parameter set. It is set from the measured length of legitimate outputs with margin above the longest, not from a cost wish, and when it fires the result is the length-limit outcome of AHC-0025, so its rate is counted and a limit set too low shows up as a number rather than as truncated answers.
 
 **Discharges** AAC-0010, AAC-0012, AAC-0018
 
@@ -1073,6 +1123,8 @@ Every recorded provider response stores the date it was captured and the resolve
 **Settled by the catalog:**
 
 - *What forces a re-cut?* Both, and treat a re-cut as a reviewable change. A fixture diff nobody reads is a fixture nobody owns.
+- *Are fixtures committed, or generated?* Committed — or, where they are large, stored outside the repository and referenced from it by content digest. Either way a clone pins exactly which recordings a run uses. Mark them as generated so review tooling folds them away, and review them as a set when a re-cut changes them.
+- *How old is too old?* Older than the last re-cut the schedule called for. The catalog sets no age; the system's re-cut schedule does, and a fixture past it is reported as overdue wherever it is used rather than silently trusted.
 
 **Discharges** AAC-0016, AAC-0012
 
@@ -1116,6 +1168,8 @@ A rate-limit response is classified separately from an error, and drives a diffe
 **Settled by the catalog:**
 
 - *Honour the provider's stated wait, or use your own backoff?* Honour the hint where it fits inside the remaining budget; otherwise fail into a declared outcome rather than waiting past the deadline.
+- *Does a throttle on one route trigger a switch to another?* Only to a route declared as a fallback for that task and evaluated as one; otherwise wait. The switch is recorded with throttling as its reason (AHC-0027), so quality movement during the throttle is attributable. An unevaluated route is a different system, and a throttle is not a reason to ship one.
+- *Should the limit adapt downward after repeated throttling?* Yes, and it recovers by itself. The limit falls on repeated throttles and climbs back toward the configured value as calls succeed, never below a declared floor and never above the configured limit. Every change is recorded, so a limit still lowered long after the throttling stopped is visible rather than a silent cap.
 
 **Discharges** AAC-0009, AAC-0007
 
@@ -1129,6 +1183,7 @@ A retry count exists per unit of work, not per call site, and it is bounded. Eve
 
 - *Is the retry bound the same number as the step bound?* Two bounds, two counters. Attempts (every call, retries included) go on the record for cost; the retry bound counts only repeats after failure; the step bound counts only iterations.
 - *Which layer owns the retry budget?* One owner, declared, with the others explicitly set to none. Two owners is the multiplication case, and it is always discovered from a bill.
+- *Does a retry after a partially streamed response start over?* Start over, and count it as an attempt. The abandoned prefix is a partial result under AHC-0025, recorded as such; where the caller has already seen it, the stream's terminal event tells them the response restarted rather than splicing a new answer onto the old prefix. Stitching two generations together produces text no single call wrote.
 - *Is a repair attempt a retry?* Count it. A repair is an attempt, and the count is the signal that the contract is being missed.
 
 **Discharges** AAC-0008, AAC-0009, AAC-0102
@@ -1146,6 +1201,7 @@ Where the harness stops before completing — output length reached, budget exha
 **Settled by the catalog:**
 
 - *Return the partial content, or discard it?* Return it behind the incomplete marker, so salvaging is a deliberate act by the caller rather than the default.
+- *Can the harness continue from where it stopped?* Not by default. The harness returns the partial behind the incomplete marker and the caller decides. Where a task's output is routinely longer than one call allows, the task is split into parts designed as separate calls with their own boundaries, not continued across a cut the length limit chose.
 
 **Discharges** AAC-0015, AAC-0002, AAC-0019
 
@@ -1159,6 +1215,11 @@ Every trigger carries an identifier derived from the occasion that caused it, an
 
 - `AHC-0053/occasion_source` — What is the identifier derived from?
 - `AHC-0053/claim_scope` — Whose is a claimed occasion?
+
+**Settled by the catalog:**
+
+- *Where is the claim recorded?* In the store that holds the run's own durable state (AHC-0044), written before the first step. When that store is down the run could neither checkpoint nor record its intents, so refusing to start is the correct outcome rather than an outage the claim caused. The trigger fails closed, and the scheduler's retry carries the same occasion and is deduplicated once the store returns; a separate store's disagreements with reality are duplicates nobody sees.
+- *What if a run dies holding the claim?* The claim is a lease that expires into recovery, never into a fresh run. When it lapses, the next delivery of the same occasion takes over the original run from its last checkpoint under the original claim, and any intent recorded without an outcome (AHC-0056) is resolved through its idempotency or compensating path (AHC-0058) before anything is redone. A run that cannot be resumed is marked failed and alerted, and the occasion stays claimed: running it again is an operator's decision, recorded as a new occasion.
 
 **Discharges** AAC-0076, AAC-0047, AAC-0080
 
@@ -1256,6 +1317,7 @@ Every time a policy runs, it emits a record naming the policy, its version, the 
 
 - *Record the matched content, or only that a match occurred?* Record the policy, the classification and an offset. Recording the matched text reproduces the leak inside the audit trail.
 - *Is an allow decision worth the volume?* Record allows at low cardinality — a counter per policy per interval — and full records for anything not allowed.
+- *Does the record survive when the policy machinery is down?* Yes, because the enforcement position writes it, not the policy. When a policy cannot run, the position (AHC-0008) records the policy as unavailable together with the declared default it applied, so an unavailable policy is never counted as an allow. If the record itself cannot be written, the unavailable case is handled as the policy's declared default, closed unless declared otherwise.
 
 **Discharges** AAC-0091, AAC-0011, AAC-0020
 
@@ -1282,6 +1344,8 @@ A single identifier is created where a unit of work begins and is carried by eve
 **Settled by the catalog:**
 
 - *Reuse the tracing identifier, or mint a business one?* Mint one and carry it as an attribute on the trace. Cost and audit records must outlive whatever the observability retention policy is.
+- *Where does the unit begin for a scheduled or queued trigger?* At enqueue: the identifier is minted there and carried in the message, so the link to the cause survives. Time spent queued is recorded as its own interval, separate from the time the work took, so an open unit waiting in a queue is a measured wait rather than a distorted duration.
+- *Does the identifier reach the caller?* Yes. It is random and opaque, carries no meaning, and grants nothing: looking up a unit by its identifier requires the caller's own authorisation for that unit. An identifier that has to stay secret to be safe is an access control in disguise; one that does not can be quoted in a support request.
 
 **Discharges** AAC-0011, AAC-0060, AAC-0104
 
@@ -1297,6 +1361,7 @@ Where more than one route can serve a request — several deployments, several p
 
 - *Is the reason recorded, or just the route?* Both. Without the reason, every routing question becomes an inspection of configuration as it was at a past moment.
 - *How is a cache hit distinguished in cost and latency figures?* Record it as a served unit with a cache marker, so both figures can be computed and neither is silently wrong.
+- *Does a semantic cache hit record what it matched against?* Yes: the identifier of the matched entry, the similarity score and the boundary — tenant or scope — that each side belongs to, never a copy of the matched content. The content stays where the cache entry already holds it, and a cross-boundary hit is detectable by comparing two fields in one record.
 
 **Discharges** AAC-0100, AAC-0101, AAC-0098, AAC-0096, AAC-0089
 
@@ -1309,6 +1374,7 @@ What a captured run records and what the eval entrypoint accepts are the same sh
 **Settled by the catalog:**
 
 - *What is copied — the input, or the assembled context?* Both, as two kinds of row with different purposes. Conflating them produces a set that answers neither question.
+- *Who supplies the expected value?* A person, for any row that claims correctness. The production output may be promoted as the expected value only into a row marked as a baseline, which detects change and asserts nothing about whether the behaviour was right; the two kinds are never scored as one.
 - *Does the promoted row carry the customer's data forward?* Redaction under AHC-0019 applies to the promotion path, not only the telemetry path.
 
 **Discharges** AAC-0014, AAC-0013, AAC-0001
@@ -1322,6 +1388,8 @@ Each unit of work carries the dimensions along which its behaviour will later be
 **Settled by the catalog:**
 
 - *Which dimensions are worth carrying?* The dimensions along which you already suspect behaviour differs, plus the ones a customer would complain along. Both are usually known on day one.
+- *Does the caller supply them, or does the harness infer them?* The harness derives every label the boundary itself knows — entry point, tenant, channel, declared input type — and takes from the caller only what the boundary cannot see. A label inferred from content is the last resort and is recorded as inferred, with the version of whatever inferred it, because a wrong segment label hides a broken segment as well as a missing one does. A label nobody supplied is the explicit unknown, never blank.
+- *Are labels part of the eval row?* Yes. Labels are copied into the row when a record is promoted under AHC-0029, and a curated row without one carries the explicit unknown. Offline and production results are compared per segment, which needs the same dimension on both sides; a curated set without labels can only confirm the aggregate that hides the problem.
 
 **Discharges** AAC-0017, AAC-0014, AAC-0104
 
@@ -1379,6 +1447,7 @@ The system exposes a callable entrypoint that performs one unit of work end to e
 - *Does the entrypoint return the trace, or is the trace collected out of band?* Return a handle to the trace rather than the trace. The evaluation resolves it; production ignores it.
 - *How is the provider substituted for a cheap run?* Both, at different stages: recorded for the plumbing, live for the release candidate. Date the recordings and re-cut them on a schedule.
 - *Is the entrypoint parameterised by model and prompt version?* Parameterise by the resolved configuration record from AHC-0003, not by loose arguments. One thing to pass, and it is the same thing production records.
+- *Where do graders live — beside the system, or in a separate suite?* In a separate suite, written against the task's specification and versioned apart from the system (AHC-0028). The suite runs on every change to the system, so a grader that lags shows up as a failing or meaningless score at the next change rather than rotting quietly. A grader is never edited in the same change as the behaviour it grades.
 
 **Discharges** AAC-0001, AAC-0013, AAC-0098, AAC-0010
 
@@ -1405,6 +1474,7 @@ The functions that judge an output are supplied to the eval entrypoint rather th
 **Settled by the catalog:**
 
 - *Does a grader version change invalidate history?* Store the grader version with every score, so comparison is a query constraint rather than an act of faith.
+- *Where does a model-graded rubric live?* With the graders, apart from the system's prompts, derived from the task's specification and versioned as a grader. It is never changed in the same change as the prompt it judges; a rubric that must change alongside the system is a sign it was describing the implementation.
 - *Is the grader's own model pinned separately?* Separately pinned. Moving the instrument and the subject together makes the reading uninterpretable.
 
 **Discharges** AAC-0001, AAC-0013, AAC-0090
@@ -1418,6 +1488,7 @@ What a captured run records and what the eval entrypoint accepts are the same sh
 **Settled by the catalog:**
 
 - *What is copied — the input, or the assembled context?* Both, as two kinds of row with different purposes. Conflating them produces a set that answers neither question.
+- *Who supplies the expected value?* A person, for any row that claims correctness. The production output may be promoted as the expected value only into a row marked as a baseline, which detects change and asserts nothing about whether the behaviour was right; the two kinds are never scored as one.
 - *Does the promoted row carry the customer's data forward?* Redaction under AHC-0019 applies to the promotion path, not only the telemetry path.
 
 **Discharges** AAC-0014, AAC-0013, AAC-0001
@@ -1431,6 +1502,8 @@ Each unit of work carries the dimensions along which its behaviour will later be
 **Settled by the catalog:**
 
 - *Which dimensions are worth carrying?* The dimensions along which you already suspect behaviour differs, plus the ones a customer would complain along. Both are usually known on day one.
+- *Does the caller supply them, or does the harness infer them?* The harness derives every label the boundary itself knows — entry point, tenant, channel, declared input type — and takes from the caller only what the boundary cannot see. A label inferred from content is the last resort and is recorded as inferred, with the version of whatever inferred it, because a wrong segment label hides a broken segment as well as a missing one does. A label nobody supplied is the explicit unknown, never blank.
+- *Are labels part of the eval row?* Yes. Labels are copied into the row when a record is promoted under AHC-0029, and a curated row without one carries the explicit unknown. Offline and production results are compared per segment, which needs the same dimension on both sides; a curated set without labels can only confirm the aggregate that hides the problem.
 
 **Discharges** AAC-0017, AAC-0014, AAC-0104
 
@@ -1487,6 +1560,7 @@ The harness defines a unit of work — a task, a request, a conversation turn �
 - *What is a unit of work in this system?* The smallest thing a user or a caller would call a completed task. If two people would disagree about whether it succeeded, it is still too coarse.
 - *Where is the ceiling enforced — the harness, or the gateway?* Harness enforces per-unit, gateway enforces per-key as a backstop. Neither alone catches both a single runaway task and an unrouted caller.
 - *Do failed and abandoned units count?* Account for all units, report success and failure separately. Cost per successful task requires the denominator to include the failures.
+- *Is spend computed from provider-reported usage or from local counting?* Both, for different jobs. Local counting drives the ceiling while the unit is running, because a ceiling that waits for the provider's figure fires after the money is spent; provider-reported usage is what the unit's recorded spend settles to once it arrives. The difference between the two is recorded per unit, so drift is a measured number rather than a surprise on the invoice.
 
 **Discharges** AAC-0008, AAC-0104, AAC-0102, AAC-0093
 
@@ -1499,6 +1573,8 @@ Context is bounded before the call, by the component that assembles it, using a 
 **Settled by the catalog:**
 
 - *What gets dropped first?* Priority is declared per segment class by the assembler's caller, not inferred from position in a list.
+- *Summarise, or refuse?* Refuse, with a typed outcome, when dropping what the caller declared droppable still leaves the context over budget. Summarising is right only for conversation history in a long-running conversation, where the summary is made off the request path, kept as a segment of its own and recorded as derived rather than verbatim. A summary made inside the request to rescue it hides the over-budget case behind a second output nobody checks.
+- *Is the budget measured in provider tokens or an approximation?* Provider tokens wherever the model's tokeniser can be run before the call; an approximation only where it cannot, and then with headroom declared as a number and checked against the provider-reported count after the call. The assembler takes the counter from the resolved configuration, so the coupling to the model is in one place and changes with the pin.
 
 **Discharges** AAC-0019, AAC-0103
 
@@ -1512,6 +1588,7 @@ A retry count exists per unit of work, not per call site, and it is bounded. Eve
 
 - *Is the retry bound the same number as the step bound?* Two bounds, two counters. Attempts (every call, retries included) go on the record for cost; the retry bound counts only repeats after failure; the step bound counts only iterations.
 - *Which layer owns the retry budget?* One owner, declared, with the others explicitly set to none. Two owners is the multiplication case, and it is always discovered from a bill.
+- *Does a retry after a partially streamed response start over?* Start over, and count it as an attempt. The abandoned prefix is a partial result under AHC-0025, recorded as such; where the caller has already seen it, the stream's terminal event tells them the response restarted rather than splicing a new answer onto the old prefix. Stitching two generations together produces text no single call wrote.
 - *Is a repair attempt a retry?* Count it. A repair is an attempt, and the count is the signal that the contract is being missed.
 
 **Discharges** AAC-0008, AAC-0009, AAC-0102
@@ -1540,6 +1617,7 @@ The assembler reports the size of what it produced, broken down by segment class
 
 - *Which segment classes are worth separating?* Separate the classes that grow for different reasons and are owned by different people. That is usually four.
 - *Is tool-definition size counted?* Count it separately. It is the most common source of growth nobody attributes.
+- *Where is the comparison made?* On a fixed set at release, as the comparison that attributes growth to the system; and in production as a trend, to catch growth driven by what users send. A release is judged on the first; the second explains cost movement between releases.
 
 **Discharges** AAC-0103, AAC-0102, AAC-0008
 
@@ -1554,6 +1632,7 @@ Where a single request issues several model calls in parallel — one per docume
 **Settled by the catalog:**
 
 - *Reject the oversized request, or process it in batches?* Whichever is chosen, decide it at the boundary under AHC-0016 rather than discovering the size after the calls have started.
+- *Does fan-out count toward the unit's deadline or extend it?* It counts toward the unit's deadline, which fan-out never extends. A request too wide to complete inside its deadline is identified at the boundary and either rejected or accepted as an explicit long-running job with its own declared deadline and observable status; an interactive request does not silently become one. Whatever is unfinished when the deadline arrives is returned as a partial result under the next decision.
 - *Is partial fan-out a usable result?* Return it marked incomplete under AHC-0025, naming which branches are missing. Silent partial fan-out is the hardest failure here to notice.
 
 **Discharges** AAC-0007, AAC-0008, AAC-0093
@@ -1598,6 +1677,7 @@ Every tool declares whether it reads, writes reversibly, or writes irreversibly,
 
 - *What counts as irreversible?* Externally visible effects count as irreversible even when technically undoable. The recipient already saw it.
 - *Who issues the grant, and for how long?* Scope the grant to the action class and the specific resource, not to the session. "This agent may act for the next hour" is not a control.
+- *Does a dry-run mode exist?* Yes, at the dispatcher rather than in each tool. In rehearsal, every tool classed as writing returns a declared stand-in result without executing, so rehearsal is one switch in one place and nothing parallel exists to rot. A tool whose rehearsal is meaningless without a realistic result may supply a simulator; the rest are stubbed.
 
 **Discharges** AAC-0056, AAC-0078, AAC-0081
 
@@ -1618,6 +1698,7 @@ Actions in the irreversible class from AHC-0039 are held pending an approval iss
 **Settled by the catalog:**
 
 - *What does the approver actually see?* Show the concrete effect — resource, operation, before and after — rather than the reasoning. The approver is checking the action, not the argument.
+- *What happens while the action is pending?* Suspend to a checkpoint and resume on the decision. A human interval is unbounded — a minute, a night, a weekend — and a run held open for it holds a worker and a budget clock and dies with the process, taking the pending action with it. Resuming already re-establishes the judged state before executing, which this capability requires anyway. Holding the run open is right only where the approver is expected inside the request's own deadline, such as a person in the same live session.
 - *Is there a standing pre-approval for routine cases?* Scope any pre-approval to a resource pattern and a time window, and record each use against it. "This class is always fine" is how the control decays.
 
 **Discharges** AAC-0078, AAC-0056, AAC-0081
@@ -1634,6 +1715,7 @@ Model identifier, the prompt — identified by its content, not by a label that 
 
 - *Alias or pinned version for the model identifier?* Pin, and treat the pin as a dependency with an owner and an upgrade path. An alias is acceptable only where a recorded resolution captures what the alias resolved to at call time.
 - *What is allowed to change without a deploy?* Name the changeable set explicitly and keep it small. Anything in it must appear in the resolved record, so an unreviewed change is at least visible.
+- *Does the record travel with the output, or only into telemetry?* The full record goes into telemetry; an opaque reference to it travels with the output. The reference is enough for a consumer to tell two outputs were produced under different configurations and to detect a stale cached answer, and resolving it to the model, prompt and policies requires access to the record store. Send the full record outward only where the consumer is inside the same trust boundary.
 
 **Discharges** AAC-0012, AAC-0107, AAC-0101
 
@@ -1670,6 +1752,11 @@ The unit of rollback is the whole resolved configuration from AHC-0003, not one 
 
 The resolved configuration promoted to production is byte-identical to the one that went through the release process, carried forward as an artifact rather than rebuilt from source at the destination. Promotion moves a thing; it does not reconstruct one.
 
+**Settled by the catalog:**
+
+- *What is the artifact, concretely?* The resolved configuration record of AHC-0003, addressed by digest, in which everything it names — code image, prompt text, model pin, policy set — is itself referenced by content hash rather than by tag or by "latest". A container image is one entry in it, not the whole of it. The serving side starts only from a digest it was handed, so nothing can re-resolve after promotion.
+- *Does the promoted artifact pin transitive dependencies?* Pin everything, by digest, inside the artifact. A security update is a new artifact that goes through the release process like any other change; floating is the very drift this capability exists to remove. Where patch latency matters, make the pipeline faster, not the pin looser.
+
 **Discharges** AAC-0107, AAC-0012
 
 ### AHC-0053 — A trigger produces exactly one run
@@ -1682,6 +1769,11 @@ Every trigger carries an identifier derived from the occasion that caused it, an
 
 - `AHC-0053/occasion_source` — What is the identifier derived from?
 - `AHC-0053/claim_scope` — Whose is a claimed occasion?
+
+**Settled by the catalog:**
+
+- *Where is the claim recorded?* In the store that holds the run's own durable state (AHC-0044), written before the first step. When that store is down the run could neither checkpoint nor record its intents, so refusing to start is the correct outcome rather than an outage the claim caused. The trigger fails closed, and the scheduler's retry carries the same occasion and is deduplicated once the store returns; a separate store's disagreements with reality are duplicates nobody sees.
+- *What if a run dies holding the claim?* The claim is a lease that expires into recovery, never into a fresh run. When it lapses, the next delivery of the same occasion takes over the original run from its last checkpoint under the original claim, and any intent recorded without an outcome (AHC-0056) is resolved through its idempotency or compensating path (AHC-0058) before anything is redone. A run that cannot be resumed is marked failed and alerted, and the occasion stays claimed: running it again is an operator's decision, recorded as a new occasion.
 
 **Discharges** AAC-0076, AAC-0047, AAC-0080
 
@@ -1697,6 +1789,7 @@ Where a jurisdiction constrains where content may be processed, the reachable ro
 
 - *Refuse, or degrade, when no in-region route is available?* Refuse. A residency obligation that yields to an availability target was not an obligation.
 - *Does the constraint reach caching and telemetry?* The boundary applies to every copy. A compliant inference path feeding a cross-region telemetry backend has moved the data anyway.
+- *Is the region derived from the endpoint or asserted by the provider?* Record both, and say which is which: the region the route was configured for, as intended, and the region the provider asserted for the call, as observed, where the provider exposes it. Enforcement uses the configured region, since it is known before the call; the record keeps evidence and intention apart so an audit can tell what happened from what was meant. Where no per-call assertion exists, the record shows the intended region only, and that gap is a known limit of the route rather than a silent one.
 
 **Discharges** AAC-0097, AAC-0094, AAC-0096
 
@@ -1711,6 +1804,8 @@ The identity on whose behalf the system is acting is carried through the harness
 **Settled by the catalog:**
 
 - *Delegated identity, or the service's own with a filter?* Delegate where the downstream can. A filter you apply yourself is a control you must get right on every path, forever.
+- *What identity does a scheduled or triggered run carry?* A dedicated identity per scheduled job, scoped to what that job needs, with a named accountable person recorded against it and reassigned when they leave. The run acts as the job, never as whoever configured it. Where a run fulfils a specific user's standing request, it carries that user's delegated identity exactly as an interactive run would.
+- *Does the identity reach the record?* Yes, as a pseudonymous identifier, with the mapping to a person held in the access-controlled identity store rather than in telemetry. An access question stays answerable by those entitled to ask it, and the widely readable record holds no direct identifier; anything else identifying is redacted under AHC-0019.
 
 **Discharges** AAC-0032, AAC-0040, AAC-0006
 
@@ -1724,6 +1819,7 @@ Credentials, keys and tokens are held by the components that use them and are ne
 
 - *How do tool results get sanitised?* Centrally, at the point results re-enter context, with tool authors responsible in addition rather than instead.
 - *Can a tool argument ever legitimately be a credential?* Never. A tool that needs a credential holds a reference the model can name; the dispatcher resolves the reference to the secret.
+- *What happens when a secret is detected in context?* Block the call and return a typed failure, then treat the detection as an incident: the secret is rotated, because it has already left its store. One failed run is cheaper than a credential in a provider's logs, and a detector that fires repeatedly is a leak to fix at its source, not a reason to continue past it.
 
 **Discharges** AAC-0006, AAC-0095, AAC-0057
 
@@ -1736,6 +1832,8 @@ The permissions a tool operates under are held by the executing side and scoped 
 **Settled by the catalog:**
 
 - *One credential per tool, or one per agent?* Per tool where the tool writes. Read-only tools can reasonably share, since the blast radius of a read is bounded by AHC-0034.
+- *Does the executing side know which agent called it?* Yes. The agent's identity travels with every call alongside the end user's (AHC-0034), and the executing side records it whether or not it enforces on it. Per-agent policy is then available wherever a downstream supports it; where it does not, per-tool credentials are the enforcement and the agent identity is attribution only.
+- *Is the tool inventory itself protected?* Protected. A tool enters the registry only through the release process, as part of the resolved configuration (AHC-0003) and with its declared class (AHC-0039). Keep that path cheap rather than open — a new read tool should be a small reviewed change — and register any generic escape hatch, such as arbitrary code or arbitrary requests, as the irreversible class it is.
 
 **Discharges** AAC-0057, AAC-0032, AAC-0072
 

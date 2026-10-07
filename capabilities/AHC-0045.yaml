@@ -45,6 +45,12 @@ design_decisions:
     tension: >-
       Treating it as trusted is natural and lets injected content laundered
       through one step arrive as trusted in the next.
+    resolution: >-
+      It carries the most restrictive provenance of anything it was derived
+      from: a step that read untrusted content produces output fenced as
+      untrusted in later steps. Model-authored text is never promoted to
+      instruction by having been written by the model; only the system's own
+      prompt and the harness's own messages are trusted.
 
 realization_policy: own
 

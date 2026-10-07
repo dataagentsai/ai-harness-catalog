@@ -39,11 +39,25 @@ design_decisions:
       recorded through chunking and embedding. Without it, deleting a document
       leaves its chunks retrievable, which is the standard way removed content
       keeps being cited.
+    resolution: >-
+      Yes, by cascade. The derivation chain is recorded at ingestion — every
+      passage and vector names the document and the ingestion it came from,
+      which the origin requirement already demands — so removing a source
+      produces a new corpus version (AHC-0064) without any of its passages. A
+      removal that cannot account for a document's derived passages is a
+      failure, not a partial success.
   - question: How is a stale document detected?
     tension: >-
       Recording an as-of date lets staleness be reasoned about and depends on
       the source exposing one. Refreshing on a schedule is uniform and expensive
       across a corpus that mostly does not change.
+    resolution: >-
+      By the source's own signal where it has one — an as-of date, a
+      modification time, a content hash — and by scheduled re-fetch only for
+      sources with none, comparing content so an unchanged document costs a
+      fetch and not a re-embedding. Either way each passage carries its
+      document's as-of, so staleness is visible at assembly rather than only
+      at ingestion.
 
 realization_policy: own
 

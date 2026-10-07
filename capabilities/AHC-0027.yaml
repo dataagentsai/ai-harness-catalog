@@ -47,6 +47,12 @@ design_decisions:
       Recording the source entry makes an incorrect hit diagnosable and is the
       only way to detect a match served across a boundary it should not have
       crossed; it also stores a second request's content beside the first.
+    resolution: >-
+      Yes: the identifier of the matched entry, the similarity score and the
+      boundary — tenant or scope — that each side belongs to, never a copy of
+      the matched content. The content stays where the cache entry already holds
+      it, and a cross-boundary hit is detectable by comparing two fields in one
+      record.
 
 realization_policy: own
 

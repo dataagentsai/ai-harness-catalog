@@ -55,6 +55,12 @@ design_decisions:
     tension: >-
       Beside it, they drift toward asserting what the implementation does rather
       than what the task requires. Separate, they lag behind changes and rot.
+    resolution: >-
+      In a separate suite, written against the task's specification and
+      versioned apart from the system (AHC-0028). The suite runs on every change
+      to the system, so a grader that lags shows up as a failing or meaningless
+      score at the next change rather than rotting quietly. A grader is never
+      edited in the same change as the behaviour it grades.
 
 realization_policy: own
 

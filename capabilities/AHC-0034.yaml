@@ -39,11 +39,23 @@ design_decisions:
       Running as the operator who configured it is traceable and grants standing
       access to whoever happened to set it up. A dedicated identity is scoped
       and detaches the action from any person accountable for it.
+    resolution: >-
+      A dedicated identity per scheduled job, scoped to what that job needs,
+      with a named accountable person recorded against it and reassigned when
+      they leave. The run acts as the job, never as whoever configured it. Where
+      a run fulfils a specific user's standing request, it carries that user's
+      delegated identity exactly as an interactive run would.
   - question: Does the identity reach the record?
     tension: >-
       Recording it is what makes an access question answerable afterwards, and
       it places an identifier for a person into telemetry that is retained and
       widely readable.
+    resolution: >-
+      Yes, as a pseudonymous identifier, with the mapping to a person held in
+      the access-controlled identity store rather than in telemetry. An access
+      question stays answerable by those entitled to ask it, and the widely
+      readable record holds no direct identifier; anything else identifying is
+      redacted under AHC-0019.
 
 realization_policy: own
 

@@ -37,11 +37,24 @@ design_decisions:
     tension: >-
       Including it in the contract shown to the model is harmless and gives the
       model a token it may echo into a field where it does not belong.
+    resolution: >-
+      No. The harness attaches the version to the emitted object after
+      validation; it is never requested from the model. The version is a
+      property of the contract the harness chose, so it is known without asking,
+      and the version in the object must be the one the boundary actually
+      validated against rather than one more field the model can get wrong.
   - question: How long are old versions served?
     tension: >-
       Supporting several is kind to consumers and multiplies the surface that
       must keep working. Cutting over fast is clean and breaks whoever was not
       watching.
+    resolution: >-
+      Until no consumer declares it, with retirement announced in advance and
+      made as a reviewable configuration change. Consumers already declare the
+      versions they accept, so who still depends on an old one is a lookup
+      rather than a guess; withdrawing a version a consumer still declares is
+      the silent break this capability exists to prevent. A consumer that will
+      not move is escalated to its owner, not cut off.
 
 realization_policy: own
 

@@ -38,11 +38,22 @@ design_decisions:
     tension: >-
       Beginning at dequeue loses the link to whatever enqueued it; beginning at
       enqueue means the unit is open for an unbounded time before any work starts.
+    resolution: >-
+      At enqueue: the identifier is minted there and carried in the message, so
+      the link to the cause survives. Time spent queued is recorded as its own
+      interval, separate from the time the work took, so an open unit waiting in
+      a queue is a measured wait rather than a distorted duration.
   - question: Does the identifier reach the caller?
     tension: >-
       Returning it lets a user quote it in a support request and turns an
       internal correlation key into a public surface with whatever that implies
       about guessability and enumeration.
+    resolution: >-
+      Yes. It is random and opaque, carries no meaning, and grants nothing:
+      looking up a unit by its identifier requires the caller's own
+      authorisation for that unit. An identifier that has to stay secret to be
+      safe is an access control in disguise; one that does not can be quoted in
+      a support request.
 
 realization_policy: own
 

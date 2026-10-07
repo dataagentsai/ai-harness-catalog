@@ -37,11 +37,22 @@ design_decisions:
       Sharing one limit prevents the burst and serialises work that was
       parallelised for latency. Separate limits keep the latency benefit and
       multiply peak load by the fan-out.
+    resolution: >-
+      One limit, shared across the whole tree for the unit of work, consistent
+      with AHC-0020 and AHC-0097. Set it for the latency the task needs;
+      parallel work proceeds up to it. Separate limits multiply peak load by the
+      fan-out, which is the burst this capability exists to prevent.
   - question: What happens to sub-agents in flight when the limit trips?
     tension: >-
       Cancelling them recovers budget immediately and may abandon irreversible
       work half-applied. Letting them finish is safe for state and overshoots
       the ceiling by however much they had left.
+    resolution: >-
+      Stop dispatching at once and cancel each sub-agent at its next step
+      boundary; an irreversible dispatch already under way completes or is
+      compensated (AHC-0058), never abandoned half-applied. Reads and model
+      calls in flight are cancelled immediately. The overshoot is bounded by one
+      step per sub-agent and recorded in the terminal outcome.
 
 realization_policy: own
 

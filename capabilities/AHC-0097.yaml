@@ -39,6 +39,13 @@ design_decisions:
       Sharing one deadline keeps the caller's expectation intact and means a
       wide fan-out cannot complete. Extending it makes the work possible and
       breaks the guarantee the deadline expressed.
+    resolution: >-
+      It counts toward the unit's deadline, which fan-out never extends. A
+      request too wide to complete inside its deadline is identified at the
+      boundary and either rejected or accepted as an explicit long-running job
+      with its own declared deadline and observable status; an interactive
+      request does not silently become one. Whatever is unfinished when the
+      deadline arrives is returned as a partial result under the next decision.
   - question: Is partial fan-out a usable result?
     tension: >-
       Returning the branches that completed is more useful than nothing and

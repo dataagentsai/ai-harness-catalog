@@ -38,11 +38,23 @@ design_decisions:
       Automatic rollback contains damage in seconds and is itself an autonomous
       agent acting on production during an incident, which is when confidence in
       automation is lowest. Operator-initiated is deliberate and slow.
+    resolution: >-
+      Automatic only inside a run, operator-initiated across runs. A run whose
+      multi-part action fails partway compensates its own completed steps
+      automatically, because the trigger is a deterministic failure and the
+      scope is the run's own record. Recovering from runs that did the wrong
+      thing is an operator's call, made as one invocation over the selected
+      records rather than by hand, so it is deliberate without being slow.
   - question: What is recorded when no compensating path exists?
     tension: >-
       An explicit "cannot be undone" is uncomfortable to write and is the single
       most useful line in a design review, because it converts an implicit
       assumption into a decision someone has to accept.
+    resolution: >-
+      An explicit "none" beside the operation, with who accepted it, and it
+      places the operation in the irreversible class (AHC-0039) so it passes
+      through the approval of AHC-0057. A missing declaration is not "none": it
+      is an undeclared operation, and the harness refuses to dispatch it.
 
 realization_policy: own
 

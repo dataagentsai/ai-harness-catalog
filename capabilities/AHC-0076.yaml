@@ -38,11 +38,24 @@ design_decisions:
       Parsing is instant and catches least. Compiling needs the dependency
       graph. Executing catches most and requires the sandbox of AHC-0077 and
       real time per attempt.
+    resolution: >-
+      As far as the destination goes before it accepts the artifact: full
+      parse, compile or schema validation with the real dependencies, always.
+      Execution is a further step, taken inside the sandbox of AHC-0077 and only
+      where there is something to execute against — a supplied functional suite
+      (AHC-0091) — since running an artifact with nothing to compare it to
+      proves only that it ran.
   - question: Is a warning a failure?
     tension: >-
       Treating warnings as failures raises quality and blocks on stylistic
       opinions the destination tolerates. Ignoring them lets a real defect
       through under a category the linter had already flagged.
+    resolution: >-
+      Whatever the destination says it is. The check runs with the
+      destination's own lint configuration and severities, so a warning the
+      destination treats as an error fails, and one it tolerates is returned in
+      the outcome and fed to the model on any correction attempt. The harness
+      never adds its own opinion of which warnings matter.
 
 realization_policy: own
 

@@ -37,6 +37,11 @@ design_decisions:
     tension: >-
       Knowing the caller helps it shape a useful answer and invites it to reason
       about the orchestration rather than its own job.
+    resolution: >-
+      It sees the delegator's role, not its reasoning or the rest of the
+      orchestration. The role tells it who will consume the answer, and the
+      output contract in the carried set says in what shape; the full delegation
+      path belongs in the record (AHC-0050), not in the recipient's context.
   - question: Is the payload model-authored or harness-assembled?
     tension: >-
       Model-authored payloads carry nuance and can silently omit a constraint or

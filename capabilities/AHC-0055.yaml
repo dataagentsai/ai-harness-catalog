@@ -46,6 +46,13 @@ design_decisions:
       A run that fails loudly every time is working as designed from the
       monitoring side and is broken from every other side; alerting only on
       silence would treat it as healthy.
+    resolution: >-
+      Not as silence, but the same independent monitor alerts on it. What the
+      expected schedule waits for is a successful completion, so a run that
+      reports failure satisfies "it ran" and not "it did its job", and the alert
+      says which of the two is missing. Failures on consecutive expected runs
+      carry the same severity as silence, because to whoever depends on the
+      output they are the same outage.
 
 realization_policy: own
 

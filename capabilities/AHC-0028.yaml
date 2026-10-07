@@ -38,6 +38,11 @@ design_decisions:
       Beside the system's prompts it drifts toward describing what the system
       does rather than what the task requires — the rubric slowly becomes a
       restatement of the implementation. Held separately it lags and rots.
+    resolution: >-
+      With the graders, apart from the system's prompts, derived from the task's
+      specification and versioned as a grader. It is never changed in the same
+      change as the prompt it judges; a rubric that must change alongside the
+      system is a sign it was describing the implementation.
   - question: Is the grader's own model pinned separately?
     tension: >-
       Pinning it separately means a judge upgrade is a deliberate act; sharing

@@ -38,11 +38,24 @@ design_decisions:
       Per-field confidence lets a consumer route low-confidence records to
       review and is only useful if calibrated under AHC-0084, which for a
       self-reported confidence is rarely done.
+    resolution: >-
+      Not by default. A per-field confidence is carried only where it is
+      calibrated under AHC-0084 and some consumer routes on it; an uncalibrated
+      self-reported number is a placeholder with decimals. The
+      could-not-determine state already carries the signal review routing needs,
+      and carries it honestly.
   - question: Does the extractor return the span it extracted from?
     tension: >-
       Returning source offsets makes every value checkable against the document
       and enlarges the output substantially, which for high-volume extraction is
       a real storage decision.
+    resolution: >-
+      Yes, as source offsets rather than copied text, wherever values are
+      reviewed, disputed or stored as fact. Offsets are small beside the text
+      they point at and make every value checkable against the document, which
+      is how a fabricated value is told from an extracted one. Only high-volume
+      extraction that nobody reviews may keep spans for a sampled share instead,
+      sized to audit the extractor.
 
 realization_policy: own
 

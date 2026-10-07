@@ -45,6 +45,12 @@ design_decisions:
     tension: >-
       Exposure builds confidence and is frequently a legal requirement; it also
       surfaces inferences the user may find unsettling to see written down.
+    resolution: >-
+      Yes, both. Every remembered item is shown under its declared category
+      with where it came from, and the user can delete any of it, which removes
+      it from the store and from anything derived from it. An inference too
+      unsettling to show is one the system should not hold: a category that
+      cannot be shown to the person it is about is not eligible.
 
 realization_policy: own
 

@@ -38,11 +38,22 @@ design_decisions:
     tension: >-
       Negative guidance measurably reduces wrong selection and costs resident
       tokens on every call, whether or not the tool is used — see AHC-0031.
+    resolution: >-
+      One sentence, only for a tool that evaluation shows is confused with a
+      neighbour, naming the tool to use instead. Resident tokens are measured
+      per release under AHC-0031, so negative guidance must earn its cost
+      against a measured selection error rather than be written by default.
   - question: Are all tools always visible?
     tension: >-
       A fixed set is predictable and grows until the declarations dominate the
       context. A set filtered per request is lean and makes behaviour depend on
       a filter that is now part of the system's correctness.
+    resolution: >-
+      All visible while the declared set fits comfortably in the context budget.
+      Past that, filter per request with a deterministic filter over declared
+      tool metadata, and record which tools were shown with the call, so the
+      filter can be debugged like any other component. Visibility is never the
+      authorisation boundary (AHC-0040).
 
 realization_policy: own
 

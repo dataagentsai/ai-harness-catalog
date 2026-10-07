@@ -30,6 +30,12 @@ design_decisions:
       In the artifact it always travels with it and adds noise to the file that
       reviewers and formatters will fight over. Beside it keeps files clean and
       breaks the moment the artifact is copied, moved or vendored.
+    resolution: >-
+      Beside it, keyed by one reference that lives in it. The artifact carries a
+      single short identifier in whatever place its format allows for metadata,
+      and the durable record it resolves to holds everything else. One reference
+      survives copying and vendoring, which a sidecar alone does not, and is too
+      small for reviewers and formatters to fight over.
   - question: How much detail is recorded?
     tension: >-
       Recording the full request makes the artifact explicable and may embed
@@ -42,6 +48,13 @@ design_decisions:
       An artifact edited by a person after generation is partly generated and
       partly not, and marking the whole thing as generated is then misleading in
       the direction that matters least.
+    resolution: >-
+      Yes, and the edit is recorded as its own revision. Provenance attaches to
+      the version that was generated; a person's change after generation is a
+      later revision with its author, so the record distinguishes what was
+      generated from what was changed. When a systematic defect is found the
+      generated version is what gets enumerated, and a later human edit narrows
+      what to re-examine without removing the artifact from the list.
 
 realization_policy: own
 

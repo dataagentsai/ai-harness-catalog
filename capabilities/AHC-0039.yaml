@@ -47,6 +47,12 @@ design_decisions:
       Being able to run the trajectory with writes disabled is the single most
       useful rehearsal available, and maintaining a parallel no-op path for
       every write tool is real, permanent work that rots quietly.
+    resolution: >-
+      Yes, at the dispatcher rather than in each tool. In rehearsal, every tool
+      classed as writing returns a declared stand-in result without executing,
+      so rehearsal is one switch in one place and nothing parallel exists to
+      rot. A tool whose rehearsal is meaningless without a realistic result may
+      supply a simulator; the rest are stubbed.
 
 realization_policy: own
 

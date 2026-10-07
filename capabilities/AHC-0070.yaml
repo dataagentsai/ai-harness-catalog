@@ -39,11 +39,22 @@ design_decisions:
       Showing it explains what was already tried and anchors the person on the
       system's interpretation, which may be exactly the mistake that caused the
       escalation.
+    resolution: >-
+      The person sees what was attempted and why the system escalated, as facts:
+      each action with its result, and the reason from the declared set. The
+      model's interpretation may be shown, labelled as its stated reading and
+      placed after the user's own words, never as a summary in place of them.
   - question: Can the conversation come back?
     tension: >-
       Returning it after a person resolves the blockage preserves continuity and
       requires the state boundary of AHC-0066 to survive an arbitrary human
       interval.
+    resolution: >-
+      Yes, when the person chooses to hand it back, and only then. While a
+      person holds the conversation its session does not expire; on return it
+      resumes under the same identifier (AHC-0066) with the person's resolution
+      added to its record, so the system continues from what was decided rather
+      than from where it stalled.
 
 realization_policy: own
 

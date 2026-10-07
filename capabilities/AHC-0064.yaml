@@ -46,6 +46,12 @@ design_decisions:
       It is not a content change and it invalidates every vector in the index,
       so it is the largest possible corpus change while looking like a
       dependency upgrade.
+    resolution: >-
+      Yes. A new embedding model produces a new corpus version, built and
+      swapped like any other rebuild, and the embedding model's pin is part of
+      that version's identity. Queries must be embedded by the model that built
+      the index they search, so the pin travels with the index rather than with
+      the application.
 
 realization_policy: own
 

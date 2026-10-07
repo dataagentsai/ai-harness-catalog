@@ -46,6 +46,13 @@ design_decisions:
       Rejected artifacts are stored longer than accepted ones because they feed
       the curated set, and they carry the same content redaction obligations as
       any other capture.
+    resolution: >-
+      Redacted at capture under AHC-0019, and kept under the same retention as
+      the production record it came from; promotion into a curated set re-runs
+      redaction and is the only thing that extends retention. Being useful for
+      evaluation is not an exemption from what content may be held. A rejection
+      that cannot be stored redacted is kept as its reason category and a
+      reference to the run, without the artifact.
 
 realization_policy: own
 

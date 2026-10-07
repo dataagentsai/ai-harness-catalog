@@ -38,11 +38,24 @@ design_decisions:
       Caller-supplied is accurate and depends on every caller being updated when
       a dimension is added. Inferred is uniform and makes the label a derived
       value that can itself be wrong.
+    resolution: >-
+      The harness derives every label the boundary itself knows — entry point,
+      tenant, channel, declared input type — and takes from the caller only what
+      the boundary cannot see. A label inferred from content is the last resort
+      and is recorded as inferred, with the version of whatever inferred it,
+      because a wrong segment label hides a broken segment as well as a missing
+      one does. A label nobody supplied is the explicit unknown, never blank.
   - question: Are labels part of the eval row?
     tension: >-
       Carrying them into curated sets under AHC-0029 is what makes offline
       results sliceable the same way production is; omitting them means the two
       views cannot be compared along the axis that matters.
+    resolution: >-
+      Yes. Labels are copied into the row when a record is promoted under
+      AHC-0029, and a curated row without one carries the explicit unknown.
+      Offline and production results are compared per segment, which needs the
+      same dimension on both sides; a curated set without labels can only
+      confirm the aggregate that hides the problem.
 
 realization_policy: own
 

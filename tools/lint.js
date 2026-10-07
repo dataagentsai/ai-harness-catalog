@@ -183,6 +183,16 @@ for (const f of files) {
   if (doc.level === "MUST" && !(doc.design_decisions || []).length) {
     warn(f, `MUST with no design_decisions — is this a component, or a principle?`);
   }
+
+  // -- a decision is settled here (resolution) or answered in a profile (key).
+  // One with neither left 118 decisions for every build to decide afresh, so
+  // two builds disagreed for no reason the catalog could claim (generation
+  // run 4, NOTES M2).
+  for (const d of doc.design_decisions || []) {
+    if (!d.key && !d.resolution) {
+      err(f, `design decision with neither a resolution nor a key: "${String(d.question).trim()}"`);
+    }
+  }
 }
 
 // ---------------------------------------------------------------- identifiers

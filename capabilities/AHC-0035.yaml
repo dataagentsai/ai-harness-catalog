@@ -47,6 +47,12 @@ design_decisions:
       Blocking the call is safe and turns a leak into an outage. Redacting and
       continuing preserves service and means the system carries on with material
       it has already established should not be there.
+    resolution: >-
+      Block the call and return a typed failure, then treat the detection as an
+      incident: the secret is rotated, because it has already left its store.
+      One failed run is cheaper than a credential in a provider's logs, and a
+      detector that fires repeatedly is a leak to fix at its source, not a
+      reason to continue past it.
 
 realization_policy: own
 

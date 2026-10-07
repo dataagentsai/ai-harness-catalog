@@ -38,6 +38,11 @@ design_decisions:
       It reduces run-to-run variance substantially, and it is best-effort on
       every provider that offers it — a seed makes variance smaller, never zero,
       and a system designed as though it were zero breaks on the exception.
+    resolution: >-
+      Yes: set it, record it, and design as though it were absent. Evaluations
+      and tests assert on properties and distributions of the output, never on
+      exact text, so a seed that fails to hold costs some noise and breaks
+      nothing.
   - key: unsettable_parameter
     question: What if the model rejects a parameter the system wants to set?
     tension: >-
@@ -63,6 +68,12 @@ design_decisions:
       Set low it truncates legitimate long answers mid-sentence; set high it is
       an open-ended cost exposure on a single call, and the truncation when it
       does fire arrives at the worst possible moment.
+    resolution: >-
+      The task's owner, as part of that task's parameter set. It is set from the
+      measured length of legitimate outputs with margin above the longest, not
+      from a cost wish, and when it fires the result is the length-limit outcome
+      of AHC-0025, so its rate is counted and a limit set too low shows up as a
+      number rather than as truncated answers.
 
 realization_policy: own
 

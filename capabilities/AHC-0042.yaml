@@ -39,6 +39,12 @@ design_decisions:
       Telling it sometimes breaks the pattern and is another turn of context
       spent on a trajectory already going badly, and the model frequently
       acknowledges being stuck and then repeats itself.
+    resolution: >-
+      Once, as a harness-authored observation naming the call that repeated, and
+      the next repeat terminates without a second warning. One notice is cheap
+      and sometimes breaks the pattern; termination never depends on the model
+      having heeded it, so an agent that acknowledges and repeats costs one
+      step, not the budget.
   - question: Is a stuck termination reported differently from a budget one?
     tension: >-
       Distinguishing them makes the two most common agent failures separable in

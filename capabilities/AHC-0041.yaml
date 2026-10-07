@@ -50,6 +50,12 @@ design_decisions:
       Steps bound cost; wall-clock bounds the user's patience and the holding of
       resources. A loop can exhaust one without approaching the other, and each
       alone leaves a real failure uncovered.
+    resolution: >-
+      Separate, both enforced by the loop, each with its own terminal outcome. A
+      step stuck on a slow tool burns time and no tokens, and a fast loop burns
+      tokens in seconds, so either alone leaves one failure open. The wall-clock
+      limit must also be able to stop a step already in flight (AHC-0030), not
+      only the next iteration.
 
 realization_policy: own
 

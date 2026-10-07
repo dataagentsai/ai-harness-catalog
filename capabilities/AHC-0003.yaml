@@ -48,6 +48,13 @@ design_decisions:
       Travelling with the output lets a consumer reason about provenance and
       makes a stale cached answer detectable; it also leaks internal
       configuration to whoever receives the response.
+    resolution: >-
+      The full record goes into telemetry; an opaque reference to it travels
+      with the output. The reference is enough for a consumer to tell two
+      outputs were produced under different configurations and to detect a stale
+      cached answer, and resolving it to the model, prompt and policies requires
+      access to the record store. Send the full record outward only where the
+      consumer is inside the same trust boundary.
 
 realization_policy: own
 

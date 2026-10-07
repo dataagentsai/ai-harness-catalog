@@ -30,6 +30,12 @@ design_decisions:
       Every step is uniform and adds a durable write to steps whose recomputation
       would have been cheaper than the write. Selective persistence is efficient
       and makes resumption logic conditional, which is where it goes wrong.
+    resolution: >-
+      Every step. One rule — continue after the last completed step — is the
+      whole of resumption, and the write is cheap beside a model call or an
+      external effect. A step may skip it only where it is declared safe to
+      repeat (AHC-0074) and touches nothing outside the run, so recomputing it
+      on resume is indistinguishable from reading it back.
   - question: How long do step results live after the run completes?
     tension: >-
       Retaining them makes a completed run reconstructable and stores
@@ -42,6 +48,12 @@ design_decisions:
       Re-validating catches a schema change since the run began and costs work
       on every resume. Trusting it is fast and can feed a step a shape its
       current version no longer accepts.
+    resolution: >-
+      Yes, against the step's current input contract (AHC-0071), on every
+      resume. A persisted result that no longer validates fails the resume as
+      its own kind of failure naming the contract change, rather than failing
+      mid-step on a shape the step rejects; restarting or migrating the run is
+      then a decision. The check costs little beside the step it protects.
 
 realization_policy: own
 

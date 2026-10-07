@@ -46,6 +46,13 @@ design_decisions:
     tension: >-
       Inline can block a bad answer and doubles latency. Asynchronous is free of
       latency cost and can only raise an alert after the answer has shipped.
+    resolution: >-
+      Asynchronously by default; inline only where the verdict gates an action
+      or a reply whose harm cannot be withdrawn after delivery. A judge that
+      only measures belongs off the request path, where its latency and failures
+      cannot degrade the system it scores. A judge used as a guardrail is inline
+      by definition, and then its timeout and open-or-closed behaviour are
+      declared like any other policy's (AHC-0095).
 
 realization_policy: own
 

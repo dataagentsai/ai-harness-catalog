@@ -39,11 +39,24 @@ design_decisions:
       Summarising keeps the request alive and costs a model call whose output is
       a second thing that can be wrong, inside the context of the first.
       Refusing is honest and pushes an unhandled case onto the caller.
+    resolution: >-
+      Refuse, with a typed outcome, when dropping what the caller declared
+      droppable still leaves the context over budget. Summarising is right only
+      for conversation history in a long-running conversation, where the summary
+      is made off the request path, kept as a segment of its own and recorded as
+      derived rather than verbatim. A summary made inside the request to rescue
+      it hides the over-budget case behind a second output nobody checks.
   - question: Is the budget measured in provider tokens or an approximation?
     tension: >-
       An exact count requires the provider's tokeniser and couples the assembler
       to the model in use. An approximation is portable and wrong by a margin
       that must then be reserved as headroom.
+    resolution: >-
+      Provider tokens wherever the model's tokeniser can be run before the call;
+      an approximation only where it cannot, and then with headroom declared as
+      a number and checked against the provider-reported count after the call.
+      The assembler takes the counter from the resolved configuration, so the
+      coupling to the model is in one place and changes with the pin.
 
 realization_policy: own
 

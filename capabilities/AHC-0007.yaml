@@ -53,6 +53,13 @@ design_decisions:
       Provider-reported is authoritative and arrives after the fact, sometimes
       only in aggregate. Local counting is immediate — which is what a ceiling
       needs — and drifts from the invoice.
+    resolution: >-
+      Both, for different jobs. Local counting drives the ceiling while the unit
+      is running, because a ceiling that waits for the provider's figure fires
+      after the money is spent; provider-reported usage is what the unit's
+      recorded spend settles to once it arrives. The difference between the two
+      is recorded per unit, so drift is a measured number rather than a surprise
+      on the invoice.
 
 realization_policy: own
 

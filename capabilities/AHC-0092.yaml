@@ -47,6 +47,14 @@ design_decisions:
       An endpoint name is a convention that can change; a provider assertion is
       authoritative and may not be exposed per call, leaving the record to state
       what was intended rather than what happened.
+    resolution: >-
+      Record both, and say which is which: the region the route was configured
+      for, as intended, and the region the provider asserted for the call, as
+      observed, where the provider exposes it. Enforcement uses the configured
+      region, since it is known before the call; the record keeps evidence and
+      intention apart so an audit can tell what happened from what was meant.
+      Where no per-call assertion exists, the record shows the intended region
+      only, and that gap is a known limit of the route rather than a silent one.
 
 realization_policy: own
 

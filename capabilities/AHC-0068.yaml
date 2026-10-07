@@ -46,6 +46,12 @@ design_decisions:
       Traces and datasets are copies too, and they are typically stored in one
       pool with broad read access, which quietly relocates tenant data outside
       the boundary the store enforces.
+    resolution: >-
+      Yes. Content is redacted before it leaves the process (AHC-0019), so what
+      reaches a shared telemetry pool is metadata rather than tenant data; any
+      store that does hold content — traces kept with payloads, datasets built
+      from production (AHC-0029) — carries the tenant scope in its keys and
+      grants read access per tenant, like the store it was copied from.
 
 realization_policy: own
 

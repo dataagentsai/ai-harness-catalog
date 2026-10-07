@@ -46,6 +46,13 @@ design_decisions:
       A policy that fails and records nothing is indistinguishable from a policy
       that ran and allowed. The unavailable case is precisely the one that must
       leave a trace.
+    resolution: >-
+      Yes, because the enforcement position writes it, not the policy. When a
+      policy cannot run, the position (AHC-0008) records the policy as
+      unavailable together with the declared default it applied, so an
+      unavailable policy is never counted as an allow. If the record itself
+      cannot be written, the unavailable case is handled as the policy's
+      declared default, closed unless declared otherwise.
 
 realization_policy: own
 

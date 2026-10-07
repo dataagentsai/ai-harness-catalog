@@ -37,11 +37,23 @@ design_decisions:
       Parent references reconstruct the tree and require every consumer to walk
       it. A materialised path is directly readable and goes stale if the
       topology is ever rewritten mid-run.
+    resolution: >-
+      Parent references are the source of truth, and a materialised path is
+      written alongside as a derived attribute when each span is created. The
+      parent reference cannot go stale; the path is computed from the parent's
+      own path at that moment, so it records the topology as it was when the
+      work happened, which is what the record should say.
   - question: Does a shared trace survive an asynchronous handoff?
     tension: >-
       Where delegation goes through a queue, the trace context must be carried
       in the message, and a message schema that predates the tracing decision
       usually has nowhere to put it.
+    resolution: >-
+      It must: trace context is a required field of the delegation message, next
+      to the unit-of-work identifier from AHC-0026. The delegation interface is
+      typed (AHC-0046), so the field belongs in its schema; a queue schema with
+      nowhere to put it is a schema to change, not a reason to start a new
+      trace.
 
 realization_policy: own
 

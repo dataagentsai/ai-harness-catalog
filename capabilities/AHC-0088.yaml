@@ -30,10 +30,24 @@ design_decisions:
       Enumerating refusals is concrete and leaves everything unlisted permitted,
       which is unbounded. Enumerating what is permitted is bounded and refuses
       legitimate adjacent requests nobody thought to list.
+    resolution: >-
+      Both: enumerate what is permitted and name what is refused. What appears
+      in neither is undecided, and goes to a person where the system has one and
+      is declined otherwise, as AHC-0118 does for a concern outside the
+      specification's intents. A permitted list alone refuses everything nobody
+      listed; a refusal list alone permits everything nobody thought of. Each
+      request landing in the gap is evidence for a reviewed addition to one list
+      or the other.
   - question: Does the refusal explain itself?
     tension: >-
       Explaining helps a user rephrase into something in scope, and it also
       describes the boundary precisely enough for someone to work around it.
+    resolution: >-
+      By category, not by rule. The refusal names which declared class the
+      request fell into and, where one exists, what the system can do instead;
+      it does not quote the boundary's wording or the rule that matched. That
+      gives a legitimate user enough to rephrase into scope and gives someone
+      probing the edge nothing beyond the product's stated purpose.
   - question: Is a refusal a success?
     tension: >-
       Counting a correct refusal as a failure makes reliability figures punish

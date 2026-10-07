@@ -39,6 +39,13 @@ design_decisions:
       labels for a definition of quality that may not be the one the product
       needs. Either way, labellers drift over time and the drift looks like
       judge drift.
+    resolution: >-
+      Domain experts label the disagreement-weighted core and write the
+      labelling guide; others may extend the set against that guide. Stability
+      is measured, not assumed: a fixed anchor subset is re-labelled whenever
+      the labellers change and at every recalibration, and labeller agreement on
+      it is recorded beside the judge's. Without that anchor, labeller drift is
+      indistinguishable from judge drift.
   - question: When is the judge re-checked?
     tension: >-
       Re-checking on every judge change is correct and makes rubric edits

@@ -49,6 +49,12 @@ design_decisions:
       Continuation recovers the answer and doubles the context cost, and the
       seam between the two halves is a place the model may repeat or contradict
       itself.
+    resolution: >-
+      Not by default. The harness returns the partial behind the incomplete
+      marker and the caller decides. Where a task's output is routinely longer
+      than one call allows, the task is split into parts designed as separate
+      calls with their own boundaries, not continued across a cut the length
+      limit chose.
 
 realization_policy: own
 

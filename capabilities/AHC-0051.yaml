@@ -47,6 +47,11 @@ design_decisions:
       Run-scoped state is isolated and loses anything worth keeping. Persistent
       shared state accumulates and becomes a cross-tenant boundary that must
       then be enforced.
+    resolution: >-
+      Scoped to the run. Anything worth keeping leaves it through the memory
+      write gate (AHC-0069), where tenant scoping is enforced, rather than by
+      persisting the shared scratchpad. Persistent state shared between agents
+      is a memory store and is governed as one.
 
 realization_policy: own
 

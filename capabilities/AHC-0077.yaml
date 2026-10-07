@@ -40,6 +40,14 @@ design_decisions:
       asked, and it places production data inside an environment running
       unreviewed code. Synthetic data is safe and misses the shape problems that
       only appear on real distributions.
+    resolution: >-
+      Real data only where egress is closed and the grant is read-only;
+      otherwise synthetic data shaped from production. Unreviewed code over real
+      data is acceptable precisely when nothing it computes can leave except
+      through the harness's declared output, which is the limit the failure mode
+      says is most often forgotten. Where egress cannot be closed, synthetic
+      data is the rule and its shape gaps are covered by the eval set, not by
+      the sandbox.
   - question: What are the limits when the artifact is a query?
     tension: >-
       A generated query runs inside a database that has its own resource

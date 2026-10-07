@@ -37,10 +37,23 @@ design_decisions:
       Rejecting the record loses everything else it contained. Passing the raw
       value through in a canonical field defeats the field's type. Marking it
       unresolved is correct and gives consumers a state to handle.
+    resolution: >-
+      Mark it unresolved, keep the raw string, and keep the rest of the record.
+      The canonical field holds a typed unresolved state, never the raw value
+      forced into a typed field and never a guess, and consumers handle it as
+      they handle could-not-determine under AHC-0086. Unresolved values are
+      counted, because a rising count is how a missing normalisation rule is
+      found.
   - question: Does the model see the canonical format at all?
     tension: >-
       Showing it improves the chance the raw value is already close, and invites
       the model to convert anyway, which is the behaviour being removed.
+    resolution: >-
+      No. The contract shown to the model asks for the value as the source
+      expressed it and does not show the target format. Showing it invites
+      exactly the conversion the harness removed, and a value the model
+      converted cannot be told from one it copied, so the retained raw string
+      would silently stop being raw.
 
 realization_policy: own
 

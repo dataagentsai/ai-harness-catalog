@@ -44,6 +44,13 @@ design_decisions:
     tension: >-
       Retaining it makes an over-aggressive strip diagnosable and stores a
       second copy of every input, with the same obligations as the first.
+    resolution: >-
+      Yes, under the same retention and redaction rules as the normalised input
+      and for as long as the record it belongs to. The record of what was
+      removed can only be checked against the raw input, and the raw input is
+      also what the eval rows of the previous decision are drawn from. Where
+      volume makes a second copy unaffordable, keep a hash for every input and
+      the full raw input for a sampled share, and record which applies.
 
 realization_policy: own
 

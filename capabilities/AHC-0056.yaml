@@ -46,6 +46,12 @@ design_decisions:
       Sharing is cheap and subjects an audit record to sampling and short
       retention. Separating costs a second path and gives the record a lifetime
       set by the question it answers.
+    resolution: >-
+      Separate. The action log is an audit record: unsampled, append-only,
+      written durably before dispatch, and kept for as long as anyone can ask
+      who did what — none of which a telemetry pipeline promises. Telemetry may
+      carry a copy or a reference for correlation (AHC-0026), but the copy is
+      never the record.
 
 realization_policy: own
 

@@ -38,10 +38,23 @@ design_decisions:
     tension: >-
       Flagging it catches dead paths left by refactoring and fires constantly on
       nodes reachable only under conditions the analysis cannot see.
+    resolution: >-
+      Yes, computed over edges rather than conditions. Because every branch's
+      destination set is declared, reachability is a property of the structure:
+      a node with no path from an entry is dead whatever happens at runtime.
+      Whether a declared edge is ever taken is a coverage question for the eval
+      harness, not a structural error, so conditions the analysis cannot see
+      never make it fire.
   - question: Does the topology version with the code?
     tension: >-
       A topology loaded from configuration can be changed without a deploy,
       which means the running system's shape is not described by any commit.
+    resolution: >-
+      It versions with whatever the run records as its configuration. Topology
+      in code versions with the commit; topology loaded as data is part of the
+      resolved configuration (AHC-0003), recorded per run and released and
+      rolled back like a prompt (AHC-0032). Either way every run states which
+      shape executed it, and a shape that changes outside both is not allowed.
 
 realization_policy: own
 

@@ -38,11 +38,25 @@ design_decisions:
       A fine-tuned classifier has a far smaller instruction surface and is
       correspondingly harder to talk around; it also cannot explain its verdict
       or adapt to a rubric change without retraining.
+    resolution: >-
+      A classifier where the judge is a guardrail with a stable rubric; a
+      generative model where it measures quality against a rubric that changes
+      with the product. A guardrail is what an output tries to talk its way
+      past, so its instruction surface should be as small as possible; a
+      measuring judge needs to adapt and to explain. Either way the fencing here
+      applies: a classifier narrows the attack, it does not remove it.
   - question: Is the judge's own output screened?
     tension: >-
       Screening it treats the grader as another untrusted producer, which is
       consistent and adds a control on a control. Not screening it means
       whatever the judge emits is trusted by construction.
+    resolution: >-
+      Validated as a verdict, not screened as content. The judge's output is
+      parsed into the declared set at the boundary (AHC-0082), and anything
+      outside it is a judge failure; a typed verdict leaves no room for injected
+      text to travel onward. Any free-text rationale the judge attaches is
+      recorded and never acted on, and wherever it is displayed it is treated as
+      untrusted content.
 
 realization_policy: own
 

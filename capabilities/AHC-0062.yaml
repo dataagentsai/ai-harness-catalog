@@ -38,11 +38,23 @@ design_decisions:
       Resolving permissions per query is correct and adds a lookup to the
       request path. Caching them is fast and means a revoked permission keeps
       working for the cache lifetime — which is the window that matters.
+    resolution: >-
+      Resolved per query by default. A cache is acceptable only where the
+      entitlement source pushes revocations and the cache honours them, so a
+      revoked permission stops working on the next query either way; a
+      time-to-live on its own is not a revocation mechanism.
   - question: Does the answer reveal that filtered material exists?
     tension: >-
       Saying "there are documents you cannot see" is honest and is itself
       disclosure. Saying nothing is safe and produces an answer that is
       confidently incomplete.
+    resolution: >-
+      Never which or how many. Every answer states its scope — drawn from what
+      this requester may read — on every response, not only on those where
+      something was filtered, so the statement is honest about incompleteness
+      and carries no signal. Where nothing the requester may read is relevant
+      enough, the outcome is the abstention of AHC-0063, identical to a corpus
+      with no matching documents.
 
 realization_policy: own
 

@@ -40,11 +40,23 @@ design_decisions:
       paying to carry the context back and forth. A transfer hands over
       ownership entirely, which is cheaper and leaves nobody holding the thread
       if the recipient fails.
+    resolution: >-
+      A call by default: the caller remains the owner and receives a typed
+      return, so a failed recipient lands somewhere (AHC-0049). A transfer is
+      right only where the recipient's terminal outcomes go to someone who will
+      handle them — a handoff to a person or to a separate owning queue — and
+      then ownership moves explicitly in the record, never implicitly.
   - question: Can an agent delegate back to its own caller?
     tension: >-
       Allowing it handles genuine escalation and opens the cycle that AHC-0052
       then has to detect. Forbidding it is simple and forces a real escalation
       to fail instead.
+    resolution: >-
+      Not as a new delegation. A sub-agent that cannot proceed returns a typed
+      escalation outcome to its caller, which is a return rather than a call and
+      so opens no cycle; a fresh delegation that names an ancestor is rejected.
+      Genuine escalation works, and AHC-0052 is left catching only the cycles
+      nobody designed.
 
 realization_policy: own
 

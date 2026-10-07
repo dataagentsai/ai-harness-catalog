@@ -38,6 +38,13 @@ design_decisions:
       Per run is surgical and useless when you do not yet know which run is
       misbehaving. Global is decisive and takes down everything including the
       agents that were working correctly.
+    resolution: >-
+      All three, as one control at three scopes, with the class the one the
+      person on call reaches for first. Per run stops the run you can name; per
+      class stops every run of the misbehaving agent or trigger and leaves the
+      healthy ones working; global is for the incident where nobody yet knows
+      which class is at fault. A class or global stop also refuses new runs
+      until it is lifted, or the next trigger restarts what was just stopped.
   - question: Who may operate it, at three in the morning?
     tension: >-
       Restricting it to a small group means the person on call may not hold the

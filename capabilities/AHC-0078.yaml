@@ -40,6 +40,13 @@ design_decisions:
       advance which files matter, which is often the thing they were asking
       about. Inferred scope adapts and is decided by the same model whose
       overreach the scope exists to bound.
+    resolution: >-
+      Declared by the caller, or proposed by the model and confirmed by the
+      caller before generation; never inferred and applied in one step.
+      Inference may help the caller find the files, but the set that bounds the
+      change is fixed outside the model before the model writes, or the
+      overreach being bounded also draws the boundary. A caller who cannot name
+      the scope is shown a proposed scope to accept, not a silently widened one.
   - question: What happens to a rejected out-of-scope change?
     tension: >-
       Discarding it silently loses a change that may have been correct and

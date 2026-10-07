@@ -39,6 +39,11 @@ design_decisions:
       A human label is ground truth and does not scale. Accepting the
       production output as expected bakes today's behaviour in as the standard,
       including whatever is currently wrong with it.
+    resolution: >-
+      A person, for any row that claims correctness. The production output may
+      be promoted as the expected value only into a row marked as a baseline,
+      which detects change and asserts nothing about whether the behaviour was
+      right; the two kinds are never scored as one.
   - question: Does the promoted row carry the customer's data forward?
     tension: >-
       A row promoted from production inherits real content, and a curated set

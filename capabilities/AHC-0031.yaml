@@ -44,6 +44,11 @@ design_decisions:
       Comparing in production reflects real inputs and mixes a change in the
       system with a change in traffic. Comparing on a fixed set isolates the
       system's contribution and misses growth driven by what users actually send.
+    resolution: >-
+      On a fixed set at release, as the comparison that attributes growth to the
+      system; and in production as a trend, to catch growth driven by what users
+      send. A release is judged on the first; the second explains cost movement
+      between releases.
 
 realization_policy: own
 
