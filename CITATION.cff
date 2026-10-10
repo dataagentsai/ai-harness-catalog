@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+type: software
+title: "AI Harness Catalog: harness capabilities for AI applications, by architecture archetype"
+version: "0.3.0"
+date-released: "2026-10-10"
+authors:
+  - given-names: Basant
+    family-names: Choudhary
+    affiliation: "DataAgents.ai"
+repository-code: "https://github.com/dataagentsai/ai-harness-catalog"
+url: "https://github.com/dataagentsai/ai-harness-catalog"
+abstract: >-
+  An open catalog of what must exist around a model call for an AI application to be production grade: 98 harness capabilities across 16 layers and 10 architecture archetypes, each discharging obligations from the AI Assurance Catalog. Part of Clean AI Engineering.
+keywords:
+  - AI agents
+  - agent harness
+  - LLM applications
+  - production engineering
+  - architecture
+  - specification
+license:
+  - Apache-2.0
+  - CC-BY-4.0

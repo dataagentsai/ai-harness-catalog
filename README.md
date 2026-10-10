@@ -281,6 +281,11 @@ Phase 4 is deliberately last. Products are the fastest-rotting layer; authoring
 them alongside each capability means writing them two or three times before the
 catalog stabilises.
 
+## Citing
+
+Cite the release you used. Metadata is in [CITATION.cff](CITATION.cff); GitHub's
+"Cite this repository" button renders it as APA or BibTeX.
+
 ## Licence
 
 Split deliberately, following the assurance catalog and the OWASP model:
