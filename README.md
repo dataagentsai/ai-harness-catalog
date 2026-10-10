@@ -1,26 +1,60 @@
 # AI Harness Catalog
 
-**Harness capabilities for AI applications, by architecture archetype.**
+An open, machine-readable list of the components that must exist around a
+model call (context assembly, tool calls, retries, cost limits, human approval,
+logging and so on) for an AI application to be production grade, sorted by the
+kind of application.
 
-Status: **working draft 0.3.0** — the normative catalog is complete.
-98 capabilities across all 16 harness layers and all 10 archetypes, every one of
-the assurance catalog's 108 obligations discharged. Identifiers are stable from
-the first tagged release. Nothing here is externally binding.
+**Status: version 0.3.0, released 10 October 2026, a working draft.**
+Nothing here is externally binding.
 
-**Read it as a page → <https://raw.githack.com/dataagentsai/ai-harness-catalog/main/site/index.html>**
-— the catalog rendered and filterable by shape and layer, with an orientation
-section on what AHC and AAC each are and where the line between them falls.
-The same page is deployed to
-<https://dataagentsai.github.io/ai-harness-catalog/>; the link above serves
-`site/index.html` straight from this branch and needs nothing enabled.
+- **Done:** 118 capabilities with permanent identifiers across all 16 harness
+  layers and all 10 kinds of application; 18 ports (the seams where a harness
+  meets something it does not own); the profile format an adopter fills in; and
+  a linter that checks every capability against the AI Assurance Catalog.
+- **Not yet:** 116 of the assurance catalog's 118 obligations are covered by a
+  capability. The two newest, AAC-0109 (repetition detected and broken) and
+  AAC-0118 (autonomy widens only on measured agreement), are not yet.
+  Blueprints exist for 2 of 10 kinds of application (A5, A6). Realizations
+  (named products) and reference skeletons are planned.
+
+**Run it** (needs Node.js):
+
+```bash
+git clone https://github.com/dataagentsai/ai-harness-catalog && cd ai-harness-catalog
+npm ci && npm test     # lint the catalog against its schema and boundary rules; check the blueprints
+```
+
+Or read it as a page: <https://dataagentsai.github.io/ai-harness-catalog/>.
+
+**Part of a family.** Six public repositories that together specify, build and
+test AI agents:
+
+| Repository | Its job |
+|---|---|
+| [AI Assurance Catalog](https://github.com/dataagentsai/ai-assurance-catalog) (AAC) | what must be **true** of an AI application: test obligations |
+| **AI Harness Catalog** (AHC, this repository) | what must **exist** around the model call: harness capabilities |
+| [AgentTwin](https://github.com/dataagentsai/agenttwin) | what an agent must **face**: a simulated world to test it in |
+| [Clean AI Engineering](https://github.com/dataagentsai/clean-ai-engineering) | the specs, the four gates and the build-test-fix cycle that join the rest |
+| [Reference Agent](https://github.com/dataagentsai/reference-agent) | the reference implementation: one agent built and tested to all of the above |
+| [AgentTwin Lab](https://github.com/dataagentsai/agenttwin-lab) | the lab: a world that keeps running for days, for testing long-running agents |
+
+**How to cite:** cite the release you used. Metadata is in
+[CITATION.cff](CITATION.cff); GitHub's "Cite this repository" button renders it
+as APA or BibTeX.
 
 ---
+
+The page above is also served straight from this branch, with nothing enabled:
+<https://raw.githack.com/dataagentsai/ai-harness-catalog/main/site/index.html>.
+It is the catalog rendered and filterable by shape and layer, with an orientation
+section on what AHC and AAC each are and where the line between them falls.
 
 ## The gap this fills
 
 Its sibling, the
 [AI Assurance Catalog](https://github.com/dataagentsai/ai-assurance-catalog),
-publishes 108 test obligations for AI applications. Read enough of them and a
+publishes 118 test obligations for AI applications. Read enough of them and a
 phrase starts recurring — *"enforced by the harness"*, *"the harness must"*,
 *"outside the model's control"*.
 
@@ -92,7 +126,7 @@ in this catalog.
 
 ## The seams
 
-Seventeen **ports** — ten every harness has, seven pulled in by archetype. A
+Eighteen **ports** — ten every harness has, eight pulled in by archetype. A
 capability says what must exist; a port says where the harness meets something
 it does not own, and what must hold across that meeting whoever implements it.
 
@@ -122,7 +156,7 @@ substitution_test: >-       # how you tell a port from a wrapper
 
 Declared as **data**, with no signatures, types or language, so an interface can
 be generated in any stack without this repository shipping a package. A port is
-not a partition of the catalog — 26 of the 98 capabilities are structural and
+not a partition of the catalog — 44 of the 118 capabilities are structural and
 cross no seam at all. See [docs/PORTS.md](docs/PORTS.md).
 
 ## The profile
@@ -173,10 +207,11 @@ and construction guidance competes with every framework's documentation.
 
 ## Where this sits
 
-This catalog is one part of a family. The others are the
-[AI Assurance Catalog](https://github.com/dataagentsai/ai-assurance-catalog) —
-what must be **TRUE** — and **AgentTwin**, which describes what a system must be
-**FACED** with.
+This catalog is one part of the family listed at the top. Its closest siblings
+are the [AI Assurance Catalog](https://github.com/dataagentsai/ai-assurance-catalog),
+which states what must be **TRUE**, and
+[AgentTwin](https://github.com/dataagentsai/agenttwin), which describes what a
+system must be **FACED** with.
 
 Two family-level documents govern form, and neither asks you to agree with
 anything:
@@ -253,16 +288,19 @@ warns rather than fails when it is not — this repository must lint standalone.
 
 | | Count |
 |---|---|
-| Capabilities | **98** |
-| Core — owed by every shape | 43 |
-| Archetype deltas | 55 |
+| Capabilities | **118** |
+| Core — owed by every shape | 52 |
+| Archetype deltas | 66 |
 | Harness layers covered | **16 of 16** |
-| Named design tensions | 292 |
-| `discharges` references | 291 |
-| Assurance obligations covered | **108 of 108** |
+| Named design decisions | 360 |
+| `discharges` references | 346 |
+| Assurance obligations covered | **116 of 118** |
 
-Landed near the projected ~89, for the structural reason the assurance catalog
-lands at 108: a core every shape owes, plus what is genuinely *new* about each
+*Counts as `npm run lint` reported them on 11 October 2026. Phase 1 and Phase 2
+below record what each phase landed at the time.*
+
+Landed above the projected ~89, for the structural reason the assurance catalog
+lands at 118: a core every shape owes, plus what is genuinely *new* about each
 shape. Deltas per archetype run from 2 (single-turn transform) to 20
 (multi-agent, counting inherited agent capabilities) — that spread is the
 taxonomy earning its keep.
@@ -272,7 +310,7 @@ taxonomy earning its keep.
 - [x] **Phase 0** — taxonomy, schema, linter with both boundary rules
 - [x] **Phase 1** — the full core layer, 43 capabilities
 - [x] **Phase 2** — archetype deltas for all ten shapes, 55 capabilities
-- [ ] **Phase 3** — blueprints: requirements, architecture and design per archetype
+- [ ] **Phase 3** — blueprints: requirements, architecture and design per archetype (A5 and A6 so far)
 - [ ] **Phase 4** — realizations, authored in one dated pass, not incrementally
 - [ ] **Phase 5** — three reference skeletons, one per control-flow tier
 - [x] **Phase 6** — bidirectional coverage against the assurance catalog
@@ -280,11 +318,6 @@ taxonomy earning its keep.
 Phase 4 is deliberately last. Products are the fastest-rotting layer; authoring
 them alongside each capability means writing them two or three times before the
 catalog stabilises.
-
-## Citing
-
-Cite the release you used. Metadata is in [CITATION.cff](CITATION.cff); GitHub's
-"Cite this repository" button renders it as APA or BibTeX.
 
 ## Licence
 
