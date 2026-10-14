@@ -1,0 +1,21 @@
+{
+  "title": "AI Harness Catalog: harness capabilities for AI applications, by architecture archetype",
+  "upload_type": "software",
+  "description": "An open catalog of what must exist around a model call for an AI application to be production grade: 98 harness capabilities across 16 layers and 10 architecture archetypes, each discharging obligations from the AI Assurance Catalog. Part of Clean AI Engineering.",
+  "creators": [
+    {
+      "affiliation": "DataAgents.ai",
+      "name": "Choudhary, Basant"
+    }
+  ],
+  "keywords": [
+    "AI agents",
+    "agent harness",
+    "LLM applications",
+    "production engineering",
+    "architecture",
+    "specification"
+  ],
+  "license": "Apache-2.0",
+  "notes": "Code under Apache-2.0 (LICENSE); specification text under CC-BY-4.0 (LICENSE-SPEC.txt)."
+}
