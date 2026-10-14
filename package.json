@@ -1,6 +1,6 @@
 {
   "name": "ai-harness-catalog",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Harness capabilities for AI applications, by architecture archetype. A specification, not a framework.",
   "license": "Apache-2.0",
   "private": true,

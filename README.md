@@ -5,7 +5,7 @@ model call (context assembly, tool calls, retries, cost limits, human approval,
 logging and so on) for an AI application to be production grade, sorted by the
 kind of application.
 
-**Status: version 0.3.0, released 10 October 2026, a working draft.**
+**Status: version 0.3.1, released 14 October 2026, a working draft.**
 Nothing here is externally binding.
 
 - **Done:** 118 capabilities with permanent identifiers across all 16 harness
