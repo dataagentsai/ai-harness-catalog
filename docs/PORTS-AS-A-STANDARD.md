@@ -130,6 +130,36 @@ stack, and four things are recorded per port per stack:
   reaches — is recorded as *not measured* with the reason, and the port is read
   as not having met the bar. Absence of evidence does not extend a standard.
 
+### The baseline, pinned 20 October 2026
+
+The three steps above are done, and everything below is measured against this.
+
+| What | Pinned at |
+|---|---|
+| This repository's three port files (`ports/approval.yaml`, `ports/cost_ledger.yaml`, `ports/policy.yaml`) | commit `dbd2023` (1 Oct 2026), unchanged since |
+| The aligned interfaces and schemas (`dataagentsai/reference-agent`, `packages/agent-harness`): `policy.port` (`Policy`: `evaluate`, `describe`; `DECISION_SCHEMA`), `cost.port` (`CostLedger`: `record`, `spent`; `SPENT_SCHEMA`), `approvals.port` (`Approvals.request`, `settled` for *await*, `Desk.stop` for *stop_signal*) | commit `d0a8b84` |
+| `policy/conformance.py`, 5 cases | sha256 `1861994733a817ae8a965c2ed03c277beb01479a1b55fb1ec4ce9564d7dd81f8` |
+| `cost/conformance.py`, 5 cases | sha256 `58a827f0bc643aea256552ab9b72ca0d07004fc6ea62ace9e6d06ad44d5577b0` |
+| `approvals/conformance.py`, 6 cases | sha256 `a6b592806579740586f34366f34a4ae97c84403011d5d0a761008831d41a1fd6` |
+
+The digests are also asserted by the reference agent's tests (`tests/test_port_*.py`),
+so an edited case fails the build before it can be used to measure anything.
+Against the baseline the reference realizations pass every case: policy and
+cost on the in-process realizations and the composed `per-task-meter`, approval
+on both waits (`temporal-updates`, `dbos-workflows`). Temporal's test server
+declares that its waits do not outlive a restart, which `survival_is_declared`
+allows; DBOS restarts and resumes.
+
+Writing the cases found three things the ports said and the implementation did
+not do, each fixed before the pin: a policy rule had no time budget
+(`failure_takes_declared_default`, the timeout half); an allow carried no reason
+(`decision_carries_reason`); and `stop_signal` had no implementation at all.
+
+The owner's march (clean-ai-engineering `TODO.md`, Step 1) measures four loop
+owners, not two: Pydantic AI's own loop and our loop on the Claude SDK are added
+beside the graph framework (LangGraph) and the agent SDK (the Claude Agent SDK).
+They add rows below; the bars and the reading of the result are unchanged.
+
 ### The record, to be filled by the two builds
 
 | Port | Stack | Cases passed | Adapter lines | Signature changes (counted / not) | Fights the loop owner | Met all four |
